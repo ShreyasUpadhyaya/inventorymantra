@@ -22,11 +22,12 @@ Next.js + TypeScript · FastAPI + Pydantic · LangGraph + LangChain (OpenAI) · 
 ## Quickstart
 > These commands are available from Phase 1 onwards.
 
-Prerequisites: Docker, Python 3.12 + [uv](https://docs.astral.sh/uv/), Node 20+.
+Prerequisites: Docker, [uv](https://docs.astral.sh/uv/) (installs Python 3.12 for you), Node 20+. The dev Postgres listens on **localhost:5433** so it doesn't clash with a local Postgres on 5432.
 
 ```bash
 cp .env.example .env        # fill in your keys; never commit .env
-make up                     # start Postgres
+make install                # backend (uv) + frontend (npm) deps
+make up                     # start Postgres (localhost:5433)
 make seed                   # migrate + load data/seed + fabricate demo data
 make api                    # FastAPI on http://localhost:8000
 make web                    # Next.js on http://localhost:3000
