@@ -1,0 +1,41 @@
+# --- Secrets (never commit) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# --- Raw DB export (contains password hashes, token hashes, real emails, 21 MB of checkpoints) ---
+# Sanitised business-table seeds live in data/seed/ instead.
+database_export/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# --- Node / Next.js ---
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# --- Eval artefacts ---
+evals/results/
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/*
+!.vscode/extensions.json
+.idea/
