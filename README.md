@@ -4,7 +4,7 @@
 
 Ask questions in plain language, like "Which POs are overdue?" or "पिछले महीने 132-1 में कितना माल आया?". InventoryMantra turns them into safe SQL, answers only from the data, asks back when a question is vague, and picks the right chart on its own. What you can see and change depends on your role: Inventory Manager, Procurement Manager or Owner.
 
-> Status: **Phase 0: planning.** See [plan.md](plan.md) for progress.
+> Status: **Phase 1: data foundation** (Phase 0 planning complete). See [plan.md](plan.md) for progress.
 
 ## Features
 - 💬 **Chat over the database**: NL → SQL → NL, in English, Hindi or Hinglish

@@ -1,6 +1,7 @@
 # plan.md — InventoryMantra build plan (3 days)
 
 > Project: **Railway-mangement-system** case study → product **InventoryMantra** (a "mantra" is a guiding formula: the one place to ask about stock and purchasing).
+> **Phase 0 complete (2026-09-30).** Gates G0 (plan) and G1 (prompts) passed.
 > Status is tracked with the checkboxes below. Tick one only after its commit has been approved and made.
 
 ---
@@ -121,10 +122,10 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 - **G3**: eval results meet the thresholds **before C7.3** (deploy).
 
 ### Phase 0 — Planning (Day 0)
-- [ ] **C0.0** create the GitHub repo + link the remote (§6.1). This is setup, not a commit.
-- [ ] **C0.1** `chore: initialise repo with gitignore, env example and env-based export script`
-- [ ] **C0.2** `docs: add CLAUDE.md, plan.md and README`
-- [ ] **C0.3** `docs: add decision log, architecture, quality/evals, write-path and draft prompt docs`
+- [x] **C0.0** create the GitHub repo + link the remote (§6.1). This is setup, not a commit.
+- [x] **C0.1** `chore: initialise repo with gitignore, env example and env-based export script`
+- [x] **C0.2** `docs: add CLAUDE.md, plan.md and README`
+- [x] **C0.3** `docs: add decision log, architecture, quality/evals, write-path and draft prompt docs`
 
 ### Phase 1 — Data foundation (Day 1 AM)
 - [ ] **C1.1** `chore: scaffold backend, frontend, docker-compose, Makefile and CI`

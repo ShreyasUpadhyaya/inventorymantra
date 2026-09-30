@@ -1,6 +1,6 @@
 # Prompts — InventoryMantra agent
 
-Status: **DRAFT v0.2, NOT APPROVED** (approval gate G1, before C4.1). After approval, the text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.2"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
+Status: **v0.2, APPROVED by the user on 2026-09-30** (gate G1 passed). After approval, the text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.2"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
 
 ---
 
@@ -282,4 +282,4 @@ Still open (small, has a default): **conversation history window.** The default 
 | Version | Date | Change | Approved by |
 |---|---|---|---|
 | 0.1 | 2026-09-30 | First draft | — |
-| 0.2 | 2026-09-30 | Explicit system-vs-user message split per call; applied answers to open questions; help mode; renamed to InventoryMantra | pending |
+| 0.2 | 2026-09-30 | Explicit system-vs-user message split per call; applied answers to open questions; help mode; renamed to InventoryMantra | User, 2026-09-30 |
