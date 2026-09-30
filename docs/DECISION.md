@@ -103,3 +103,20 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Assumed defaults are stated only when they shaped the answer.** If the user didn't give a period, item or measure and the bot filled one in, it says so in one short clause. Otherwise it says nothing about defaults.
 - **Help mode** exists, with at least 3 example questions per role (used in the demo).
 - **Status:** Accepted
+
+### D-021 · Current stock is the source of truth for on-hand quantity
+- **Context:** In the export, `inv_current_stock` does not equal the sum of `inv_transactions` for 310 of 561 item-location pairs. 110 stock rows have no transactions at all, because opening balances were never recorded as movements.
+- **Decision:** On-hand answers come from `inv_current_stock`. `inv_transactions` is movement history (issues, receipts, transfers), not a ledger from zero. New writes keep the invariant *stock change = transaction quantity* for every movement they record (tested in Phase 6). Consumption for lead-time maths uses outbound transactions only.
+- **Consequences:** "How much do we have" and "how much moved" can legitimately differ. When a user asks the bot to reconcile them, it says opening balances aren't recorded as transactions.
+- **Status:** Accepted
+
+### D-022 · Missing master data is stated, not hidden (e.g. 40 uncategorised items)
+- **Context:** 40 items have no category/sub-category. The user wants these shown as "Uncategorised", with answers making clear that the data doesn't exist.
+- **Decision:** Role views expose `category_name = 'Uncategorised'` plus a boolean `category_recorded`. When an answer groups or filters by category and uncategorised items are involved, the answer says so explicitly, e.g. "40 items have no category recorded in the database, so they're shown as Uncategorised." This follows the existing "facts only / say it isn't recorded" rule (PROMPTS §1 rule 2), so no prompt change is needed. It gets an eval case in C2.1.
+- **Status:** Accepted
+
+### D-023 · Local DB host is 127.0.0.1:5433
+- **Context:** Port 5432 is taken by a local Postgres on the dev machine. On Windows, `localhost` tries IPv6 first and the connection hangs.
+- **Decision:** Docker Postgres binds `127.0.0.1:5433`, and `DATABASE_URL` uses `127.0.0.1`. Connections set `connect_timeout`.
+- **Status:** Accepted
+

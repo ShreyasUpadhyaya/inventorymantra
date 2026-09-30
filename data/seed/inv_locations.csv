@@ -1,0 +1,7 @@
+id,name,address,is_active,created_at
+912ade74-94fb-4256-b6d2-8282f2667945,132-1,D132 Office Warehouse 1,True,2026-04-28 11:46:49.566388
+22c17bd3-d456-4a51-bf90-c7e10ecce82c,132-2,D132 Office Warehouse 2,True,2026-04-28 11:46:58.737495
+60af4579-64d1-4a18-bbd9-4a53c1e1b706,132-3,D132 Office Warehouse 3,True,2026-04-28 11:47:07.064922
+7fb82913-bad5-48bf-909c-ccbc95d90673,103-1,E103 Office Warehouse 1,True,2026-04-28 11:47:20.398256
+3658a8c8-754b-46a3-be90-9d782bb0b684,Unassigned,Auto-created placeholder,False,2026-04-19 22:06:12.158824
+0e832d56-a4ed-45cf-906e-1baafdf90da3,C-84,C-84 warehouse location,True,2026-07-22 10:26:23.075324
