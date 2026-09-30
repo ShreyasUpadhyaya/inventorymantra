@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     openai_api_key: SecretStr | None = None
     langsmith_api_key: SecretStr | None = None
     demo_password: SecretStr | None = None
+    readonly_db_password: SecretStr | None = None  # login for rms_*_ro role users
 
     llm_mode: Literal["fake", "openai"] = "fake"
     openai_model_reasoning: str = ""
