@@ -1,0 +1,7 @@
+# Extends gitleaks defaults. Allow-list only deliberate fake values used to test redaction.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fake secrets in redaction tests"
+paths = ['''backend/tests/unit/test_scaffold\.py''']
