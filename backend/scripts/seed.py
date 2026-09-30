@@ -13,6 +13,7 @@ from alembic.config import Config
 from psycopg import sql
 
 from app.db.session import psycopg_dsn
+from scripts.db_roles import configure_role_logins
 from scripts.fabricate import fabricate
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -81,6 +82,7 @@ def main() -> None:
     with psycopg.connect(psycopg_dsn(), connect_timeout=10) as conn:
         counts = load(conn)
         demo = fabricate(conn)
+        role_logins = configure_role_logins(conn)
     for table, n in counts.items():
         print(f"{table:34s} {n:>5}")
     print(f"Seeded {len(counts)} tables, {sum(counts.values())} rows.")
@@ -96,6 +98,10 @@ def main() -> None:
         )
     else:
         print("\nDemo users use DEMO_PASSWORD from .env.")
+    if role_logins:
+        print("Read-only role users (rms_*_ro) can log in with READONLY_DB_PASSWORD.")
+    else:
+        print("WARNING: READONLY_DB_PASSWORD is not set; read-only role users stay NOLOGIN.")
 
 
 if __name__ == "__main__":

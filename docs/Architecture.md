@@ -166,9 +166,9 @@ For a PM purchase order above the threshold, `apply` creates the PO with status 
 | `app_users` (or reuse `users`) | Fresh demo users per role |
 
 Role views (examples):
-- `v_im`: `items`, `stock_by_location`, `movements` (no unit_cost), `locations`, `issue_targets`, `inbound_by_item` (item, pending_qty, expected_date), `my_stock_requests`, `reorder_status` (without vendor).
-- `v_pm`: all of `v_im`, plus `vendors`, `purchase_orders`, `po_lines`, `po_receipts`, `payment_tranches`, `unexpected_receipts`, `regularisations`, `stock_requests` (all), `reorder_status` (full), `spend_by_vendor_month`, `my_approval_results`, `my_audit_log` (a security-barrier view filtered by the `app.user_id` session setting, which the API sets per request).
-- `v_owner`: all of `v_pm`, plus `sales_orders`, `sales_lines`, `margins_by_quarter`, `approvals`, `users` (no hashes), `audit_log`.
+- `v_im`: `items` (with explicit `Uncategorised`), `stock_by_location`, `stock_movements` (no unit_cost), `locations`, `issue_targets`, `inbound_by_item` (item, PO number, pending_qty, expected date; no vendor or price), `my_stock_requests`, `reorder_status` (without vendor).
+- `v_pm`: all of `v_im` (movements with unit cost), plus `vendors`, `purchase_orders` (with `days_overdue`), `po_lines`, `po_receipts`, `payment_tranches`, `unexpected_receipts`, `regularisations`, `stock_requests` (all), `reorder_status` (with preferred vendor), `spend_by_vendor_month`, `my_approval_results`, `my_audit_log` (a security-barrier view filtered by the `app.user_id` session setting, which the API sets per request).
+- `v_owner`: all of `v_pm` except the `my_*` views, plus `sales_orders`, `sales_lines`, `margins_by_quarter`, `approvals`, `users` (no hashes), `audit_log`.
 
 ## 6. Deployment view
 

@@ -134,3 +134,14 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - All generated IDs are uuid5 values (deterministic), and the data is generated as of 2026-09-30, independent of `APP_TODAY`.
 - **Status:** Accepted
 
+### D-025 · Role view schemas: implementation details (refines D-004)
+- **Schemas:** `v_im` has 8 views, `v_pm` 19 and `v_owner` 22 (migration 0003). The views run with the migrator's rights, so the role users need no rights on base tables. `REVOKE ALL ON SCHEMA public FROM PUBLIC` makes base tables unreachable for them.
+- **Role users:** `rms_im_ro`, `rms_pm_ro` and `rms_owner_ro`. They are not superusers, can't create databases or roles, and don't inherit rights. Each has its own schema as its search path (so the LLM can write `FROM items`), read-only transactions by default, a 5 s statement timeout, a 30 s idle-in-transaction timeout and a limit of 20 connections. They are created NOLOGIN in the migration, and `make seed` enables login from `READONLY_DB_PASSWORD`, so no secret lives in a migration.
+- **Per-request context:** the API sets `app.user_id` and `app.today` inside each read-only transaction (`app/db/readonly.py`). The `my_*` views are `security_barrier` views filtered on `app.user_id`, and with no user they return no rows. Date maths (overdue days, reorder dates) uses `app.today`, so evals are deterministic.
+- **Column rules, enforced by tests:**
+  - The IM's schema has no column matching price, cost, amount, total, spend, vendor, payment, tranche, margin, revenue, profit, email, password, hash, token or customer.
+  - The PM's schema has no margin, revenue, profit, customer, email, password, hash or token columns, and none of the Owner-only views.
+  - The IM can see PO **numbers** and pending quantities or dates (needed to receive goods), but never vendor or price.
+- **Known limitation:** any Postgres user can read the system catalogs (`pg_catalog`, `information_schema`), which reveals object *names*. Row data stays protected. The SQL guard (D-005, C4.2) rejects catalog references, and denials never echo names.
+- **Status:** Accepted
+
