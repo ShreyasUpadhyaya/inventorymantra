@@ -1,0 +1,4 @@
+id,name,field_type,required,options,position,created_at,updated_at
+e22d8b03-8c36-4d02-be8c-618bcffdb74f,source,text,False,[],1,2026-04-18 13:25:33.801335,2026-04-18 13:25:33.801335
+0d834c3b-93c9-4410-8cde-2ff4b552facb,legacy_product_code,text,False,[],2,2026-04-18 13:25:33.801335,2026-04-18 13:25:33.801335
+4277adcd-7a21-4429-a4bf-2736d01db5ab,alias,text,False,[],0,2026-04-18 13:25:33.801335,2026-04-18 15:29:00.128655

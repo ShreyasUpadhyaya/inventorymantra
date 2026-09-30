@@ -23,13 +23,13 @@ web:           ## Next.js on http://localhost:3000
 test: test-backend test-frontend   ## all offline checks (no LLM calls)
 
 test-backend:
-	cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy app && uv run pytest -q
+	cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy app scripts && uv run pytest -q
 
 test-frontend:
 	cd frontend && npm run lint && npm run typecheck
 
-seed:          ## implemented in C1.2/C1.3
-	@echo "seed: not implemented yet (arrives in C1.2)"
+seed:          ## migrate + load data/seed + deterministic demo data (idempotent)
+	cd backend && uv run python -m scripts.seed
 
 eval:          ## implemented in C7.1; costs OpenAI tokens, so announce before running
 	@echo "eval: not implemented yet (arrives in C7.1)"

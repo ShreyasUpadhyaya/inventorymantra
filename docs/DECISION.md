@@ -103,3 +103,34 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Assumed defaults are stated only when they shaped the answer.** If the user didn't give a period, item or measure and the bot filled one in, it says so in one short clause. Otherwise it says nothing about defaults.
 - **Help mode** exists, with at least 3 example questions per role (used in the demo).
 - **Status:** Accepted
+
+### D-021 · Current stock is the source of truth for on-hand quantity
+- **Context:** In the export, `inv_current_stock` does not equal the sum of `inv_transactions` for 310 of 561 item-location pairs. 110 stock rows have no transactions at all, because opening balances were never recorded as movements.
+- **Decision:** On-hand answers come from `inv_current_stock`. `inv_transactions` is movement history (issues, receipts, transfers), not a ledger from zero. New writes keep the invariant *stock change = transaction quantity* for every movement they record (tested in Phase 6). Consumption for lead-time maths uses outbound transactions only.
+- **Consequences:** "How much do we have" and "how much moved" can legitimately differ. When a user asks the bot to reconcile them, it says opening balances aren't recorded as transactions.
+- **Status:** Accepted
+
+### D-022 · Missing master data is stated, not hidden (e.g. 40 uncategorised items)
+- **Context:** 40 items have no category/sub-category. The user wants these shown as "Uncategorised", with answers making clear that the data doesn't exist.
+- **Decision:** Role views expose `category_name = 'Uncategorised'` plus a boolean `category_recorded`. When an answer groups or filters by category and uncategorised items are involved, the answer says so explicitly, e.g. "40 items have no category recorded in the database, so they're shown as Uncategorised." This follows the existing "facts only / say it isn't recorded" rule (PROMPTS §1 rule 2), so no prompt change is needed. It gets an eval case in C2.1.
+- **Status:** Accepted
+
+### D-023 · Local DB host is 127.0.0.1:5433
+- **Context:** Port 5432 is taken by a local Postgres on the dev machine. On Windows, `localhost` tries IPv6 first and the connection hangs.
+- **Decision:** Docker Postgres binds `127.0.0.1:5433`, and `DATABASE_URL` uses `127.0.0.1`. Connections set `connect_timeout`.
+- **Status:** Accepted
+
+### D-024 · Demo data specifics (refines D-012; ranges approved by the user 2026-09-30)
+- **Reorder policies only for regularly used items:** items issued in at least 2 distinct weeks during the 90 days to 2026-09-30 (34 items). One-off project items get no policy; the PM can add one later. This gives about 15 "reorder now" alerts instead of more than 80 noisy ones.
+  - `min_level` is about 30 days of average use and `reorder_qty` about 60 days, rounded to sensible pack sizes. `safety_stock` is 7 days of use.
+  - Lead time is drawn from a range per sub-category: consumables 7–14 days, mechanical 10–25, metal and non-metal raw material 15–30, sub-assemblies 20–40, electrical 21–45, anything else 14–30.
+  - The preferred vendor is the one on the item's most recent PO, if there is one.
+- **Sales:** Finished Goods only, Oct 2025 to Sep 2026, sold to 6 fictional customers.
+  - Unit cost is ₹20,000–2,50,000 and quantities are 1–5, so quarterly revenue (about ₹1–2.3 crore) sits plausibly next to procurement spend.
+  - Each quarter has its own markup band inside the approved 1.18–1.45 range, so the margin trend isn't flat. Quarterly margins come out at 23.6%, 25.2%, 20.9% and 24.7%.
+- **Stock requests:** 4 open requests from the IM for the items with the least cover, plus 1 fulfilled request.
+- **Users:** `owner@`, `procurement@` and `inventory@demo.inventorymantra`. The password comes from `DEMO_PASSWORD`, or is generated and printed once by `make seed`.
+- **Not seeded:** notifications and approvals. Those are produced by the real flows in Phase 6.
+- All generated IDs are uuid5 values (deterministic), and the data is generated as of 2026-09-30, independent of `APP_TODAY`.
+- **Status:** Accepted
+

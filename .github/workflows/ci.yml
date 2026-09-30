@@ -25,15 +25,29 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: inventorymantra
+          POSTGRES_PASSWORD: ci_only_password
+          POSTGRES_DB: inventorymantra
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U inventorymantra" --health-interval 3s
+          --health-timeout 3s --health-retries 20
     env:
       LLM_MODE: fake   # CI never spends OpenAI tokens
+      DATABASE_URL: postgresql+psycopg://inventorymantra:ci_only_password@127.0.0.1:5433/inventorymantra
+      DEMO_PASSWORD: ci-only-demo-password
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: uv sync
       - run: uv run ruff check .
       - run: uv run ruff format --check .
-      - run: uv run mypy app
+      - run: uv run mypy app scripts
+      - run: uv run python -m scripts.seed
       - run: uv run pytest -q
 
   frontend:
