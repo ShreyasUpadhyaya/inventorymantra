@@ -28,7 +28,7 @@ test-backend:
 test-frontend:
 	cd frontend && npm run lint && npm run typecheck
 
-seed:          ## migrate + load data/seed (idempotent); demo data arrives in C1.3
+seed:          ## migrate + load data/seed + deterministic demo data (idempotent)
 	cd backend && uv run python -m scripts.seed
 
 eval:          ## implemented in C7.1; costs OpenAI tokens, so announce before running

@@ -39,6 +39,7 @@ jobs:
     env:
       LLM_MODE: fake   # CI never spends OpenAI tokens
       DATABASE_URL: postgresql+psycopg://inventorymantra:ci_only_password@127.0.0.1:5433/inventorymantra
+      DEMO_PASSWORD: ci-only-demo-password
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5

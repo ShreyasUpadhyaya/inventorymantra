@@ -120,3 +120,17 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Decision:** Docker Postgres binds `127.0.0.1:5433`, and `DATABASE_URL` uses `127.0.0.1`. Connections set `connect_timeout`.
 - **Status:** Accepted
 
+### D-024 · Demo data specifics (refines D-012; ranges approved by the user 2026-09-30)
+- **Reorder policies only for regularly used items:** items issued in at least 2 distinct weeks during the 90 days to 2026-09-30 (34 items). One-off project items get no policy; the PM can add one later. This gives about 15 "reorder now" alerts instead of more than 80 noisy ones.
+  - `min_level` is about 30 days of average use and `reorder_qty` about 60 days, rounded to sensible pack sizes. `safety_stock` is 7 days of use.
+  - Lead time is drawn from a range per sub-category: consumables 7–14 days, mechanical 10–25, metal and non-metal raw material 15–30, sub-assemblies 20–40, electrical 21–45, anything else 14–30.
+  - The preferred vendor is the one on the item's most recent PO, if there is one.
+- **Sales:** Finished Goods only, Oct 2025 to Sep 2026, sold to 6 fictional customers.
+  - Unit cost is ₹20,000–2,50,000 and quantities are 1–5, so quarterly revenue (about ₹1–2.3 crore) sits plausibly next to procurement spend.
+  - Each quarter has its own markup band inside the approved 1.18–1.45 range, so the margin trend isn't flat. Quarterly margins come out at 23.6%, 25.2%, 20.9% and 24.7%.
+- **Stock requests:** 4 open requests from the IM for the items with the least cover, plus 1 fulfilled request.
+- **Users:** `owner@`, `procurement@` and `inventory@demo.inventorymantra`. The password comes from `DEMO_PASSWORD`, or is generated and printed once by `make seed`.
+- **Not seeded:** notifications and approvals. Those are produced by the real flows in Phase 6.
+- All generated IDs are uuid5 values (deterministic), and the data is generated as of 2026-09-30, independent of `APP_TODAY`.
+- **Status:** Accepted
+

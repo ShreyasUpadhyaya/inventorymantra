@@ -56,7 +56,11 @@ def test_stock_is_unique_per_item_and_location(db: psycopg.Connection) -> None:
         )
 
 
-def test_platform_tables_start_empty(db: psycopg.Connection) -> None:
-    for table in ("users", "refresh_tokens", "agent_audit_log"):
+def test_platform_tables_hold_only_demo_users(db: psycopg.Connection) -> None:
+    users = db.execute(
+        "SELECT count(*), count(*) FILTER (WHERE email LIKE '%@demo.inventorymantra') FROM users"
+    )
+    assert users.fetchone() == (3, 3)
+    for table in ("refresh_tokens", "agent_audit_log"):
         row = db.execute(f"SELECT count(*) FROM {table}").fetchone()  # noqa: S608
         assert row is not None and row[0] == 0

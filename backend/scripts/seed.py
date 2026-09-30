@@ -13,6 +13,7 @@ from alembic.config import Config
 from psycopg import sql
 
 from app.db.session import psycopg_dsn
+from scripts.fabricate import fabricate
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 SEED_DIR = BACKEND_DIR.parent / "data" / "seed"
@@ -79,9 +80,22 @@ def main() -> None:
     migrate()
     with psycopg.connect(psycopg_dsn(), connect_timeout=10) as conn:
         counts = load(conn)
+        demo = fabricate(conn)
     for table, n in counts.items():
         print(f"{table:34s} {n:>5}")
     print(f"Seeded {len(counts)} tables, {sum(counts.values())} rows.")
+    print(
+        f"Demo data: {demo.users} users, {demo.reorder_policies} reorder policies, "
+        f"{demo.sales_orders} sales orders ({demo.sales_lines} lines), "
+        f"{demo.stock_requests} stock requests."
+    )
+    if demo.generated_password:
+        print(
+            "\nDemo login password (shown once; set DEMO_PASSWORD in .env to choose your own):"
+            f"\n    {demo.generated_password}"
+        )
+    else:
+        print("\nDemo users use DEMO_PASSWORD from .env.")
 
 
 if __name__ == "__main__":

@@ -129,7 +129,7 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 
 ### Phase 1 — Data foundation (Day 1 AM)
 - [x] **C1.1** `chore: scaffold backend, frontend, docker-compose, Makefile and CI`
-- [ ] **C1.2** `feat(db): alembic baseline and CSV seed loader for business tables`
+- [x] **C1.2** `feat(db): alembic baseline and CSV seed loader for business tables`
 - [ ] **C1.3** `feat(db): reorder policy, stock requests, notifications, approvals, sales tables + deterministic demo data`
 - [ ] **C1.4** `feat(db): per-role views and read-only DB roles with RBAC matrix tests`
 
