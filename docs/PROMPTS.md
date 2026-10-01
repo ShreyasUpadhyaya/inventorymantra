@@ -283,3 +283,13 @@ Still open (small, has a default): **conversation history window.** The default 
 |---|---|---|---|
 | 0.1 | 2026-09-30 | First draft | — |
 | 0.2 | 2026-09-30 | Explicit system-vs-user message split per call; applied answers to open questions; help mode; renamed to InventoryMantra | User, 2026-09-30 |
+
+## 13. Pending change for v0.3 (NOT approved, not in use)
+Needed for D-026 (entity matching). It adds one field to the **guard/router output schema** (§2). No other prompt text changes.
+```text
+- entity_mentions: list of {type: "item"|"vendor"|"location"|"po", text: string}: the exact
+  words the user used to refer to each thing, copied as typed (typos included).
+  Do not correct, expand or guess codes. Example: "bush OD40 kitne hain?" ->
+  [{"type": "item", "text": "bush OD40"}]
+```
+Approve it as v0.3, and it gets applied in C4.1 with `PROMPT_VERSION = "0.3"`.

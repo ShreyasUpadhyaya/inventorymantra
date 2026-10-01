@@ -7,6 +7,178 @@
   "row_count": 0,
   "rows": []
  },
+ "ER-IM-01": {
+  "columns": [
+   "location_name",
+   "quantity"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "132-1",
+    100.0
+   ]
+  ]
+ },
+ "ER-IM-02": {
+  "columns": [
+   "location_name",
+   "quantity"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "132-1",
+    100.0
+   ]
+  ]
+ },
+ "ER-IM-03": {
+  "columns": [
+   "location_name",
+   "quantity"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "132-1",
+    2000.0
+   ]
+  ]
+ },
+ "ER-IM-05": {
+  "columns": [
+   "location_name",
+   "quantity"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "132-1",
+    8010.0
+   ]
+  ]
+ },
+ "ER-IM-07": {
+  "columns": [
+   "location_name",
+   "quantity"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "132-1",
+    50.0
+   ]
+  ]
+ },
+ "ER-IM-08": {
+  "columns": [
+   "location_name",
+   "quantity"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "132-1",
+    50.0
+   ]
+  ]
+ },
+ "ER-IM-09": {
+  "columns": [
+   "location_name",
+   "quantity"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "132-1",
+    100.0
+   ]
+  ]
+ },
+ "ER-IM-10": {
+  "columns": [
+   "po_number",
+   "pending_qty",
+   "unit",
+   "expected_delivery_date"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "PO-2026-0039",
+    "7065",
+    "kg",
+    "2026-08-20"
+   ]
+  ]
+ },
+ "ER-IM-13": {
+  "columns": [
+   "location_name",
+   "quantity"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "132-1",
+    1.0
+   ]
+  ]
+ },
+ "ER-IM-16": {
+  "columns": [
+   "items_in_stock"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    51
+   ]
+  ]
+ },
+ "ER-PM-14": {
+  "columns": [
+   "po_number",
+   "status",
+   "expected_delivery_date",
+   "days_overdue"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "PO-2026-0003",
+    "placed",
+    "2026-08-13",
+    48
+   ]
+  ]
+ },
+ "ER-PM-15": {
+  "columns": [
+   "po_number",
+   "status",
+   "total_amount",
+   "expected_delivery_date"
+  ],
+  "row_count": 2,
+  "rows": [
+   [
+    "PO-2026-0036",
+    "placed",
+    "2299789.02",
+    "2026-08-21"
+   ],
+   [
+    "PO-2026-0039",
+    "placed",
+    "721420.45",
+    "2026-08-20"
+   ]
+  ]
+ },
  "NP-IM-02": {
   "columns": [
    "item_name",

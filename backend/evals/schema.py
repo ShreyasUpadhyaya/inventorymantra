@@ -12,7 +12,9 @@ ANSWER_KEYS_PATH = REPO_ROOT / "evals" / "corpus" / "answer_keys.json"
 
 Role = Literal["inventory_manager", "procurement_manager", "owner"]
 Lang = Literal["en", "hi", "hinglish"]
-Route = Literal["read", "clarify", "write_preview", "refuse_scope", "refuse_rbac", "help"]
+Route = Literal[
+    "read", "clarify", "not_found", "write_preview", "refuse_scope", "refuse_rbac", "help"
+]
 VizType = Literal["none", "kpi", "table", "bar", "line", "pie", "stacked_bar", "flow"]
 Compare = Literal["exact", "set", "set_numeric_tol", "scalar_tol", "contains", "none"]
 
@@ -67,7 +69,8 @@ class EvalCase(Strict):
         route = self.expected_route
         if route == "read" and (not self.answer_key_sql or self.compare == "none"):
             raise ValueError(f"{self.id}: read cases need answer_key_sql and a compare mode")
-        if route in ("refuse_scope", "refuse_rbac", "help", "clarify") and self.answer_key_sql:
+        no_sql_routes = ("refuse_scope", "refuse_rbac", "help", "clarify", "not_found")
+        if route in no_sql_routes and self.answer_key_sql:
             raise ValueError(f"{self.id}: {route} cases must not have answer_key_sql")
         if route == "refuse_rbac" and not self.must_not_contain:
             raise ValueError(f"{self.id}: refusal cases must list leak strings")

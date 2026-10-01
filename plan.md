@@ -135,7 +135,8 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 
 ### Phase 2 — Tests first (Day 1 midday)
 - [x] **C2.1** `test(evals): golden corpus (90 cases) and SQL answer-key generator`
-- [ ] **C2.2** `test: policy, SQL-guard and notification-visibility unit tests (xfail until implemented)`
+- [x] **C2.1b** `test(evals): messy entity-input cases, not_found route and matching rules (D-026)`
+- [ ] **C2.2** `test: policy, SQL-guard, entity-matcher and notification-visibility unit tests (xfail until implemented)`
 
 ### Phase 3 — Auth and API (Day 1 PM)
 - [ ] **C3.1** `feat(api): login, refresh, logout and /me with bcrypt + JWT cookie`
@@ -144,7 +145,7 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 
 ### Phase 4 — Agent read path (Day 2 AM)
 - [ ] **C4.1** `feat(agent): LangGraph skeleton, LangSmith tracing and guard node`
-- [ ] **C4.2** `feat(agent): role schema context, entity resolution and guarded SQL execution`
+- [ ] **C4.2** `feat(agent): role schema context, entity resolution (D-026 matcher) and guarded SQL execution`
 - [ ] **C4.3** `feat(agent): clarification interrupt with options`
 - [ ] **C4.4** `feat(agent): answer composer, VizSpec selection, grounding check, Hindi replies`
 - [ ] **C4.5** `feat(api): /chat SSE streaming and thread history`

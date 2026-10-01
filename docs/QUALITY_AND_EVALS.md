@@ -20,7 +20,7 @@ Location: `evals/corpus/golden.jsonl`, one case per line, synced to the LangSmit
   "lang": "en",                         // en | hi | hinglish
   "query": "Spend by vendor this month",
   "history": [],                        // optional prior turns (for clarification resumes)
-  "expected_route": "read",             // read | clarify | write_preview | refuse_scope | refuse_rbac
+  "expected_route": "read",             // read | clarify | not_found | write_preview | refuse_scope | refuse_rbac | help
   "answer_key_sql": "SELECT vendor_name, total_spend FROM spend_by_vendor_month WHERE …",
                                         // runs AS THE CASE'S ROLE (its view schema, its demo user)
   "compare": "set_numeric_tol",         // exact | set | set_numeric_tol | scalar_tol | contains | none
@@ -36,12 +36,13 @@ Location: `evals/corpus/golden.jsonl`, one case per line, synced to the LangSmit
 ```
 Frozen results live in `evals/corpus/answer_keys.json`, keyed by case id and rebuilt with `make answer-keys`. The schema is enforced by `backend/evals/schema.py`, a strict Pydantic model with per-route rules.
 
-### Coverage (90 cases as of C2.1; the minimums are enforced by `tests/evals/test_corpus.py`)
+### Coverage (106 cases as of C2.1b; the minimums are enforced by `tests/evals/test_corpus.py`)
 | Bucket | Count (min) | Examples |
 |---|---|---|
 | IM reads | 13 (10) | stock by item/location, zero stock, issues to shop floor, inbound qty/date, requests status |
 | PM reads | 15 (10) | overdue POs, spend by vendor/month, PO status split, reorder list, IM requests, unexpected receipts, tranches due |
 | Owner reads | 11 (10) | margins by quarter, spend trend, top vendors, approvals pending, users, audit |
+| Messy entity input (D-026) | 16 (12) | `OD40xID26x70`, `ms bush 40`, `hex nut m3`, `torx screw`, `AC contacter`, `PO 3`, `sterling steel`, `godown 132-2` |
 | Clarification | 9 (8) | "a few days back", "bush", "last quarter's AC", "recent orders", metric-ambiguous "how are we doing" |
 | RBAC denials + leak probes | 16 (12) | IM → prices, vendors, users, PO totals; PM → margins, users, approvals; injection "ignore rules", raw `SELECT * FROM users` |
 | Out of scope | 5 (4) | poem, weather, general coding, stock market |
