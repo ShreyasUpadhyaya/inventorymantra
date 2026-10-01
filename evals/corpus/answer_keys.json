@@ -467,17 +467,17 @@
   "rows": [
    [
     "2026-08-19",
-    "FG-IA-0005",
-    "Hand Pallet Truck 3 Ton (Width 550mm, Fork Length 800mm)",
-    2.0,
+    "BO-MC-0240",
+    "PVC Curtain for High Speed Door – 900 GSM Blue PVC – Sizes: 3145×3795mm (2 nos); 3175×3765mm (1 nos); 1500×3765mm (1 nos); 2700×3530mm (1 nos); 3145×3770mm (1 nos) – Total fabric 80.00 sqm – Vision Transparent 800 GSM 18.00 sqm",
+    6.0,
     "pcs",
     "C-84"
    ],
    [
     "2026-08-19",
-    "BO-MC-0240",
-    "PVC Curtain for High Speed Door – 900 GSM Blue PVC – Sizes: 3145×3795mm (2 nos); 3175×3765mm (1 nos); 1500×3765mm (1 nos); 2700×3530mm (1 nos); 3145×3770mm (1 nos) – Total fabric 80.00 sqm – Vision Transparent 800 GSM 18.00 sqm",
-    6.0,
+    "FG-IA-0005",
+    "Hand Pallet Truck 3 Ton (Width 550mm, Fork Length 800mm)",
+    2.0,
     "pcs",
     "C-84"
    ]
@@ -491,24 +491,24 @@
   "row_count": 5,
   "rows": [
    [
-    "G133 Shop Floor",
-    45
-   ],
-   [
-    "H103 Shop Floor",
-    30
-   ],
-   [
-    "Dispatch team",
-    26
+    "C84 FM assembly",
+    2
    ],
    [
     "DE132 Shop floor",
     19
    ],
    [
-    "C84 FM assembly",
-    2
+    "Dispatch team",
+    26
+   ],
+   [
+    "G133 Shop Floor",
+    45
+   ],
+   [
+    "H103 Shop Floor",
+    30
    ]
   ]
  },
@@ -525,13 +525,22 @@
   "row_count": 15,
   "rows": [
    [
-    "BO-EL-0140",
-    "Relay Base RXZE1M2C",
+    "BO-CN-0010",
+    "Scotch Brite Red Belt For SS Polishing (3.5\"×15.5\")",
     "0",
     "0",
     "0",
-    44,
-    "2026-08-17"
+    13,
+    "2026-09-17"
+   ],
+   [
+    "BO-CN-0037",
+    "EPE Packing Roll – 1500mm×80m×5mm",
+    "0",
+    "0",
+    "0",
+    10,
+    "2026-09-20"
    ],
    [
     "BO-EL-0138",
@@ -543,15 +552,6 @@
     "2026-08-17"
    ],
    [
-    "RM-MT-ST-0063",
-    "MS Tube – 40×40×2mm",
-    "0",
-    "0",
-    "0",
-    28,
-    "2026-09-02"
-   ],
-   [
     "BO-EL-0139",
     "Relay  – 240V, 2 Pole (RXM2LB1P7)",
     "0",
@@ -561,13 +561,49 @@
     "2026-09-03"
    ],
    [
-    "RM-MT-ST-0088",
-    "MS Tube – 80×40×2mm",
+    "BO-EL-0140",
+    "Relay Base RXZE1M2C",
     "0",
     "0",
     "0",
-    25,
-    "2026-09-05"
+    44,
+    "2026-08-17"
+   ],
+   [
+    "BO-MC-0133",
+    "Flap Mechanism for AFC Gate (Normal) ",
+    "0",
+    "0",
+    "0",
+    12,
+    "2026-09-18"
+   ],
+   [
+    "BO-MC-AS-0029",
+    "Acrylic Sheet – Transparent – 37×30×4mm",
+    "495",
+    "0",
+    "12",
+    17,
+    "2026-09-25"
+   ],
+   [
+    "RM-MT-FS-0036",
+    "MS Sheet – 1500×3000×10mm",
+    "0.000000000000909494701772928",
+    "0",
+    "0",
+    19,
+    "2026-09-11"
+   ],
+   [
+    "RM-MT-FS-0069",
+    "SS Sheet – 304 – 1250×2500×4mm",
+    "520",
+    "0",
+    "23",
+    23,
+    "2026-09-29"
    ],
    [
     "RM-MT-FS-0071",
@@ -588,15 +624,6 @@
     "2026-09-06"
    ],
    [
-    "RM-MT-FS-0036",
-    "MS Sheet – 1500×3000×10mm",
-    "0.000000000000909494701772928",
-    "0",
-    "0",
-    19,
-    "2026-09-11"
-   ],
-   [
     "RM-MT-ST-0006",
     "MS Tube – 100×100×3.2mm",
     "0",
@@ -606,6 +633,24 @@
     "2026-09-14"
    ],
    [
+    "RM-MT-ST-0063",
+    "MS Tube – 40×40×2mm",
+    "0",
+    "0",
+    "0",
+    28,
+    "2026-09-02"
+   ],
+   [
+    "RM-MT-ST-0088",
+    "MS Tube – 80×40×2mm",
+    "0",
+    "0",
+    "0",
+    25,
+    "2026-09-05"
+   ],
+   [
     "RM-MT-ST-0093",
     "MS Tube – 80×80×3.2mm",
     "0",
@@ -613,51 +658,6 @@
     "0",
     15,
     "2026-09-15"
-   ],
-   [
-    "BO-CN-0010",
-    "Scotch Brite Red Belt For SS Polishing (3.5\"×15.5\")",
-    "0",
-    "0",
-    "0",
-    13,
-    "2026-09-17"
-   ],
-   [
-    "BO-MC-0133",
-    "Flap Mechanism for AFC Gate (Normal) ",
-    "0",
-    "0",
-    "0",
-    12,
-    "2026-09-18"
-   ],
-   [
-    "BO-CN-0037",
-    "EPE Packing Roll – 1500mm×80m×5mm",
-    "0",
-    "0",
-    "0",
-    10,
-    "2026-09-20"
-   ],
-   [
-    "BO-MC-AS-0029",
-    "Acrylic Sheet – Transparent – 37×30×4mm",
-    "495",
-    "0",
-    "12",
-    17,
-    "2026-09-25"
-   ],
-   [
-    "RM-MT-FS-0069",
-    "SS Sheet – 304 – 1250×2500×4mm",
-    "520",
-    "0",
-    "23",
-    23,
-    "2026-09-29"
    ]
   ]
  },
@@ -688,10 +688,16 @@
   "row_count": 5,
   "rows": [
    [
-    "Relay Base RXZE1M2C",
-    "65",
+    "Geared Motor - IDM-RS-MTRBA800 - Indirect Drive",
+    "2",
     "open",
-    "2026-10-16"
+    "2026-10-09"
+   ],
+   [
+    "MS Tube – 100×100×3.2mm",
+    "870",
+    "fulfilled",
+    "2026-09-29"
    ],
    [
     "MS Tube – 40×40×2mm",
@@ -700,22 +706,16 @@
     "2026-10-16"
    ],
    [
-    "Geared Motor - IDM-RS-MTRBA800 - Indirect Drive",
-    "2",
+    "Relay Base RXZE1M2C",
+    "65",
     "open",
-    "2026-10-09"
+    "2026-10-16"
    ],
    [
     "Uninterruptible Power Supply (UPS) 1100VA, Tower, 230V",
     "90",
     "open",
     "2026-10-13"
-   ],
-   [
-    "MS Tube – 100×100×3.2mm",
-    "870",
-    "fulfilled",
-    "2026-09-29"
    ]
   ]
  },
@@ -731,12 +731,12 @@
     348
    ],
    [
-    "Raw Material",
-    68
-   ],
-   [
     "Finished Goods",
     45
+   ],
+   [
+    "Raw Material",
+    68
    ],
    [
     "Uncategorised",
@@ -778,22 +778,6 @@
     "2026-09-17",
     "BO-MC-WS-0012",
     "Washer – Flat – SS 304 – M4",
-    500.0,
-    "pcs",
-    "132-1"
-   ],
-   [
-    "2026-09-17",
-    "BO-MC-WS-0012",
-    "Washer – Flat – SS 304 – M4",
-    500.0,
-    "pcs",
-    "132-1"
-   ],
-   [
-    "2026-09-17",
-    "BO-MC-WS-0012",
-    "Washer – Flat – SS 304 – M4",
     10.0,
     "pcs",
     "132-1"
@@ -815,10 +799,18 @@
     "132-1"
    ],
    [
-    "2026-09-18",
+    "2026-09-17",
     "BO-MC-WS-0012",
     "Washer – Flat – SS 304 – M4",
-    3700.0,
+    500.0,
+    "pcs",
+    "132-1"
+   ],
+   [
+    "2026-09-17",
+    "BO-MC-WS-0012",
+    "Washer – Flat – SS 304 – M4",
+    500.0,
     "pcs",
     "132-1"
    ],
@@ -831,6 +823,14 @@
     "132-1"
    ],
    [
+    "2026-09-18",
+    "BO-MC-WS-0012",
+    "Washer – Flat – SS 304 – M4",
+    3700.0,
+    "pcs",
+    "132-1"
+   ],
+   [
     "2026-09-19",
     "BO-MC-WS-0012",
     "Washer – Flat – SS 304 – M4",
@@ -842,7 +842,7 @@
     "2026-09-19",
     "BO-MC-WS-0012",
     "Washer – Flat – SS 304 – M4",
-    29900.0,
+    100.0,
     "pcs",
     "132-1"
    ],
@@ -850,7 +850,7 @@
     "2026-09-19",
     "BO-MC-WS-0012",
     "Washer – Flat – SS 304 – M4",
-    100.0,
+    29900.0,
     "pcs",
     "132-1"
    ]
@@ -960,18 +960,6 @@
   "row_count": 6,
   "rows": [
    [
-    "Ganga Metro Services",
-    "11286800"
-   ],
-   [
-    "Northline Metro Corporation",
-    "7333800"
-   ],
-   [
-    "Western Rail Systems Pvt. Ltd.",
-    "6364700"
-   ],
-   [
     "Coastal Rail Transit Ltd.",
     "5734200"
    ],
@@ -980,8 +968,20 @@
     "4831000"
    ],
    [
+    "Ganga Metro Services",
+    "11286800"
+   ],
+   [
+    "Northline Metro Corporation",
+    "7333800"
+   ],
+   [
     "Sahyadri Infra Projects",
     "3014200"
+   ],
+   [
+    "Western Rail Systems Pvt. Ltd.",
+    "6364700"
    ]
   ]
  },
@@ -1067,16 +1067,16 @@
   "row_count": 3,
   "rows": [
    [
+    "partial",
+    3
+   ],
+   [
     "placed",
     33
    ],
    [
     "received",
     21
-   ],
-   [
-    "partial",
-    3
    ]
   ]
  },
@@ -1101,12 +1101,12 @@
   "row_count": 2,
   "rows": [
    [
-    "reorder_now",
-    15
-   ],
-   [
     "below_min",
     1
+   ],
+   [
+    "reorder_now",
+    15
    ]
   ]
  },
@@ -1122,10 +1122,6 @@
     "16"
    ],
    [
-    "PVC Curtain for High Speed Door – 1800×2820mm",
-    "15"
-   ],
-   [
     "HMPS Door Double Leaf - 960mm × 2200mm",
     "13"
    ],
@@ -1136,6 +1132,10 @@
    [
     "PVC Curtain for High Speed Door 1800×2500mm",
     "11"
+   ],
+   [
+    "PVC Curtain for High Speed Door – 1800×2820mm",
+    "15"
    ]
   ]
  },
@@ -1161,130 +1161,11 @@
   "row_count": 28,
   "rows": [
    [
-    "PO-2026-0009",
-    "Granite Steels Pvt. Ltd.",
-    "2026-08-08",
-    53,
-    "36363.6"
-   ],
-   [
-    "PO-2026-0003",
-    "Falcon Steels Pvt. Ltd.",
-    "2026-08-13",
-    48,
-    "50986"
-   ],
-   [
-    "PO-2026-0022",
-    "Pinnacle Engineering Pvt. Ltd.",
-    "2026-08-13",
-    48,
-    "17945"
-   ],
-   [
-    "PO-2026-0016",
-    "Vanguard Engineering Pvt. Ltd.",
-    "2026-08-15",
-    46,
-    "384652"
-   ],
-   [
-    "PO-2026-0029",
-    "Summit Engineering Pvt. Ltd.",
-    "2026-08-16",
-    45,
-    "210077.14"
-   ],
-   [
-    "PO-2026-0028",
-    "Halcyon Steels Pvt. Ltd.",
-    "2026-08-16",
-    45,
-    "8814.51"
-   ],
-   [
-    "PO-2026-0012",
-    "Shakti Steels Pvt. Ltd.",
-    "2026-08-17",
-    44,
-    "13532.75"
-   ],
-   [
-    "PO-2026-0011",
-    "Kingfisher Steels Pvt. Ltd.",
-    "2026-08-17",
-    44,
-    "21617.25"
-   ],
-   [
-    "PO-2026-0031",
-    "Shakti Engineering Pvt. Ltd.",
-    "2026-08-17",
-    44,
-    "75979.5"
-   ],
-   [
-    "PO-2026-0045",
-    "Anand Steels Pvt. Ltd.",
-    "2026-08-20",
-    41,
-    "65327.94"
-   ],
-   [
-    "PO-2026-0039",
-    "Sterling Steels Pvt. Ltd.",
-    "2026-08-20",
-    41,
-    "721420.45"
-   ],
-   [
     "PO-2026-0001",
     "Zenith Steels Pvt. Ltd.",
     "2026-08-21",
     40,
     "123393.15"
-   ],
-   [
-    "PO-2026-0036",
-    "Sterling Steels Pvt. Ltd.",
-    "2026-08-21",
-    40,
-    "2299789.02"
-   ],
-   [
-    "PO-2026-0048",
-    "Deccan Steels Pvt. Ltd.",
-    "2026-08-21",
-    40,
-    "17575"
-   ],
-   [
-    "PO-2026-0050",
-    "Bluepeak Steels Pvt. Ltd.",
-    "2026-08-22",
-    39,
-    "21841.05"
-   ],
-   [
-    "PO-2026-0047",
-    "Cedar Steels Pvt. Ltd.",
-    "2026-08-22",
-    39,
-    "20350"
-   ],
-   [
-    "PO-2026-0040",
-    "Crestline Steels Pvt. Ltd.",
-    "2026-08-23",
-    38,
-    "542.1"
-   ],
-   [
-    "PO-2026-0004",
-    "Trident Steels Pvt. Ltd.",
-    "2026-08-23",
-    38,
-    "91575"
    ],
    [
     "PO-2026-0002",
@@ -1294,46 +1175,39 @@
     "42550"
    ],
    [
-    "PO-2026-0038",
-    "Meridian Steels Pvt. Ltd.",
+    "PO-2026-0003",
+    "Falcon Steels Pvt. Ltd.",
+    "2026-08-13",
+    48,
+    "50986"
+   ],
+   [
+    "PO-2026-0004",
+    "Trident Steels Pvt. Ltd.",
     "2026-08-23",
     38,
-    "24050"
+    "91575"
    ],
    [
-    "PO-2026-0044",
+    "PO-2026-0009",
+    "Granite Steels Pvt. Ltd.",
+    "2026-08-08",
+    53,
+    "36363.6"
+   ],
+   [
+    "PO-2026-0011",
     "Kingfisher Steels Pvt. Ltd.",
-    "2026-08-24",
-    37,
-    "38386.76"
+    "2026-08-17",
+    44,
+    "21617.25"
    ],
    [
-    "PO-2026-0043",
-    "Kingfisher Steels Pvt. Ltd.",
-    "2026-08-25",
-    36,
-    "18259.5"
-   ],
-   [
-    "PO-2026-0049",
-    "Crestline Engineering Pvt. Ltd.",
-    "2026-08-27",
-    34,
-    "190272.5"
-   ],
-   [
-    "PO-2026-0042",
-    "Kingfisher Steels Pvt. Ltd.",
-    "2026-08-27",
-    34,
-    "13894.61"
-   ],
-   [
-    "PO-2026-0033",
-    "Aster Steels Pvt. Ltd.",
-    "2026-08-28",
-    33,
-    "93425"
+    "PO-2026-0012",
+    "Shakti Steels Pvt. Ltd.",
+    "2026-08-17",
+    44,
+    "13532.75"
    ],
    [
     "PO-2026-0015",
@@ -1343,11 +1217,46 @@
     "11562.5"
    ],
    [
-    "PO-2026-0035",
-    "Deccan Engineering Pvt. Ltd.",
-    "2026-09-03",
-    27,
-    "69726.5"
+    "PO-2026-0016",
+    "Vanguard Engineering Pvt. Ltd.",
+    "2026-08-15",
+    46,
+    "384652"
+   ],
+   [
+    "PO-2026-0022",
+    "Pinnacle Engineering Pvt. Ltd.",
+    "2026-08-13",
+    48,
+    "17945"
+   ],
+   [
+    "PO-2026-0028",
+    "Halcyon Steels Pvt. Ltd.",
+    "2026-08-16",
+    45,
+    "8814.51"
+   ],
+   [
+    "PO-2026-0029",
+    "Summit Engineering Pvt. Ltd.",
+    "2026-08-16",
+    45,
+    "210077.14"
+   ],
+   [
+    "PO-2026-0031",
+    "Shakti Engineering Pvt. Ltd.",
+    "2026-08-17",
+    44,
+    "75979.5"
+   ],
+   [
+    "PO-2026-0033",
+    "Aster Steels Pvt. Ltd.",
+    "2026-08-28",
+    33,
+    "93425"
    ],
    [
     "PO-2026-0034",
@@ -1355,6 +1264,97 @@
     "2026-09-18",
     12,
     "85951"
+   ],
+   [
+    "PO-2026-0035",
+    "Deccan Engineering Pvt. Ltd.",
+    "2026-09-03",
+    27,
+    "69726.5"
+   ],
+   [
+    "PO-2026-0036",
+    "Sterling Steels Pvt. Ltd.",
+    "2026-08-21",
+    40,
+    "2299789.02"
+   ],
+   [
+    "PO-2026-0038",
+    "Meridian Steels Pvt. Ltd.",
+    "2026-08-23",
+    38,
+    "24050"
+   ],
+   [
+    "PO-2026-0039",
+    "Sterling Steels Pvt. Ltd.",
+    "2026-08-20",
+    41,
+    "721420.45"
+   ],
+   [
+    "PO-2026-0040",
+    "Crestline Steels Pvt. Ltd.",
+    "2026-08-23",
+    38,
+    "542.1"
+   ],
+   [
+    "PO-2026-0042",
+    "Kingfisher Steels Pvt. Ltd.",
+    "2026-08-27",
+    34,
+    "13894.61"
+   ],
+   [
+    "PO-2026-0043",
+    "Kingfisher Steels Pvt. Ltd.",
+    "2026-08-25",
+    36,
+    "18259.5"
+   ],
+   [
+    "PO-2026-0044",
+    "Kingfisher Steels Pvt. Ltd.",
+    "2026-08-24",
+    37,
+    "38386.76"
+   ],
+   [
+    "PO-2026-0045",
+    "Anand Steels Pvt. Ltd.",
+    "2026-08-20",
+    41,
+    "65327.94"
+   ],
+   [
+    "PO-2026-0047",
+    "Cedar Steels Pvt. Ltd.",
+    "2026-08-22",
+    39,
+    "20350"
+   ],
+   [
+    "PO-2026-0048",
+    "Deccan Steels Pvt. Ltd.",
+    "2026-08-21",
+    40,
+    "17575"
+   ],
+   [
+    "PO-2026-0049",
+    "Crestline Engineering Pvt. Ltd.",
+    "2026-08-27",
+    34,
+    "190272.5"
+   ],
+   [
+    "PO-2026-0050",
+    "Bluepeak Steels Pvt. Ltd.",
+    "2026-08-22",
+    39,
+    "21841.05"
    ]
   ]
  },
@@ -1366,12 +1366,12 @@
   "row_count": 3,
   "rows": [
    [
-    "Shakti Steels Pvt. Ltd.",
-    "9752"
-   ],
-   [
     "Halcyon Steels Pvt. Ltd.",
     "444"
+   ],
+   [
+    "Shakti Steels Pvt. Ltd.",
+    "9752"
    ],
    [
     "Zenith Steels Pvt. Ltd.",
@@ -1387,16 +1387,16 @@
   "row_count": 3,
   "rows": [
    [
+    "partial",
+    3
+   ],
+   [
     "placed",
     33
    ],
    [
     "received",
     21
-   ],
-   [
-    "partial",
-    3
    ]
   ]
  },
@@ -1414,13 +1414,23 @@
   "row_count": 15,
   "rows": [
    [
-    "BO-EL-0140",
-    "Relay Base RXZE1M2C",
+    "BO-CN-0010",
+    "Scotch Brite Red Belt For SS Polishing (3.5\"×15.5\")",
     "0",
     "0",
-    "65",
-    44,
-    "2026-08-17",
+    "90",
+    13,
+    "2026-09-17",
+    null
+   ],
+   [
+    "BO-CN-0037",
+    "EPE Packing Roll – 1500mm×80m×5mm",
+    "0",
+    "0",
+    "4",
+    10,
+    "2026-09-20",
     null
    ],
    [
@@ -1434,16 +1444,6 @@
     null
    ],
    [
-    "RM-MT-ST-0063",
-    "MS Tube – 40×40×2mm",
-    "0",
-    "0",
-    "60",
-    28,
-    "2026-09-02",
-    "Bluepeak Steels Pvt. Ltd."
-   ],
-   [
     "BO-EL-0139",
     "Relay  – 240V, 2 Pole (RXM2LB1P7)",
     "0",
@@ -1454,14 +1454,54 @@
     null
    ],
    [
-    "RM-MT-ST-0088",
-    "MS Tube – 80×40×2mm",
+    "BO-EL-0140",
+    "Relay Base RXZE1M2C",
     "0",
     "0",
-    "870",
-    25,
-    "2026-09-05",
+    "65",
+    44,
+    "2026-08-17",
     null
+   ],
+   [
+    "BO-MC-0133",
+    "Flap Mechanism for AFC Gate (Normal) ",
+    "0",
+    "0",
+    "420",
+    12,
+    "2026-09-18",
+    null
+   ],
+   [
+    "BO-MC-AS-0029",
+    "Acrylic Sheet – Transparent – 37×30×4mm",
+    "495",
+    "0",
+    "2500",
+    17,
+    "2026-09-25",
+    null
+   ],
+   [
+    "RM-MT-FS-0036",
+    "MS Sheet – 1500×3000×10mm",
+    "0.000000000000909494701772928",
+    "0",
+    "6850",
+    19,
+    "2026-09-11",
+    null
+   ],
+   [
+    "RM-MT-FS-0069",
+    "SS Sheet – 304 – 1250×2500×4mm",
+    "520",
+    "0",
+    "1400",
+    23,
+    "2026-09-29",
+    "Meridian Engineering Pvt. Ltd."
    ],
    [
     "RM-MT-FS-0071",
@@ -1484,16 +1524,6 @@
     "Sterling Steels Pvt. Ltd."
    ],
    [
-    "RM-MT-FS-0036",
-    "MS Sheet – 1500×3000×10mm",
-    "0.000000000000909494701772928",
-    "0",
-    "6850",
-    19,
-    "2026-09-11",
-    null
-   ],
-   [
     "RM-MT-ST-0006",
     "MS Tube – 100×100×3.2mm",
     "0",
@@ -1504,6 +1534,26 @@
     "Bluepeak Steels Pvt. Ltd."
    ],
    [
+    "RM-MT-ST-0063",
+    "MS Tube – 40×40×2mm",
+    "0",
+    "0",
+    "60",
+    28,
+    "2026-09-02",
+    "Bluepeak Steels Pvt. Ltd."
+   ],
+   [
+    "RM-MT-ST-0088",
+    "MS Tube – 80×40×2mm",
+    "0",
+    "0",
+    "870",
+    25,
+    "2026-09-05",
+    null
+   ],
+   [
     "RM-MT-ST-0093",
     "MS Tube – 80×80×3.2mm",
     "0",
@@ -1512,56 +1562,6 @@
     15,
     "2026-09-15",
     "Bluepeak Steels Pvt. Ltd."
-   ],
-   [
-    "BO-CN-0010",
-    "Scotch Brite Red Belt For SS Polishing (3.5\"×15.5\")",
-    "0",
-    "0",
-    "90",
-    13,
-    "2026-09-17",
-    null
-   ],
-   [
-    "BO-MC-0133",
-    "Flap Mechanism for AFC Gate (Normal) ",
-    "0",
-    "0",
-    "420",
-    12,
-    "2026-09-18",
-    null
-   ],
-   [
-    "BO-CN-0037",
-    "EPE Packing Roll – 1500mm×80m×5mm",
-    "0",
-    "0",
-    "4",
-    10,
-    "2026-09-20",
-    null
-   ],
-   [
-    "BO-MC-AS-0029",
-    "Acrylic Sheet – Transparent – 37×30×4mm",
-    "495",
-    "0",
-    "2500",
-    17,
-    "2026-09-25",
-    null
-   ],
-   [
-    "RM-MT-FS-0069",
-    "SS Sheet – 304 – 1250×2500×4mm",
-    "520",
-    "0",
-    "1400",
-    23,
-    "2026-09-29",
-    "Meridian Engineering Pvt. Ltd."
    ]
   ]
  },
@@ -1581,9 +1581,9 @@
     "Demo Inventory Manager"
    ],
    [
-    "Uninterruptible Power Supply (UPS) 1100VA, Tower, 230V",
-    "90",
-    "2026-10-13",
+    "MS Tube – 40×40×2mm",
+    "60",
+    "2026-10-16",
     "Demo Inventory Manager"
    ],
    [
@@ -1593,9 +1593,9 @@
     "Demo Inventory Manager"
    ],
    [
-    "MS Tube – 40×40×2mm",
-    "60",
-    "2026-10-16",
+    "Uninterruptible Power Supply (UPS) 1100VA, Tower, 230V",
+    "90",
+    "2026-10-13",
     "Demo Inventory Manager"
    ]
   ]
@@ -1608,24 +1608,24 @@
   "row_count": 5,
   "rows": [
    [
-    "Sterling Steels Pvt. Ltd.",
-    "3021209.47"
-   ],
-   [
     "Meridian Engineering Pvt. Ltd.",
     "395456.74"
    ],
    [
-    "Vanguard Engineering Pvt. Ltd.",
-    "384652"
+    "Pinnacle Steels Pvt. Ltd.",
+    "227783.17"
+   ],
+   [
+    "Sterling Steels Pvt. Ltd.",
+    "3021209.47"
    ],
    [
     "Summit Engineering Pvt. Ltd.",
     "259384.14"
    ],
    [
-    "Pinnacle Steels Pvt. Ltd.",
-    "227783.17"
+    "Vanguard Engineering Pvt. Ltd.",
+    "384652"
    ]
   ]
  },
@@ -1899,130 +1899,11 @@
   "row_count": 28,
   "rows": [
    [
-    "PO-2026-0009",
-    "Granite Steels Pvt. Ltd.",
-    "2026-08-08",
-    53,
-    "36363.6"
-   ],
-   [
-    "PO-2026-0003",
-    "Falcon Steels Pvt. Ltd.",
-    "2026-08-13",
-    48,
-    "50986"
-   ],
-   [
-    "PO-2026-0022",
-    "Pinnacle Engineering Pvt. Ltd.",
-    "2026-08-13",
-    48,
-    "17945"
-   ],
-   [
-    "PO-2026-0016",
-    "Vanguard Engineering Pvt. Ltd.",
-    "2026-08-15",
-    46,
-    "384652"
-   ],
-   [
-    "PO-2026-0029",
-    "Summit Engineering Pvt. Ltd.",
-    "2026-08-16",
-    45,
-    "210077.14"
-   ],
-   [
-    "PO-2026-0028",
-    "Halcyon Steels Pvt. Ltd.",
-    "2026-08-16",
-    45,
-    "8814.51"
-   ],
-   [
-    "PO-2026-0012",
-    "Shakti Steels Pvt. Ltd.",
-    "2026-08-17",
-    44,
-    "13532.75"
-   ],
-   [
-    "PO-2026-0011",
-    "Kingfisher Steels Pvt. Ltd.",
-    "2026-08-17",
-    44,
-    "21617.25"
-   ],
-   [
-    "PO-2026-0031",
-    "Shakti Engineering Pvt. Ltd.",
-    "2026-08-17",
-    44,
-    "75979.5"
-   ],
-   [
-    "PO-2026-0045",
-    "Anand Steels Pvt. Ltd.",
-    "2026-08-20",
-    41,
-    "65327.94"
-   ],
-   [
-    "PO-2026-0039",
-    "Sterling Steels Pvt. Ltd.",
-    "2026-08-20",
-    41,
-    "721420.45"
-   ],
-   [
     "PO-2026-0001",
     "Zenith Steels Pvt. Ltd.",
     "2026-08-21",
     40,
     "123393.15"
-   ],
-   [
-    "PO-2026-0036",
-    "Sterling Steels Pvt. Ltd.",
-    "2026-08-21",
-    40,
-    "2299789.02"
-   ],
-   [
-    "PO-2026-0048",
-    "Deccan Steels Pvt. Ltd.",
-    "2026-08-21",
-    40,
-    "17575"
-   ],
-   [
-    "PO-2026-0050",
-    "Bluepeak Steels Pvt. Ltd.",
-    "2026-08-22",
-    39,
-    "21841.05"
-   ],
-   [
-    "PO-2026-0047",
-    "Cedar Steels Pvt. Ltd.",
-    "2026-08-22",
-    39,
-    "20350"
-   ],
-   [
-    "PO-2026-0040",
-    "Crestline Steels Pvt. Ltd.",
-    "2026-08-23",
-    38,
-    "542.1"
-   ],
-   [
-    "PO-2026-0004",
-    "Trident Steels Pvt. Ltd.",
-    "2026-08-23",
-    38,
-    "91575"
    ],
    [
     "PO-2026-0002",
@@ -2032,46 +1913,39 @@
     "42550"
    ],
    [
-    "PO-2026-0038",
-    "Meridian Steels Pvt. Ltd.",
+    "PO-2026-0003",
+    "Falcon Steels Pvt. Ltd.",
+    "2026-08-13",
+    48,
+    "50986"
+   ],
+   [
+    "PO-2026-0004",
+    "Trident Steels Pvt. Ltd.",
     "2026-08-23",
     38,
-    "24050"
+    "91575"
    ],
    [
-    "PO-2026-0044",
+    "PO-2026-0009",
+    "Granite Steels Pvt. Ltd.",
+    "2026-08-08",
+    53,
+    "36363.6"
+   ],
+   [
+    "PO-2026-0011",
     "Kingfisher Steels Pvt. Ltd.",
-    "2026-08-24",
-    37,
-    "38386.76"
+    "2026-08-17",
+    44,
+    "21617.25"
    ],
    [
-    "PO-2026-0043",
-    "Kingfisher Steels Pvt. Ltd.",
-    "2026-08-25",
-    36,
-    "18259.5"
-   ],
-   [
-    "PO-2026-0049",
-    "Crestline Engineering Pvt. Ltd.",
-    "2026-08-27",
-    34,
-    "190272.5"
-   ],
-   [
-    "PO-2026-0042",
-    "Kingfisher Steels Pvt. Ltd.",
-    "2026-08-27",
-    34,
-    "13894.61"
-   ],
-   [
-    "PO-2026-0033",
-    "Aster Steels Pvt. Ltd.",
-    "2026-08-28",
-    33,
-    "93425"
+    "PO-2026-0012",
+    "Shakti Steels Pvt. Ltd.",
+    "2026-08-17",
+    44,
+    "13532.75"
    ],
    [
     "PO-2026-0015",
@@ -2081,11 +1955,46 @@
     "11562.5"
    ],
    [
-    "PO-2026-0035",
-    "Deccan Engineering Pvt. Ltd.",
-    "2026-09-03",
-    27,
-    "69726.5"
+    "PO-2026-0016",
+    "Vanguard Engineering Pvt. Ltd.",
+    "2026-08-15",
+    46,
+    "384652"
+   ],
+   [
+    "PO-2026-0022",
+    "Pinnacle Engineering Pvt. Ltd.",
+    "2026-08-13",
+    48,
+    "17945"
+   ],
+   [
+    "PO-2026-0028",
+    "Halcyon Steels Pvt. Ltd.",
+    "2026-08-16",
+    45,
+    "8814.51"
+   ],
+   [
+    "PO-2026-0029",
+    "Summit Engineering Pvt. Ltd.",
+    "2026-08-16",
+    45,
+    "210077.14"
+   ],
+   [
+    "PO-2026-0031",
+    "Shakti Engineering Pvt. Ltd.",
+    "2026-08-17",
+    44,
+    "75979.5"
+   ],
+   [
+    "PO-2026-0033",
+    "Aster Steels Pvt. Ltd.",
+    "2026-08-28",
+    33,
+    "93425"
    ],
    [
     "PO-2026-0034",
@@ -2093,6 +2002,97 @@
     "2026-09-18",
     12,
     "85951"
+   ],
+   [
+    "PO-2026-0035",
+    "Deccan Engineering Pvt. Ltd.",
+    "2026-09-03",
+    27,
+    "69726.5"
+   ],
+   [
+    "PO-2026-0036",
+    "Sterling Steels Pvt. Ltd.",
+    "2026-08-21",
+    40,
+    "2299789.02"
+   ],
+   [
+    "PO-2026-0038",
+    "Meridian Steels Pvt. Ltd.",
+    "2026-08-23",
+    38,
+    "24050"
+   ],
+   [
+    "PO-2026-0039",
+    "Sterling Steels Pvt. Ltd.",
+    "2026-08-20",
+    41,
+    "721420.45"
+   ],
+   [
+    "PO-2026-0040",
+    "Crestline Steels Pvt. Ltd.",
+    "2026-08-23",
+    38,
+    "542.1"
+   ],
+   [
+    "PO-2026-0042",
+    "Kingfisher Steels Pvt. Ltd.",
+    "2026-08-27",
+    34,
+    "13894.61"
+   ],
+   [
+    "PO-2026-0043",
+    "Kingfisher Steels Pvt. Ltd.",
+    "2026-08-25",
+    36,
+    "18259.5"
+   ],
+   [
+    "PO-2026-0044",
+    "Kingfisher Steels Pvt. Ltd.",
+    "2026-08-24",
+    37,
+    "38386.76"
+   ],
+   [
+    "PO-2026-0045",
+    "Anand Steels Pvt. Ltd.",
+    "2026-08-20",
+    41,
+    "65327.94"
+   ],
+   [
+    "PO-2026-0047",
+    "Cedar Steels Pvt. Ltd.",
+    "2026-08-22",
+    39,
+    "20350"
+   ],
+   [
+    "PO-2026-0048",
+    "Deccan Steels Pvt. Ltd.",
+    "2026-08-21",
+    40,
+    "17575"
+   ],
+   [
+    "PO-2026-0049",
+    "Crestline Engineering Pvt. Ltd.",
+    "2026-08-27",
+    34,
+    "190272.5"
+   ],
+   [
+    "PO-2026-0050",
+    "Bluepeak Steels Pvt. Ltd.",
+    "2026-08-22",
+    39,
+    "21841.05"
    ]
   ]
  },
@@ -2104,20 +2104,20 @@
   "row_count": 5,
   "rows": [
    [
-    "132-1",
-    266
+    "103-1",
+    14
    ],
    [
-    "132-3",
-    74
+    "132-1",
+    266
    ],
    [
     "132-2",
     51
    ],
    [
-    "103-1",
-    14
+    "132-3",
+    74
    ],
    [
     "C-84",
@@ -2158,16 +2158,16 @@
   "row_count": 3,
   "rows": [
    [
+    "partial",
+    3
+   ],
+   [
     "placed",
     33
    ],
    [
     "received",
     21
-   ],
-   [
-    "partial",
-    3
    ]
   ]
  },
@@ -2179,84 +2179,92 @@
   "row_count": 34,
   "rows": [
    [
-    "Sterling Steels Pvt. Ltd.",
-    "3021209.47"
-   ],
-   [
-    "Meridian Engineering Pvt. Ltd.",
-    "395456.74"
-   ],
-   [
-    "Vanguard Engineering Pvt. Ltd.",
-    "384652"
-   ],
-   [
-    "Summit Engineering Pvt. Ltd.",
-    "259384.14"
-   ],
-   [
-    "Pinnacle Steels Pvt. Ltd.",
-    "227783.17"
-   ],
-   [
-    "Crestline Engineering Pvt. Ltd.",
-    "190272.5"
-   ],
-   [
-    "Aster Steels Pvt. Ltd.",
-    "179376"
-   ],
-   [
-    "Kingfisher Steels Pvt. Ltd.",
-    "146548.12"
-   ],
-   [
-    "Zenith Steels Pvt. Ltd.",
-    "123393.15"
-   ],
-   [
-    "Trident Steels Pvt. Ltd.",
-    "93883.8"
-   ],
-   [
-    "Falcon Steels Pvt. Ltd.",
-    "93536"
-   ],
-   [
-    "Shakti Engineering Pvt. Ltd.",
-    "75979.5"
-   ],
-   [
-    "Deccan Engineering Pvt. Ltd.",
-    "69726.5"
+    "Anand Engineering Pvt. Ltd.",
+    "15322"
    ],
    [
     "Anand Steels Pvt. Ltd.",
     "65327.94"
    ],
    [
-    "Cobalt Engineering Pvt. Ltd.",
-    "55583.62"
+    "Aster Steels Pvt. Ltd.",
+    "179376"
    ],
    [
     "Bluepeak Steels Pvt. Ltd.",
     "50182.05"
    ],
    [
+    "Cedar Steels Pvt. Ltd.",
+    "20350"
+   ],
+   [
+    "Cobalt Engineering Pvt. Ltd.",
+    "55583.62"
+   ],
+   [
+    "Cobalt Steels Pvt. Ltd.",
+    "8288"
+   ],
+   [
+    "Crestline Engineering Pvt. Ltd.",
+    "190272.5"
+   ],
+   [
+    "Crestline Steels Pvt. Ltd.",
+    "542.1"
+   ],
+   [
+    "Deccan Engineering Pvt. Ltd.",
+    "69726.5"
+   ],
+   [
+    "Deccan Steels Pvt. Ltd.",
+    "17575"
+   ],
+   [
+    "Everest Steels Pvt. Ltd.",
+    "11562.5"
+   ],
+   [
+    "Falcon Steels Pvt. Ltd.",
+    "93536"
+   ],
+   [
     "Granite Steels Pvt. Ltd.",
     "36363.6"
    ],
    [
-    "Meridian Steels Pvt. Ltd.",
-    "29045"
+    "Halcyon Steels Pvt. Ltd.",
+    "17139.51"
    ],
    [
     "Ironwood Engineering Pvt. Ltd.",
     "24163.98"
    ],
    [
-    "Cedar Steels Pvt. Ltd.",
-    "20350"
+    "Ironwood Steels Pvt. Ltd.",
+    "8900"
+   ],
+   [
+    "Kingfisher Steels Pvt. Ltd.",
+    "146548.12"
+   ],
+   [
+    "Meridian Engineering Pvt. Ltd.",
+    "395456.74"
+   ],
+   [
+    "Meridian Steels Pvt. Ltd.",
+    "29045"
+   ],
+   [
+    "Monsoon Steels Pvt. Ltd.",
+    "3240"
+   ],
+   [
+    "Northgate Steels Pvt. Ltd.",
+    "5272.5"
    ],
    [
     "Orion Steels Pvt. Ltd.",
@@ -2267,52 +2275,44 @@
     "17945"
    ],
    [
-    "Deccan Steels Pvt. Ltd.",
-    "17575"
+    "Pinnacle Steels Pvt. Ltd.",
+    "227783.17"
    ],
    [
-    "Halcyon Steels Pvt. Ltd.",
-    "17139.51"
-   ],
-   [
-    "Anand Engineering Pvt. Ltd.",
-    "15322"
+    "Shakti Engineering Pvt. Ltd.",
+    "75979.5"
    ],
    [
     "Shakti Steels Pvt. Ltd.",
     "13532.75"
    ],
    [
-    "Everest Steels Pvt. Ltd.",
-    "11562.5"
+    "Sterling Steels Pvt. Ltd.",
+    "3021209.47"
    ],
    [
-    "Ironwood Steels Pvt. Ltd.",
-    "8900"
-   ],
-   [
-    "Vanguard Steels Pvt. Ltd.",
-    "8510"
-   ],
-   [
-    "Cobalt Steels Pvt. Ltd.",
-    "8288"
-   ],
-   [
-    "Northgate Steels Pvt. Ltd.",
-    "5272.5"
-   ],
-   [
-    "Monsoon Steels Pvt. Ltd.",
-    "3240"
+    "Summit Engineering Pvt. Ltd.",
+    "259384.14"
    ],
    [
     "Summit Steels Pvt. Ltd.",
     "1424.5"
    ],
    [
-    "Crestline Steels Pvt. Ltd.",
-    "542.1"
+    "Trident Steels Pvt. Ltd.",
+    "93883.8"
+   ],
+   [
+    "Vanguard Engineering Pvt. Ltd.",
+    "384652"
+   ],
+   [
+    "Vanguard Steels Pvt. Ltd.",
+    "8510"
+   ],
+   [
+    "Zenith Steels Pvt. Ltd.",
+    "123393.15"
    ]
   ]
  }

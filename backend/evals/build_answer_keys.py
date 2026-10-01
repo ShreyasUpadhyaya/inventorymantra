@@ -40,6 +40,10 @@ def compute_key(case: EvalCase) -> dict[str, Any]:
         cursor = conn.execute(case.answer_key_sql)  # corpus SQL is reviewed, trusted input
         columns = [d.name for d in cursor.description or []]
         rows = [[to_json(v) for v in row] for row in cursor.fetchall()]
+    if case.compare != "exact":
+        # Order only matters for "exact"; otherwise freeze a canonical order, so ties in
+        # ORDER BY (e.g. equal days_overdue) can't make keys differ between machines.
+        rows.sort(key=lambda r: json.dumps(r, ensure_ascii=False))
     if case.expect_empty != (len(rows) == 0):
         expectation = "empty" if case.expect_empty else "non-empty"
         raise ValueError(f"{case.id}: expected a {expectation} result, got {len(rows)} rows")
