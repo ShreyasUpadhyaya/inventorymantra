@@ -136,7 +136,7 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 ### Phase 2 — Tests first (Day 1 midday)
 - [x] **C2.1** `test(evals): golden corpus (90 cases) and SQL answer-key generator`
 - [x] **C2.1b** `test(evals): messy entity-input cases, not_found route and matching rules (D-026)`
-- [ ] **C2.2** `test: policy, SQL-guard, entity-matcher and notification-visibility unit tests (xfail until implemented)`
+- [x] **C2.2** `test: policy, SQL-guard, entity-matcher and notification-visibility unit tests (xfail until implemented)`
 
 ### Phase 3 — Auth and API (Day 1 PM)
 - [ ] **C3.1** `feat(api): login, refresh, logout and /me with bcrypt + JWT cookie`

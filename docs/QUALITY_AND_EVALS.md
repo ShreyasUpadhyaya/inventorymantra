@@ -120,13 +120,18 @@ Results are recorded in §7 below for each eval run (model IDs, prompt version, 
 ---
 
 ## 6. Deterministic test suites (CI)
-- `tests/rbac/test_policy_matrix.py`: every (role, action) pair against the table in plan.md §1.
-- `tests/rbac/test_role_views.py`: each DB role can `SELECT` its schema only. Cross-schema and base-table access is denied. No write privileges.
-- `tests/unit/test_sql_guard.py`: DDL/DML, multi-statement, comments, `pg_sleep`, `information_schema`, disallowed relations, missing LIMIT.
-- `tests/unit/test_grounding.py`: number extraction (Indian formatting: ₹1,00,000; lakh/crore; Hindi numerals).
-- `tests/unit/test_lead_time.py`: formula cases, zero consumption, open PO qty.
-- `tests/integration/test_write_tools.py`: each tool → preview, apply, audit row, notifications with role-correct payloads.
-- `tests/integration/test_notifications_visibility.py`: IM notifications never contain vendor, price or approval data.
+Tests written before their code are marked `pending("Cx.y")` (`backend/tests/pending.py`). They are expected failures **only while their module can't be imported**: any other error fails the build, and once the code lands, a passing test fails until the marker is removed.
+
+| Suite | Contract | Status |
+|---|---|---|
+| `tests/rbac/test_role_views.py` | role × view matrix, base tables denied, no writes or escalation, forbidden columns, row-level `my_*` views | ✅ live (C1.4) |
+| `tests/integration/test_seed.py`, `test_fabricate.py` | seed counts and facts, deterministic demo data within the approved ranges | ✅ live (C1.2, C1.3) |
+| `tests/evals/test_corpus.py` | corpus schema, coverage minimums, fixed denials, answer keys match the DB | ✅ live (C2.1) |
+| `tests/unit/test_policy.py` | `can_read` / `can` / `denied_areas` / `requires_approval` matrices; unknown means deny | ⏳ pending C3.2 |
+| `tests/unit/test_sql_guard.py` | 9 accepted shapes, LIMIT enforcement, 40 rejections with fixed reason codes, reasons never name relations | ⏳ pending C4.2 |
+| `tests/integration/test_entity_match.py` | D-026 matcher: match, clarify, not_found, denied; vendors, locations, PO numbers; mentions are data | ⏳ pending C4.2 |
+| `tests/unit/test_notification_visibility.py` | per-role payload allow-lists; IM never sees vendor, price or Owner data; refused recipients; unknown events | ⏳ pending C6.5 |
+| `tests/unit/test_grounding.py`, `test_lead_time.py`, `tests/integration/test_write_tools.py` | grounding checker, lead-time maths, write tools | to be written test-first in C4.4 / C6.x |
 
 ## 7. Eval run log
 | Date | Commit | Models | Prompt ver | EX | Leak | Route | Clarify P/R | Viz | Lang | p95 | Notes |
