@@ -1,5 +1,5 @@
 # InventoryMantra developer commands (see CLAUDE.md §3). Run from the repo root.
-.PHONY: up down db-shell api web install test test-backend test-frontend lint seed eval
+.PHONY: up down db-shell api web install test test-backend test-frontend lint seed answer-keys eval
 
 up:            ## start Postgres and wait until healthy
 	docker compose up -d --wait db
@@ -23,13 +23,16 @@ web:           ## Next.js on http://localhost:3000
 test: test-backend test-frontend   ## all offline checks (no LLM calls)
 
 test-backend:
-	cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy app scripts && uv run pytest -q
+	cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy app scripts evals && uv run pytest -q
 
 test-frontend:
 	cd frontend && npm run lint && npm run typecheck
 
 seed:          ## migrate + load data/seed + deterministic demo data (idempotent)
 	cd backend && uv run python -m scripts.seed
+
+answer-keys:   ## recompute frozen answer keys for evals/corpus (review the diff!)
+	cd backend && uv run python -m evals.build_answer_keys
 
 eval:          ## implemented in C7.1; costs OpenAI tokens, so announce before running
 	@echo "eval: not implemented yet (arrives in C7.1)"

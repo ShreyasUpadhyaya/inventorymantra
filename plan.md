@@ -134,7 +134,7 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 - [x] **C1.4** `feat(db): per-role views and read-only DB roles with RBAC matrix tests`
 
 ### Phase 2 — Tests first (Day 1 midday)
-- [ ] **C2.1** `test(evals): golden corpus and SQL answer-key generator`
+- [x] **C2.1** `test(evals): golden corpus (90 cases) and SQL answer-key generator`
 - [ ] **C2.2** `test: policy, SQL-guard and notification-visibility unit tests (xfail until implemented)`
 
 ### Phase 3 — Auth and API (Day 1 PM)
