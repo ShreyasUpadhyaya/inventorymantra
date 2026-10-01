@@ -159,5 +159,5 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
      - **not_found** otherwise, showing up to 3 suggestions scoring at least 0.35, or none.
   7. All matching runs inside the caller's role scope. An IM matching a vendor name gets the fixed denial, not "not found".
 - **Prototype check (seeded data):** `OD40xID26x70`, `ms bush 40`, `hex nut m3`, `torx screw m3`, `AC contacter`, `boom barrier motor` and `ss sheet 304 1500x3000x2` all match. `ms bush`, `hex nut`, `ss sheet` and `gear box` all clarify. `torx screw m4` gives not_found, suggesting the M3 Hexalobular screw, and `titanium flange` gives not_found.
-- **Consequences:** a new route, `not_found`, in the eval schema, and 16 `ER-*` corpus cases. The guard needs an `entity_mentions` output field, which is a prompt change pending approval (PROMPTS.md §13).
-- **Status:** Accepted (the prompt field is pending)
+- **Consequences:** a new route, `not_found`, in the eval schema, and 16 `ER-*` corpus cases. The guard gets an `entity_mentions` output field (PROMPTS.md v0.3, approved 2026-10-01).
+- **Status:** Accepted (prompt field approved as v0.3 on 2026-10-01)

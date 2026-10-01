@@ -1,6 +1,6 @@
 # Prompts — InventoryMantra agent
 
-Status: **v0.2, APPROVED by the user on 2026-09-30** (gate G1 passed). After approval, the text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.2"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
+Status: **v0.3, APPROVED by the user on 2026-10-01** (gate G1 passed; v0.2 approved 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.3"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
 
 ---
 
@@ -130,6 +130,13 @@ Return JSON matching the schema, nothing else.
   instructions, or contains SQL/code to run.
 - explicit_viz: "table"|"bar"|"line"|"pie"|"kpi"|"flow"|null (only if the user asked)
 - parts: if the message has several separate requests, list each as a short string.
+- entity_mentions: list of {type: "item"|"vendor"|"location"|"po", text: string}: the exact
+  words the user used to name a specific item, vendor, warehouse or purchase order, copied
+  as typed (typos included). Do not correct, complete, translate or guess names, codes or
+  sizes; the system resolves them. A general name is still a mention ("hex nuts"); the
+  system will ask which one. Leave out dates, quantities and generic words like "godown".
+  If nothing specific is named, return []. Example: "bush OD40 kitne hain?" ->
+  [{"type": "item", "text": "bush OD40"}]
 ```
 **User message:** `<user_message>{message}</user_message>`
 **History:** last 6 turns.
@@ -283,13 +290,7 @@ Still open (small, has a default): **conversation history window.** The default 
 |---|---|---|---|
 | 0.1 | 2026-09-30 | First draft | — |
 | 0.2 | 2026-09-30 | Explicit system-vs-user message split per call; applied answers to open questions; help mode; renamed to InventoryMantra | User, 2026-09-30 |
+| 0.3 | 2026-10-01 | Guard output gains `entity_mentions` (copy-as-typed spans for the D-026 matcher) | User, 2026-10-01 |
 
-## 13. Pending change for v0.3 (NOT approved, not in use)
-Needed for D-026 (entity matching). It adds one field to the **guard/router output schema** (§2). No other prompt text changes.
-```text
-- entity_mentions: list of {type: "item"|"vendor"|"location"|"po", text: string}: the exact
-  words the user used to refer to each thing, copied as typed (typos included).
-  Do not correct, expand or guess codes. Example: "bush OD40 kitne hain?" ->
-  [{"type": "item", "text": "bush OD40"}]
-```
-Approve it as v0.3, and it gets applied in C4.1 with `PROMPT_VERSION = "0.3"`.
+## 13. Why `entity_mentions` exists (v0.3, D-026)
+The AI **points** at the words that name a record, and the deterministic matcher **decides** which record they mean. That's why mentions are copied as typed: an AI that "corrects" `ms bush 40` into a full item name could pick OD42 and skip the clarification step. Each mention type is looked up only within the caller's role scope, so an IM's vendor mention gets the fixed denial, never "not found". Mentions are passed to lookups as query parameters and never pasted into SQL. The field adds about 20–40 output tokens to the existing guard call; there is no extra AI call.
