@@ -1,0 +1,2319 @@
+{
+ "CL-PM-02": {
+  "columns": [
+   "po_number",
+   "unit_price"
+  ],
+  "row_count": 0,
+  "rows": []
+ },
+ "NP-IM-02": {
+  "columns": [
+   "item_name",
+   "on_hand",
+   "avg_daily_use_90d",
+   "days_of_cover",
+   "lead_time_days",
+   "order_by_date"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "Relay Base RXZE1M2C",
+    "0",
+    "1.06",
+    "0",
+    44,
+    "2026-08-17"
+   ]
+  ]
+ },
+ "NP-OW-04": {
+  "columns": [
+   "quarter",
+   "margin_pct"
+  ],
+  "row_count": 4,
+  "rows": [
+   [
+    "2025-Q4",
+    "23.6"
+   ],
+   [
+    "2026-Q1",
+    "25.2"
+   ],
+   [
+    "2026-Q2",
+    "20.9"
+   ],
+   [
+    "2026-Q3",
+    "24.7"
+   ]
+  ]
+ },
+ "NP-PM-01": {
+  "columns": [
+   "po_number",
+   "status",
+   "expected_delivery_date",
+   "days_overdue"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "PO-2026-0003",
+    "placed",
+    "2026-08-13",
+    48
+   ]
+  ]
+ },
+ "NP-PM-03": {
+  "columns": [
+   "po_number",
+   "expected_delivery_date",
+   "days_overdue"
+  ],
+  "row_count": 2,
+  "rows": [
+   [
+    "PO-2026-0036",
+    "2026-08-21",
+    40
+   ],
+   [
+    "PO-2026-0039",
+    "2026-08-20",
+    41
+   ]
+  ]
+ },
+ "NP-PM-05": {
+  "columns": [
+   "po_number",
+   "status",
+   "expected_delivery_date",
+   "days_overdue"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "PO-2026-0009",
+    "placed",
+    "2026-08-08",
+    53
+   ]
+  ]
+ },
+ "RB-IM-12": {
+  "columns": [
+   "location_name",
+   "quantity"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "132-1",
+    100.0
+   ]
+  ]
+ },
+ "RD-IM-01": {
+  "columns": [
+   "location_name",
+   "quantity"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "132-1",
+    100.0
+   ]
+  ]
+ },
+ "RD-IM-02": {
+  "columns": [
+   "item_code",
+   "item_name"
+  ],
+  "row_count": 78,
+  "rows": [
+   [
+    "BO-CN-0001",
+    "Bubble Roll (30 GSM .75-80 MTR)"
+   ],
+   [
+    "BO-CN-0010",
+    "Scotch Brite Red Belt For SS Polishing (3.5\"×15.5\")"
+   ],
+   [
+    "BO-CN-0016",
+    "Thermocol Sheet 914.4×457.2×50.8mm"
+   ],
+   [
+    "BO-CN-0048",
+    "Thinner – Epoxy (Paint Thinner)"
+   ],
+   [
+    "BO-CN-PT-0028",
+    "Paint – Epoxy – Red Oxide Primer"
+   ],
+   [
+    "BO-EL-0138",
+    "Uninterruptible Power Supply (UPS) 1100VA, Tower, 230V"
+   ],
+   [
+    "BO-EL-0139",
+    "Relay  – 240V, 2 Pole (RXM2LB1P7)"
+   ],
+   [
+    "BO-EL-0140",
+    "Relay Base RXZE1M2C"
+   ],
+   [
+    "BO-EL-0179",
+    "Ballon Grinder"
+   ],
+   [
+    "BO-EL-0180",
+    "Straight Grinder GGS 5LS"
+   ],
+   [
+    "BO-EL-0196",
+    "UPOS Android Unattended Terminal IM30"
+   ],
+   [
+    "BO-EL-0202",
+    "Diesel Generator Set – 125KVA – Three Phase CPCB-I V+ – 415V – Cummins Engine QSB4.5-G2 – Stamford Alternator – Silent Acoustic Enclosure – Includes Fuel Tank; Manual Control Panel; Battery & Leads; Residential Silencer; First Fill Lube Oil"
+   ],
+   [
+    "BO-EL-0213",
+    "PCB for Boom Barrier"
+   ],
+   [
+    "BO-EL-MTR-0060",
+    "Geared Motor - NORTHWIND - RS-MTR800 - Indirect Drive"
+   ],
+   [
+    "BO-EL-MTR-0065",
+    "Geared Motor - IDM-RS-MTRBA800 - Indirect Drive"
+   ],
+   [
+    "BO-EL-MTR-0068",
+    "Geared Motor - GEN - IDM-RS-MTRBA1000 - Indirect Drive"
+   ],
+   [
+    "BO-EL-SNR-0040",
+    "ECR - ECR-One "
+   ],
+   [
+    "BO-MC-0084",
+    "Sectional Door Panel – 4550×500mm – Bottom, Mid, Top"
+   ],
+   [
+    "BO-MC-0085",
+    "Top/ Bottom Profile for Sectional Door 4060×500mm"
+   ],
+   [
+    "BO-MC-0086",
+    "End Cap for Sectional Door Panel 6mm (Small)"
+   ],
+   [
+    "BO-MC-0088",
+    "Aluminium Bottom panel profile for sectional doors – 500×4550mm – With Rubber Seal"
+   ],
+   [
+    "BO-MC-0089",
+    "Sectional Door Panel 4060×500mm – Bottom / Mid Panel"
+   ],
+   [
+    "BO-MC-0090",
+    "Aluminium Bottom panel profile for sectional doors – 500×4060mm – With Rubber Seal"
+   ],
+   [
+    "BO-MC-0091",
+    "Window for Sectional Door – Rectangle"
+   ],
+   [
+    "BO-MC-0092",
+    "Top/ Bottom Profile for Sectional Door 4550×500mm"
+   ],
+   [
+    "BO-MC-0113",
+    "Flap Mechanism Parts for AFC (Repair) – 1"
+   ],
+   [
+    "BO-MC-0114",
+    "Flap Mechanism Parts for AFC (Repair) – 2"
+   ],
+   [
+    "BO-MC-0120",
+    "Flap Mechanism for AFC Gate (Wide)"
+   ],
+   [
+    "BO-MC-0133",
+    "Flap Mechanism for AFC Gate (Normal) "
+   ],
+   [
+    "BO-MC-0177",
+    "PVC Duct 45×45mm - Trinity Touch"
+   ],
+   [
+    "BO-MC-0178",
+    "PVC Duct 25×45mm - Trinity Touch"
+   ],
+   [
+    "BO-MC-0179",
+    "PVC Duct 25×25mm - Trinity Touch"
+   ],
+   [
+    "BO-MC-0218",
+    "SS 304 Elbow – OD32×1.5mm"
+   ],
+   [
+    "BO-MC-BR-0012",
+    "Bearing – 6801 ZZ (Make - NTN)"
+   ],
+   [
+    "BO-MC-BR-0013",
+    "Bearing – 6201 ZZ (Make - FAG)"
+   ],
+   [
+    "FG-IA-0001",
+    "PVC Curtain for High Speed Door – Sioen Fabric 900 GSM – Blue RAL 5007 – Sizes: 2800×2300mm (2 nos); 1700×3800mm (2 nos); 3200×4000mm (2 nos) – Total 59.40 sqm – Vision Transparent 8.49 sqm"
+   ],
+   [
+    "FG-IA-HMPS-0003",
+    "HMPS Door - 1200mm × 2100mm"
+   ],
+   [
+    "FG-IA-HMPS-0004",
+    "HMPS Door Double Leaf - 960mm × 2200mm"
+   ],
+   [
+    "FG-IA-HMPS-0005",
+    "HMPS Door - 1500mm × 2120mm"
+   ],
+   [
+    "FG-IA-HMPS-0006",
+    "HMPS Door - 2400mm × 2400mm"
+   ],
+   [
+    "FG-IA-RS-0006",
+    "Gear Operated Rolling Shutter with GI Curtain – 3050×3100mm"
+   ],
+   [
+    "FG-IA-RS-0007",
+    "Motorized Rolling Shutter with GI Curtain - 3150 x 4300mm"
+   ],
+   [
+    "FG-IA-RS-0009",
+    "Motorized Direct Drive Rolling Shutter with GI Curtain – 2500×2735mm"
+   ],
+   [
+    "FG-IA-RS-0010",
+    "Motorized Direct Drive Rolling Shutter with GI Curtain – 4035×3100mm"
+   ],
+   [
+    "FG-IA-RS-0011",
+    "Motorized Direct Drive Rolling Shutter with GI Curtain – 2500×2600mm"
+   ],
+   [
+    "FG-IA-RS-0013",
+    "Motorized Direct Drive Rolling Shutter with GI Curtain – 3955×3250mm"
+   ],
+   [
+    "FG-IA-RS-0016",
+    "Motorized Direct Drive Rolling Shutter with GI Curtain 6000×2550mm"
+   ],
+   [
+    "FG-IA-RS-0017",
+    "Motorized Direct Drive Rolling Shutter with GI Curtain 3000×3000mm"
+   ],
+   [
+    "RM-MT-CP-0008",
+    "MS Chequered Plate – 1250×2050×6mm"
+   ],
+   [
+    "RM-MT-FS-0012",
+    "MS Sheet – 1250×2500×1.5mm"
+   ],
+   [
+    "RM-MT-FS-0016",
+    "MS Sheet – 1250×2500×1mm"
+   ],
+   [
+    "RM-MT-FS-0017",
+    "MS Sheet – 1250×2500×2mm"
+   ],
+   [
+    "RM-MT-FS-0019",
+    "MS Sheet – 1250×2500×4mm"
+   ],
+   [
+    "RM-MT-FS-0020",
+    "MS Sheet – 1250×2500×5mm"
+   ],
+   [
+    "RM-MT-FS-0021",
+    "MS Sheet – 1250×2500×6mm"
+   ],
+   [
+    "RM-MT-FS-0022",
+    "MS Sheet – 1250×2500×8mm"
+   ],
+   [
+    "RM-MT-FS-0026",
+    "MS Sheet – 1250×3000×3mm"
+   ],
+   [
+    "RM-MT-FS-0042",
+    "MS Sheet – 1500×3000×3mm"
+   ],
+   [
+    "RM-MT-FS-0066",
+    "SS Sheet – 304 – 1250×2500×1mm"
+   ],
+   [
+    "RM-MT-FS-0069",
+    "SS Sheet – 304 – 1250×2500×4mm"
+   ],
+   [
+    "RM-MT-FS-0071",
+    "SS Sheet – 304 – 1250×2500×6mm"
+   ],
+   [
+    "RM-MT-FS-0077",
+    "SS Sheet – 304 – 1500×3000×4mm"
+   ],
+   [
+    "RM-MT-FS-0092",
+    "MS Sheet - 1240 x 2500 x 3mm"
+   ],
+   [
+    "RM-MT-FS-0093",
+    "SS Sheet – 304 – 2500×12500×3mm"
+   ],
+   [
+    "RM-MT-FS-0094",
+    "SS Sheet – 304 – 2500×1250×8mm"
+   ],
+   [
+    "RM-MT-PP-0010",
+    "SS 304 Pipe Round OD32 x 1.5mm"
+   ],
+   [
+    "RM-MT-PP-0013",
+    "SS 304 Pipe Round - OD 125 x 2mm"
+   ],
+   [
+    "RM-MT-PP-0014",
+    "SS 304 Pipe – Round – OD32×2mm"
+   ],
+   [
+    "RM-MT-PP-0015",
+    "SS 304 Round Pipe – OD50×50×3mm"
+   ],
+   [
+    "RM-MT-PP-0016",
+    "SS 304 Round Pipe– 20×20×2mm"
+   ],
+   [
+    "RM-MT-ST-0006",
+    "MS Tube – 100×100×3.2mm"
+   ],
+   [
+    "RM-MT-ST-0063",
+    "MS Tube – 40×40×2mm"
+   ],
+   [
+    "RM-MT-ST-0078",
+    "MS Tube – 40×60×3.2mm"
+   ],
+   [
+    "RM-MT-ST-0086",
+    "MS Tube – 40×80×2.5mm"
+   ],
+   [
+    "RM-MT-ST-0088",
+    "MS Tube – 80×40×2mm"
+   ],
+   [
+    "RM-MT-ST-0093",
+    "MS Tube – 80×80×3.2mm"
+   ],
+   [
+    "RM-MT-ST-0109",
+    "MS Tube"
+   ],
+   [
+    "RM-MT-ST-0110",
+    "MS Tube - 25*50*1mm"
+   ]
+  ]
+ },
+ "RD-IM-03": {
+  "columns": [
+   "issue_date",
+   "item_code",
+   "item_name",
+   "quantity_issued",
+   "unit",
+   "location_name"
+  ],
+  "row_count": 2,
+  "rows": [
+   [
+    "2026-08-19",
+    "FG-IA-0005",
+    "Hand Pallet Truck 3 Ton (Width 550mm, Fork Length 800mm)",
+    2.0,
+    "pcs",
+    "C-84"
+   ],
+   [
+    "2026-08-19",
+    "BO-MC-0240",
+    "PVC Curtain for High Speed Door – 900 GSM Blue PVC – Sizes: 3145×3795mm (2 nos); 3175×3765mm (1 nos); 1500×3765mm (1 nos); 2700×3530mm (1 nos); 3145×3770mm (1 nos) – Total fabric 80.00 sqm – Vision Transparent 800 GSM 18.00 sqm",
+    6.0,
+    "pcs",
+    "C-84"
+   ]
+  ]
+ },
+ "RD-IM-04": {
+  "columns": [
+   "issued_to",
+   "issues"
+  ],
+  "row_count": 5,
+  "rows": [
+   [
+    "G133 Shop Floor",
+    45
+   ],
+   [
+    "H103 Shop Floor",
+    30
+   ],
+   [
+    "Dispatch team",
+    26
+   ],
+   [
+    "DE132 Shop floor",
+    19
+   ],
+   [
+    "C84 FM assembly",
+    2
+   ]
+  ]
+ },
+ "RD-IM-05": {
+  "columns": [
+   "item_code",
+   "item_name",
+   "on_hand",
+   "on_order",
+   "days_of_cover",
+   "lead_time_days",
+   "order_by_date"
+  ],
+  "row_count": 15,
+  "rows": [
+   [
+    "BO-EL-0140",
+    "Relay Base RXZE1M2C",
+    "0",
+    "0",
+    "0",
+    44,
+    "2026-08-17"
+   ],
+   [
+    "BO-EL-0138",
+    "Uninterruptible Power Supply (UPS) 1100VA, Tower, 230V",
+    "0",
+    "0",
+    "0",
+    44,
+    "2026-08-17"
+   ],
+   [
+    "RM-MT-ST-0063",
+    "MS Tube – 40×40×2mm",
+    "0",
+    "0",
+    "0",
+    28,
+    "2026-09-02"
+   ],
+   [
+    "BO-EL-0139",
+    "Relay  – 240V, 2 Pole (RXM2LB1P7)",
+    "0",
+    "0",
+    "0",
+    27,
+    "2026-09-03"
+   ],
+   [
+    "RM-MT-ST-0088",
+    "MS Tube – 80×40×2mm",
+    "0",
+    "0",
+    "0",
+    25,
+    "2026-09-05"
+   ],
+   [
+    "RM-MT-FS-0071",
+    "SS Sheet – 304 – 1250×2500×6mm",
+    "0",
+    "0",
+    "0",
+    25,
+    "2026-09-05"
+   ],
+   [
+    "RM-MT-FS-0075",
+    "SS Sheet – 304 – 1500×3000×2mm",
+    "3681",
+    "7065",
+    "5.6",
+    29,
+    "2026-09-06"
+   ],
+   [
+    "RM-MT-FS-0036",
+    "MS Sheet – 1500×3000×10mm",
+    "0.000000000000909494701772928",
+    "0",
+    "0",
+    19,
+    "2026-09-11"
+   ],
+   [
+    "RM-MT-ST-0006",
+    "MS Tube – 100×100×3.2mm",
+    "0",
+    "0",
+    "0",
+    16,
+    "2026-09-14"
+   ],
+   [
+    "RM-MT-ST-0093",
+    "MS Tube – 80×80×3.2mm",
+    "0",
+    "0",
+    "0",
+    15,
+    "2026-09-15"
+   ],
+   [
+    "BO-CN-0010",
+    "Scotch Brite Red Belt For SS Polishing (3.5\"×15.5\")",
+    "0",
+    "0",
+    "0",
+    13,
+    "2026-09-17"
+   ],
+   [
+    "BO-MC-0133",
+    "Flap Mechanism for AFC Gate (Normal) ",
+    "0",
+    "0",
+    "0",
+    12,
+    "2026-09-18"
+   ],
+   [
+    "BO-CN-0037",
+    "EPE Packing Roll – 1500mm×80m×5mm",
+    "0",
+    "0",
+    "0",
+    10,
+    "2026-09-20"
+   ],
+   [
+    "BO-MC-AS-0029",
+    "Acrylic Sheet – Transparent – 37×30×4mm",
+    "495",
+    "0",
+    "12",
+    17,
+    "2026-09-25"
+   ],
+   [
+    "RM-MT-FS-0069",
+    "SS Sheet – 304 – 1250×2500×4mm",
+    "520",
+    "0",
+    "23",
+    23,
+    "2026-09-29"
+   ]
+  ]
+ },
+ "RD-IM-06": {
+  "columns": [
+   "po_number",
+   "pending_qty",
+   "unit",
+   "expected_delivery_date"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "PO-2026-0039",
+    "7065",
+    "kg",
+    "2026-08-20"
+   ]
+  ]
+ },
+ "RD-IM-07": {
+  "columns": [
+   "item_name",
+   "quantity",
+   "status",
+   "needed_by"
+  ],
+  "row_count": 5,
+  "rows": [
+   [
+    "Relay Base RXZE1M2C",
+    "65",
+    "open",
+    "2026-10-16"
+   ],
+   [
+    "MS Tube – 40×40×2mm",
+    "60",
+    "open",
+    "2026-10-16"
+   ],
+   [
+    "Geared Motor - IDM-RS-MTRBA800 - Indirect Drive",
+    "2",
+    "open",
+    "2026-10-09"
+   ],
+   [
+    "Uninterruptible Power Supply (UPS) 1100VA, Tower, 230V",
+    "90",
+    "open",
+    "2026-10-13"
+   ],
+   [
+    "MS Tube – 100×100×3.2mm",
+    "870",
+    "fulfilled",
+    "2026-09-29"
+   ]
+  ]
+ },
+ "RD-IM-08": {
+  "columns": [
+   "category",
+   "items"
+  ],
+  "row_count": 4,
+  "rows": [
+   [
+    "Bought Out",
+    348
+   ],
+   [
+    "Raw Material",
+    68
+   ],
+   [
+    "Finished Goods",
+    45
+   ],
+   [
+    "Uncategorised",
+    40
+   ]
+  ]
+ },
+ "RD-IM-09": {
+  "columns": [
+   "items_in_stock"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    74
+   ]
+  ]
+ },
+ "RD-IM-10": {
+  "columns": [
+   "received_on",
+   "item_code",
+   "item_name",
+   "quantity",
+   "unit",
+   "location_name"
+  ],
+  "row_count": 11,
+  "rows": [
+   [
+    "2026-09-12",
+    "BO-MC-0081",
+    "PU Flap for AFC Mechanism (Wide - Green)",
+    50.0,
+    "pcs",
+    "132-1"
+   ],
+   [
+    "2026-09-17",
+    "BO-MC-WS-0012",
+    "Washer – Flat – SS 304 – M4",
+    500.0,
+    "pcs",
+    "132-1"
+   ],
+   [
+    "2026-09-17",
+    "BO-MC-WS-0012",
+    "Washer – Flat – SS 304 – M4",
+    500.0,
+    "pcs",
+    "132-1"
+   ],
+   [
+    "2026-09-17",
+    "BO-MC-WS-0012",
+    "Washer – Flat – SS 304 – M4",
+    10.0,
+    "pcs",
+    "132-1"
+   ],
+   [
+    "2026-09-17",
+    "BO-MC-WS-0012",
+    "Washer – Flat – SS 304 – M4",
+    300.0,
+    "pcs",
+    "132-1"
+   ],
+   [
+    "2026-09-17",
+    "BO-MC-WS-0012",
+    "Washer – Flat – SS 304 – M4",
+    300.0,
+    "pcs",
+    "132-1"
+   ],
+   [
+    "2026-09-18",
+    "BO-MC-WS-0012",
+    "Washer – Flat – SS 304 – M4",
+    3700.0,
+    "pcs",
+    "132-1"
+   ],
+   [
+    "2026-09-18",
+    "BO-MC-WS-0012",
+    "Washer – Flat – SS 304 – M4",
+    20.0,
+    "pcs",
+    "132-1"
+   ],
+   [
+    "2026-09-19",
+    "BO-MC-WS-0012",
+    "Washer – Flat – SS 304 – M4",
+    10.0,
+    "pcs",
+    "132-1"
+   ],
+   [
+    "2026-09-19",
+    "BO-MC-WS-0012",
+    "Washer – Flat – SS 304 – M4",
+    29900.0,
+    "pcs",
+    "132-1"
+   ],
+   [
+    "2026-09-19",
+    "BO-MC-WS-0012",
+    "Washer – Flat – SS 304 – M4",
+    100.0,
+    "pcs",
+    "132-1"
+   ]
+  ]
+ },
+ "RD-IM-11": {
+  "columns": [
+   "location_name",
+   "address"
+  ],
+  "row_count": 5,
+  "rows": [
+   [
+    "103-1",
+    "E103 Office Warehouse 1"
+   ],
+   [
+    "132-1",
+    "D132 Office Warehouse 1"
+   ],
+   [
+    "132-2",
+    "D132 Office Warehouse 2"
+   ],
+   [
+    "132-3",
+    "D132 Office Warehouse 3"
+   ],
+   [
+    "C-84",
+    "C-84 warehouse location"
+   ]
+  ]
+ },
+ "RD-IM-12": {
+  "columns": [
+   "created_at",
+   "item_code",
+   "movement_type",
+   "quantity"
+  ],
+  "row_count": 0,
+  "rows": []
+ },
+ "RD-IM-13": {
+  "columns": [
+   "zero_stock_items"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    78
+   ]
+  ]
+ },
+ "RD-OW-01": {
+  "columns": [
+   "quarter",
+   "revenue",
+   "cost",
+   "margin_pct"
+  ],
+  "row_count": 3,
+  "rows": [
+   [
+    "2026-Q1",
+    "10879200",
+    "8141500",
+    "25.2"
+   ],
+   [
+    "2026-Q2",
+    "10692000",
+    "8454000",
+    "20.9"
+   ],
+   [
+    "2026-Q3",
+    "16993500",
+    "12789000",
+    "24.7"
+   ]
+  ]
+ },
+ "RD-OW-02": {
+  "columns": [
+   "month",
+   "total_spend"
+  ],
+  "row_count": 2,
+  "rows": [
+   [
+    "2026-08-01",
+    "5689423.54"
+   ],
+   [
+    "2026-09-01",
+    "10529"
+   ]
+  ]
+ },
+ "RD-OW-03": {
+  "columns": [
+   "customer_name",
+   "revenue"
+  ],
+  "row_count": 6,
+  "rows": [
+   [
+    "Ganga Metro Services",
+    "11286800"
+   ],
+   [
+    "Northline Metro Corporation",
+    "7333800"
+   ],
+   [
+    "Western Rail Systems Pvt. Ltd.",
+    "6364700"
+   ],
+   [
+    "Coastal Rail Transit Ltd.",
+    "5734200"
+   ],
+   [
+    "Deccan Urban Transit Authority",
+    "4831000"
+   ],
+   [
+    "Sahyadri Infra Projects",
+    "3014200"
+   ]
+  ]
+ },
+ "RD-OW-04": {
+  "columns": [
+   "po_number",
+   "vendor_name",
+   "po_total",
+   "requested_by_name"
+  ],
+  "row_count": 0,
+  "rows": []
+ },
+ "RD-OW-05": {
+  "columns": [
+   "full_name",
+   "email",
+   "role",
+   "is_active"
+  ],
+  "row_count": 3,
+  "rows": [
+   [
+    "Demo Inventory Manager",
+    "inventory@demo.inventorymantra",
+    "inventory_manager",
+    true
+   ],
+   [
+    "Demo Owner",
+    "owner@demo.inventorymantra",
+    "owner",
+    true
+   ],
+   [
+    "Demo Procurement Manager",
+    "procurement@demo.inventorymantra",
+    "procurement_manager",
+    true
+   ]
+  ]
+ },
+ "RD-OW-06": {
+  "columns": [
+   "quarter",
+   "revenue",
+   "cost",
+   "gross_profit"
+  ],
+  "row_count": 4,
+  "rows": [
+   [
+    "2025-Q4",
+    "22860800",
+    "17463000",
+    "5397800"
+   ],
+   [
+    "2026-Q1",
+    "10879200",
+    "8141500",
+    "2737700"
+   ],
+   [
+    "2026-Q2",
+    "10692000",
+    "8454000",
+    "2238000"
+   ],
+   [
+    "2026-Q3",
+    "16993500",
+    "12789000",
+    "4204500"
+   ]
+  ]
+ },
+ "RD-OW-07": {
+  "columns": [
+   "status",
+   "pos"
+  ],
+  "row_count": 3,
+  "rows": [
+   [
+    "placed",
+    33
+   ],
+   [
+    "received",
+    21
+   ],
+   [
+    "partial",
+    3
+   ]
+  ]
+ },
+ "RD-OW-08": {
+  "columns": [
+   "quarter",
+   "margin_pct"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "2026-Q2",
+    "20.9"
+   ]
+  ]
+ },
+ "RD-OW-09": {
+  "columns": [
+   "status",
+   "items"
+  ],
+  "row_count": 2,
+  "rows": [
+   [
+    "reorder_now",
+    15
+   ],
+   [
+    "below_min",
+    1
+   ]
+  ]
+ },
+ "RD-OW-10": {
+  "columns": [
+   "item_name",
+   "units"
+  ],
+  "row_count": 5,
+  "rows": [
+   [
+    "Gear Operated Rolling Shutter with GI Curtain – 2000×2400mm",
+    "16"
+   ],
+   [
+    "PVC Curtain for High Speed Door – 1800×2820mm",
+    "15"
+   ],
+   [
+    "HMPS Door Double Leaf - 960mm × 2200mm",
+    "13"
+   ],
+   [
+    "Motorized Direct Drive Rolling Shutter with GI Curtain – 2500×2600mm",
+    "13"
+   ],
+   [
+    "PVC Curtain for High Speed Door 1800×2500mm",
+    "11"
+   ]
+  ]
+ },
+ "RD-OW-11": {
+  "columns": [
+   "revenue"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "38564700"
+   ]
+  ]
+ },
+ "RD-PM-01": {
+  "columns": [
+   "po_number",
+   "vendor_name",
+   "expected_delivery_date",
+   "days_overdue",
+   "total_amount"
+  ],
+  "row_count": 28,
+  "rows": [
+   [
+    "PO-2026-0009",
+    "Granite Steels Pvt. Ltd.",
+    "2026-08-08",
+    53,
+    "36363.6"
+   ],
+   [
+    "PO-2026-0003",
+    "Falcon Steels Pvt. Ltd.",
+    "2026-08-13",
+    48,
+    "50986"
+   ],
+   [
+    "PO-2026-0022",
+    "Pinnacle Engineering Pvt. Ltd.",
+    "2026-08-13",
+    48,
+    "17945"
+   ],
+   [
+    "PO-2026-0016",
+    "Vanguard Engineering Pvt. Ltd.",
+    "2026-08-15",
+    46,
+    "384652"
+   ],
+   [
+    "PO-2026-0029",
+    "Summit Engineering Pvt. Ltd.",
+    "2026-08-16",
+    45,
+    "210077.14"
+   ],
+   [
+    "PO-2026-0028",
+    "Halcyon Steels Pvt. Ltd.",
+    "2026-08-16",
+    45,
+    "8814.51"
+   ],
+   [
+    "PO-2026-0012",
+    "Shakti Steels Pvt. Ltd.",
+    "2026-08-17",
+    44,
+    "13532.75"
+   ],
+   [
+    "PO-2026-0011",
+    "Kingfisher Steels Pvt. Ltd.",
+    "2026-08-17",
+    44,
+    "21617.25"
+   ],
+   [
+    "PO-2026-0031",
+    "Shakti Engineering Pvt. Ltd.",
+    "2026-08-17",
+    44,
+    "75979.5"
+   ],
+   [
+    "PO-2026-0045",
+    "Anand Steels Pvt. Ltd.",
+    "2026-08-20",
+    41,
+    "65327.94"
+   ],
+   [
+    "PO-2026-0039",
+    "Sterling Steels Pvt. Ltd.",
+    "2026-08-20",
+    41,
+    "721420.45"
+   ],
+   [
+    "PO-2026-0001",
+    "Zenith Steels Pvt. Ltd.",
+    "2026-08-21",
+    40,
+    "123393.15"
+   ],
+   [
+    "PO-2026-0036",
+    "Sterling Steels Pvt. Ltd.",
+    "2026-08-21",
+    40,
+    "2299789.02"
+   ],
+   [
+    "PO-2026-0048",
+    "Deccan Steels Pvt. Ltd.",
+    "2026-08-21",
+    40,
+    "17575"
+   ],
+   [
+    "PO-2026-0050",
+    "Bluepeak Steels Pvt. Ltd.",
+    "2026-08-22",
+    39,
+    "21841.05"
+   ],
+   [
+    "PO-2026-0047",
+    "Cedar Steels Pvt. Ltd.",
+    "2026-08-22",
+    39,
+    "20350"
+   ],
+   [
+    "PO-2026-0040",
+    "Crestline Steels Pvt. Ltd.",
+    "2026-08-23",
+    38,
+    "542.1"
+   ],
+   [
+    "PO-2026-0004",
+    "Trident Steels Pvt. Ltd.",
+    "2026-08-23",
+    38,
+    "91575"
+   ],
+   [
+    "PO-2026-0002",
+    "Falcon Steels Pvt. Ltd.",
+    "2026-08-23",
+    38,
+    "42550"
+   ],
+   [
+    "PO-2026-0038",
+    "Meridian Steels Pvt. Ltd.",
+    "2026-08-23",
+    38,
+    "24050"
+   ],
+   [
+    "PO-2026-0044",
+    "Kingfisher Steels Pvt. Ltd.",
+    "2026-08-24",
+    37,
+    "38386.76"
+   ],
+   [
+    "PO-2026-0043",
+    "Kingfisher Steels Pvt. Ltd.",
+    "2026-08-25",
+    36,
+    "18259.5"
+   ],
+   [
+    "PO-2026-0049",
+    "Crestline Engineering Pvt. Ltd.",
+    "2026-08-27",
+    34,
+    "190272.5"
+   ],
+   [
+    "PO-2026-0042",
+    "Kingfisher Steels Pvt. Ltd.",
+    "2026-08-27",
+    34,
+    "13894.61"
+   ],
+   [
+    "PO-2026-0033",
+    "Aster Steels Pvt. Ltd.",
+    "2026-08-28",
+    33,
+    "93425"
+   ],
+   [
+    "PO-2026-0015",
+    "Everest Steels Pvt. Ltd.",
+    "2026-08-28",
+    33,
+    "11562.5"
+   ],
+   [
+    "PO-2026-0035",
+    "Deccan Engineering Pvt. Ltd.",
+    "2026-09-03",
+    27,
+    "69726.5"
+   ],
+   [
+    "PO-2026-0034",
+    "Aster Steels Pvt. Ltd.",
+    "2026-09-18",
+    12,
+    "85951"
+   ]
+  ]
+ },
+ "RD-PM-02": {
+  "columns": [
+   "vendor_name",
+   "total_spend"
+  ],
+  "row_count": 3,
+  "rows": [
+   [
+    "Shakti Steels Pvt. Ltd.",
+    "9752"
+   ],
+   [
+    "Halcyon Steels Pvt. Ltd.",
+    "444"
+   ],
+   [
+    "Zenith Steels Pvt. Ltd.",
+    "333"
+   ]
+  ]
+ },
+ "RD-PM-03": {
+  "columns": [
+   "status",
+   "pos"
+  ],
+  "row_count": 3,
+  "rows": [
+   [
+    "placed",
+    33
+   ],
+   [
+    "received",
+    21
+   ],
+   [
+    "partial",
+    3
+   ]
+  ]
+ },
+ "RD-PM-04": {
+  "columns": [
+   "item_code",
+   "item_name",
+   "on_hand",
+   "on_order",
+   "reorder_qty",
+   "lead_time_days",
+   "order_by_date",
+   "preferred_vendor"
+  ],
+  "row_count": 15,
+  "rows": [
+   [
+    "BO-EL-0140",
+    "Relay Base RXZE1M2C",
+    "0",
+    "0",
+    "65",
+    44,
+    "2026-08-17",
+    null
+   ],
+   [
+    "BO-EL-0138",
+    "Uninterruptible Power Supply (UPS) 1100VA, Tower, 230V",
+    "0",
+    "0",
+    "90",
+    44,
+    "2026-08-17",
+    null
+   ],
+   [
+    "RM-MT-ST-0063",
+    "MS Tube – 40×40×2mm",
+    "0",
+    "0",
+    "60",
+    28,
+    "2026-09-02",
+    "Bluepeak Steels Pvt. Ltd."
+   ],
+   [
+    "BO-EL-0139",
+    "Relay  – 240V, 2 Pole (RXM2LB1P7)",
+    "0",
+    "0",
+    "65",
+    27,
+    "2026-09-03",
+    null
+   ],
+   [
+    "RM-MT-ST-0088",
+    "MS Tube – 80×40×2mm",
+    "0",
+    "0",
+    "870",
+    25,
+    "2026-09-05",
+    null
+   ],
+   [
+    "RM-MT-FS-0071",
+    "SS Sheet – 304 – 1250×2500×6mm",
+    "0",
+    "0",
+    "300",
+    25,
+    "2026-09-05",
+    "Meridian Engineering Pvt. Ltd."
+   ],
+   [
+    "RM-MT-FS-0075",
+    "SS Sheet – 304 – 1500×3000×2mm",
+    "3681",
+    "7065",
+    "39450",
+    29,
+    "2026-09-06",
+    "Sterling Steels Pvt. Ltd."
+   ],
+   [
+    "RM-MT-FS-0036",
+    "MS Sheet – 1500×3000×10mm",
+    "0.000000000000909494701772928",
+    "0",
+    "6850",
+    19,
+    "2026-09-11",
+    null
+   ],
+   [
+    "RM-MT-ST-0006",
+    "MS Tube – 100×100×3.2mm",
+    "0",
+    "0",
+    "870",
+    16,
+    "2026-09-14",
+    "Bluepeak Steels Pvt. Ltd."
+   ],
+   [
+    "RM-MT-ST-0093",
+    "MS Tube – 80×80×3.2mm",
+    "0",
+    "0",
+    "910",
+    15,
+    "2026-09-15",
+    "Bluepeak Steels Pvt. Ltd."
+   ],
+   [
+    "BO-CN-0010",
+    "Scotch Brite Red Belt For SS Polishing (3.5\"×15.5\")",
+    "0",
+    "0",
+    "90",
+    13,
+    "2026-09-17",
+    null
+   ],
+   [
+    "BO-MC-0133",
+    "Flap Mechanism for AFC Gate (Normal) ",
+    "0",
+    "0",
+    "420",
+    12,
+    "2026-09-18",
+    null
+   ],
+   [
+    "BO-CN-0037",
+    "EPE Packing Roll – 1500mm×80m×5mm",
+    "0",
+    "0",
+    "4",
+    10,
+    "2026-09-20",
+    null
+   ],
+   [
+    "BO-MC-AS-0029",
+    "Acrylic Sheet – Transparent – 37×30×4mm",
+    "495",
+    "0",
+    "2500",
+    17,
+    "2026-09-25",
+    null
+   ],
+   [
+    "RM-MT-FS-0069",
+    "SS Sheet – 304 – 1250×2500×4mm",
+    "520",
+    "0",
+    "1400",
+    23,
+    "2026-09-29",
+    "Meridian Engineering Pvt. Ltd."
+   ]
+  ]
+ },
+ "RD-PM-05": {
+  "columns": [
+   "item_name",
+   "quantity",
+   "needed_by",
+   "requested_by_name"
+  ],
+  "row_count": 4,
+  "rows": [
+   [
+    "Geared Motor - IDM-RS-MTRBA800 - Indirect Drive",
+    "2",
+    "2026-10-09",
+    "Demo Inventory Manager"
+   ],
+   [
+    "Uninterruptible Power Supply (UPS) 1100VA, Tower, 230V",
+    "90",
+    "2026-10-13",
+    "Demo Inventory Manager"
+   ],
+   [
+    "Relay Base RXZE1M2C",
+    "65",
+    "2026-10-16",
+    "Demo Inventory Manager"
+   ],
+   [
+    "MS Tube – 40×40×2mm",
+    "60",
+    "2026-10-16",
+    "Demo Inventory Manager"
+   ]
+  ]
+ },
+ "RD-PM-06": {
+  "columns": [
+   "vendor_name",
+   "total_spend"
+  ],
+  "row_count": 5,
+  "rows": [
+   [
+    "Sterling Steels Pvt. Ltd.",
+    "3021209.47"
+   ],
+   [
+    "Meridian Engineering Pvt. Ltd.",
+    "395456.74"
+   ],
+   [
+    "Vanguard Engineering Pvt. Ltd.",
+    "384652"
+   ],
+   [
+    "Summit Engineering Pvt. Ltd.",
+    "259384.14"
+   ],
+   [
+    "Pinnacle Steels Pvt. Ltd.",
+    "227783.17"
+   ]
+  ]
+ },
+ "RD-PM-07": {
+  "columns": [
+   "unresolved"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    42
+   ]
+  ]
+ },
+ "RD-PM-08": {
+  "columns": [
+   "po_number",
+   "vendor_name",
+   "stage",
+   "amount"
+  ],
+  "row_count": 26,
+  "rows": [
+   [
+    "PO-2026-0027",
+    "Bluepeak Steels Pvt. Ltd.",
+    "10 Days PDC Agst Dispatch",
+    "28341"
+   ],
+   [
+    "PO-2026-0028",
+    "Halcyon Steels Pvt. Ltd.",
+    "Advance",
+    "8814.51"
+   ],
+   [
+    "PO-2026-0029",
+    "Summit Engineering Pvt. Ltd.",
+    "10 DAys PDC Against Dispatch",
+    "210077.14"
+   ],
+   [
+    "PO-2026-0030",
+    "Pinnacle Steels Pvt. Ltd.",
+    "7 Days PDC Against Dispatch",
+    "104282.65"
+   ],
+   [
+    "PO-2026-0031",
+    "Shakti Engineering Pvt. Ltd.",
+    "30 Days Credit",
+    "75979.5"
+   ],
+   [
+    "PO-2026-0032",
+    "Cobalt Steels Pvt. Ltd.",
+    "30 Days Credit",
+    "8288"
+   ],
+   [
+    "PO-2026-0033",
+    "Aster Steels Pvt. Ltd.",
+    "100% Against Dispatch",
+    "93425"
+   ],
+   [
+    "PO-2026-0034",
+    "Aster Steels Pvt. Ltd.",
+    "100% Against Dispatch",
+    "85951"
+   ],
+   [
+    "PO-2026-0035",
+    "Deccan Engineering Pvt. Ltd.",
+    "100% After Work Completion",
+    "69726.5"
+   ],
+   [
+    "PO-2026-0036",
+    "Sterling Steels Pvt. Ltd.",
+    "10 Days PDC Against Dispatch",
+    "2299789.02"
+   ],
+   [
+    "PO-2026-0038",
+    "Meridian Steels Pvt. Ltd.",
+    "100% Against PI",
+    "24050"
+   ],
+   [
+    "PO-2026-0039",
+    "Sterling Steels Pvt. Ltd.",
+    "10 Days PDC Cheque",
+    "721420.45"
+   ],
+   [
+    "PO-2026-0040",
+    "Crestline Steels Pvt. Ltd.",
+    "100% Payment Against Dispatch",
+    "542.1"
+   ],
+   [
+    "PO-2026-0041",
+    "Orion Steels Pvt. Ltd.",
+    "Advance",
+    "8976.2"
+   ],
+   [
+    "PO-2026-0041",
+    "Orion Steels Pvt. Ltd.",
+    "Balance Against Dispatch",
+    "8976.2"
+   ],
+   [
+    "PO-2026-0042",
+    "Kingfisher Steels Pvt. Ltd.",
+    "30 Days Credit",
+    "13894.61"
+   ],
+   [
+    "PO-2026-0043",
+    "Kingfisher Steels Pvt. Ltd.",
+    "30 Days Credit",
+    "18259.5"
+   ],
+   [
+    "PO-2026-0044",
+    "Kingfisher Steels Pvt. Ltd.",
+    "30 Days Credit",
+    "38386.76"
+   ],
+   [
+    "PO-2026-0045",
+    "Anand Steels Pvt. Ltd.",
+    "10 Days PDC Agst Dispatch",
+    "65327.94"
+   ],
+   [
+    "PO-2026-0046",
+    "Cobalt Engineering Pvt. Ltd.",
+    "Advance",
+    "2451.25"
+   ],
+   [
+    "PO-2026-0046",
+    "Cobalt Engineering Pvt. Ltd.",
+    "Balance 30 Days Credit",
+    "2451.25"
+   ],
+   [
+    "PO-2026-0047",
+    "Cedar Steels Pvt. Ltd.",
+    "100% After Dispatch",
+    "20350"
+   ],
+   [
+    "PO-2026-0048",
+    "Deccan Steels Pvt. Ltd.",
+    "100% Against Dispatch",
+    "17575"
+   ],
+   [
+    "PO-2026-0049",
+    "Crestline Engineering Pvt. Ltd.",
+    "Advance",
+    "95136.25"
+   ],
+   [
+    "PO-2026-0049",
+    "Crestline Engineering Pvt. Ltd.",
+    "Balance 30 Days Credit",
+    "95136.25"
+   ],
+   [
+    "PO-2026-0050",
+    "Bluepeak Steels Pvt. Ltd.",
+    "10 Days PDC Against Dispatch",
+    "21841.05"
+   ]
+  ]
+ },
+ "RD-PM-09": {
+  "columns": [
+   "open_value",
+   "open_pos"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "4789288.83",
+    36
+   ]
+  ]
+ },
+ "RD-PM-10": {
+  "columns": [
+   "total_spend"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "5689423.54"
+   ]
+  ]
+ },
+ "RD-PM-11": {
+  "columns": [
+   "po_number",
+   "vendor_name",
+   "days_overdue"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "PO-2026-0009",
+    "Granite Steels Pvt. Ltd.",
+    53
+   ]
+  ]
+ },
+ "RD-PM-12": {
+  "columns": [
+   "open_pos"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    2
+   ]
+  ]
+ },
+ "RD-PM-13": {
+  "columns": [
+   "item_code",
+   "item_name",
+   "quantity_ordered",
+   "quantity_received",
+   "unit_price",
+   "line_total"
+  ],
+  "row_count": 1,
+  "rows": [
+   [
+    "BO-EL-0215",
+    "Uninterruptible Power Supply (UPS) 1000VA / 600W - Aurora (Eaton) - for TVM - 364×139×195mm",
+    "26",
+    "0",
+    "1961",
+    "50986"
+   ]
+  ]
+ },
+ "RD-PM-14": {
+  "columns": [
+   "created_at",
+   "operation",
+   "entity_type",
+   "status"
+  ],
+  "row_count": 0,
+  "rows": []
+ },
+ "RD-PM-15": {
+  "columns": [
+   "po_number",
+   "vendor_name",
+   "expected_delivery_date",
+   "days_overdue",
+   "total_amount"
+  ],
+  "row_count": 28,
+  "rows": [
+   [
+    "PO-2026-0009",
+    "Granite Steels Pvt. Ltd.",
+    "2026-08-08",
+    53,
+    "36363.6"
+   ],
+   [
+    "PO-2026-0003",
+    "Falcon Steels Pvt. Ltd.",
+    "2026-08-13",
+    48,
+    "50986"
+   ],
+   [
+    "PO-2026-0022",
+    "Pinnacle Engineering Pvt. Ltd.",
+    "2026-08-13",
+    48,
+    "17945"
+   ],
+   [
+    "PO-2026-0016",
+    "Vanguard Engineering Pvt. Ltd.",
+    "2026-08-15",
+    46,
+    "384652"
+   ],
+   [
+    "PO-2026-0029",
+    "Summit Engineering Pvt. Ltd.",
+    "2026-08-16",
+    45,
+    "210077.14"
+   ],
+   [
+    "PO-2026-0028",
+    "Halcyon Steels Pvt. Ltd.",
+    "2026-08-16",
+    45,
+    "8814.51"
+   ],
+   [
+    "PO-2026-0012",
+    "Shakti Steels Pvt. Ltd.",
+    "2026-08-17",
+    44,
+    "13532.75"
+   ],
+   [
+    "PO-2026-0011",
+    "Kingfisher Steels Pvt. Ltd.",
+    "2026-08-17",
+    44,
+    "21617.25"
+   ],
+   [
+    "PO-2026-0031",
+    "Shakti Engineering Pvt. Ltd.",
+    "2026-08-17",
+    44,
+    "75979.5"
+   ],
+   [
+    "PO-2026-0045",
+    "Anand Steels Pvt. Ltd.",
+    "2026-08-20",
+    41,
+    "65327.94"
+   ],
+   [
+    "PO-2026-0039",
+    "Sterling Steels Pvt. Ltd.",
+    "2026-08-20",
+    41,
+    "721420.45"
+   ],
+   [
+    "PO-2026-0001",
+    "Zenith Steels Pvt. Ltd.",
+    "2026-08-21",
+    40,
+    "123393.15"
+   ],
+   [
+    "PO-2026-0036",
+    "Sterling Steels Pvt. Ltd.",
+    "2026-08-21",
+    40,
+    "2299789.02"
+   ],
+   [
+    "PO-2026-0048",
+    "Deccan Steels Pvt. Ltd.",
+    "2026-08-21",
+    40,
+    "17575"
+   ],
+   [
+    "PO-2026-0050",
+    "Bluepeak Steels Pvt. Ltd.",
+    "2026-08-22",
+    39,
+    "21841.05"
+   ],
+   [
+    "PO-2026-0047",
+    "Cedar Steels Pvt. Ltd.",
+    "2026-08-22",
+    39,
+    "20350"
+   ],
+   [
+    "PO-2026-0040",
+    "Crestline Steels Pvt. Ltd.",
+    "2026-08-23",
+    38,
+    "542.1"
+   ],
+   [
+    "PO-2026-0004",
+    "Trident Steels Pvt. Ltd.",
+    "2026-08-23",
+    38,
+    "91575"
+   ],
+   [
+    "PO-2026-0002",
+    "Falcon Steels Pvt. Ltd.",
+    "2026-08-23",
+    38,
+    "42550"
+   ],
+   [
+    "PO-2026-0038",
+    "Meridian Steels Pvt. Ltd.",
+    "2026-08-23",
+    38,
+    "24050"
+   ],
+   [
+    "PO-2026-0044",
+    "Kingfisher Steels Pvt. Ltd.",
+    "2026-08-24",
+    37,
+    "38386.76"
+   ],
+   [
+    "PO-2026-0043",
+    "Kingfisher Steels Pvt. Ltd.",
+    "2026-08-25",
+    36,
+    "18259.5"
+   ],
+   [
+    "PO-2026-0049",
+    "Crestline Engineering Pvt. Ltd.",
+    "2026-08-27",
+    34,
+    "190272.5"
+   ],
+   [
+    "PO-2026-0042",
+    "Kingfisher Steels Pvt. Ltd.",
+    "2026-08-27",
+    34,
+    "13894.61"
+   ],
+   [
+    "PO-2026-0033",
+    "Aster Steels Pvt. Ltd.",
+    "2026-08-28",
+    33,
+    "93425"
+   ],
+   [
+    "PO-2026-0015",
+    "Everest Steels Pvt. Ltd.",
+    "2026-08-28",
+    33,
+    "11562.5"
+   ],
+   [
+    "PO-2026-0035",
+    "Deccan Engineering Pvt. Ltd.",
+    "2026-09-03",
+    27,
+    "69726.5"
+   ],
+   [
+    "PO-2026-0034",
+    "Aster Steels Pvt. Ltd.",
+    "2026-09-18",
+    12,
+    "85951"
+   ]
+  ]
+ },
+ "VZ-IM-03": {
+  "columns": [
+   "location_name",
+   "items_in_stock"
+  ],
+  "row_count": 5,
+  "rows": [
+   [
+    "132-1",
+    266
+   ],
+   [
+    "132-3",
+    74
+   ],
+   [
+    "132-2",
+    51
+   ],
+   [
+    "103-1",
+    14
+   ],
+   [
+    "C-84",
+    4
+   ]
+  ]
+ },
+ "VZ-OW-02": {
+  "columns": [
+   "quarter",
+   "margin_pct"
+  ],
+  "row_count": 4,
+  "rows": [
+   [
+    "2025-Q4",
+    "23.6"
+   ],
+   [
+    "2026-Q1",
+    "25.2"
+   ],
+   [
+    "2026-Q2",
+    "20.9"
+   ],
+   [
+    "2026-Q3",
+    "24.7"
+   ]
+  ]
+ },
+ "VZ-PM-01": {
+  "columns": [
+   "status",
+   "pos"
+  ],
+  "row_count": 3,
+  "rows": [
+   [
+    "placed",
+    33
+   ],
+   [
+    "received",
+    21
+   ],
+   [
+    "partial",
+    3
+   ]
+  ]
+ },
+ "VZ-PM-04": {
+  "columns": [
+   "vendor_name",
+   "total_spend"
+  ],
+  "row_count": 34,
+  "rows": [
+   [
+    "Sterling Steels Pvt. Ltd.",
+    "3021209.47"
+   ],
+   [
+    "Meridian Engineering Pvt. Ltd.",
+    "395456.74"
+   ],
+   [
+    "Vanguard Engineering Pvt. Ltd.",
+    "384652"
+   ],
+   [
+    "Summit Engineering Pvt. Ltd.",
+    "259384.14"
+   ],
+   [
+    "Pinnacle Steels Pvt. Ltd.",
+    "227783.17"
+   ],
+   [
+    "Crestline Engineering Pvt. Ltd.",
+    "190272.5"
+   ],
+   [
+    "Aster Steels Pvt. Ltd.",
+    "179376"
+   ],
+   [
+    "Kingfisher Steels Pvt. Ltd.",
+    "146548.12"
+   ],
+   [
+    "Zenith Steels Pvt. Ltd.",
+    "123393.15"
+   ],
+   [
+    "Trident Steels Pvt. Ltd.",
+    "93883.8"
+   ],
+   [
+    "Falcon Steels Pvt. Ltd.",
+    "93536"
+   ],
+   [
+    "Shakti Engineering Pvt. Ltd.",
+    "75979.5"
+   ],
+   [
+    "Deccan Engineering Pvt. Ltd.",
+    "69726.5"
+   ],
+   [
+    "Anand Steels Pvt. Ltd.",
+    "65327.94"
+   ],
+   [
+    "Cobalt Engineering Pvt. Ltd.",
+    "55583.62"
+   ],
+   [
+    "Bluepeak Steels Pvt. Ltd.",
+    "50182.05"
+   ],
+   [
+    "Granite Steels Pvt. Ltd.",
+    "36363.6"
+   ],
+   [
+    "Meridian Steels Pvt. Ltd.",
+    "29045"
+   ],
+   [
+    "Ironwood Engineering Pvt. Ltd.",
+    "24163.98"
+   ],
+   [
+    "Cedar Steels Pvt. Ltd.",
+    "20350"
+   ],
+   [
+    "Orion Steels Pvt. Ltd.",
+    "17952.4"
+   ],
+   [
+    "Pinnacle Engineering Pvt. Ltd.",
+    "17945"
+   ],
+   [
+    "Deccan Steels Pvt. Ltd.",
+    "17575"
+   ],
+   [
+    "Halcyon Steels Pvt. Ltd.",
+    "17139.51"
+   ],
+   [
+    "Anand Engineering Pvt. Ltd.",
+    "15322"
+   ],
+   [
+    "Shakti Steels Pvt. Ltd.",
+    "13532.75"
+   ],
+   [
+    "Everest Steels Pvt. Ltd.",
+    "11562.5"
+   ],
+   [
+    "Ironwood Steels Pvt. Ltd.",
+    "8900"
+   ],
+   [
+    "Vanguard Steels Pvt. Ltd.",
+    "8510"
+   ],
+   [
+    "Cobalt Steels Pvt. Ltd.",
+    "8288"
+   ],
+   [
+    "Northgate Steels Pvt. Ltd.",
+    "5272.5"
+   ],
+   [
+    "Monsoon Steels Pvt. Ltd.",
+    "3240"
+   ],
+   [
+    "Summit Steels Pvt. Ltd.",
+    "1424.5"
+   ],
+   [
+    "Crestline Steels Pvt. Ltd.",
+    "542.1"
+   ]
+  ]
+ }
+}
