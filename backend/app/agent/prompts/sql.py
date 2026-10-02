@@ -1,4 +1,4 @@
-"""SQL-generation task block: verbatim from docs/PROMPTS.md §4 (v0.4, approved)."""
+"""SQL-generation task block: verbatim from docs/PROMPTS.md §4 (unchanged since v0.4; current v0.5)."""
 
 SQL_TASK = """\
 TASK: Write ONE PostgreSQL query that answers the request.

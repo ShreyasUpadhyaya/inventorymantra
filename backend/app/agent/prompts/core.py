@@ -1,4 +1,4 @@
-"""Core system prompt and fixed sentences: verbatim from docs/PROMPTS.md §1 (v0.4, approved).
+"""Core system prompt and fixed sentences: verbatim from docs/PROMPTS.md §1 (v0.5, approved).
 
 Do not edit here without changing PROMPTS.md, bumping PROMPT_VERSION and getting approval;
 tests/agent/test_prompts_match_doc.py fails if this text and the document diverge.
@@ -8,7 +8,7 @@ in prompt text, such as JSON examples, are safe).
 
 from typing import Literal
 
-PROMPT_VERSION = "0.4"
+PROMPT_VERSION = "0.5"
 Lang = Literal["en", "hi", "hinglish"]
 
 CORE_SYSTEM_PROMPT = """\

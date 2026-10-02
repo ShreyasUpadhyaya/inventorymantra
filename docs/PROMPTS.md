@@ -1,6 +1,6 @@
 # Prompts — InventoryMantra agent
 
-Status: **v0.4, APPROVED by the user on 2026-10-02** (gate G1 passed; v0.3 approved 2026-10-01, v0.2 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.4"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
+Status: **v0.5, APPROVED by the user on 2026-10-03** (gate G1 passed; earlier: v0.4 2026-10-02, v0.3 2026-10-01, v0.2 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.5"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
 
 ---
 
@@ -123,6 +123,8 @@ Use the recent conversation only to understand references like "and in 132-2?".
 Return JSON matching the schema, nothing else.
 - language: "en" | "hi" | "hinglish"
 - intent: "read" | "write" | "clarification_reply" | "help" | "greeting" | "out_of_scope"
+  (use "out_of_scope" if ANY part of the message is unrelated, e.g. "... and write a poem",
+  and still list the data_areas of the other parts)
 - data_areas: areas the request touches, from ["stock","movements","inbound","requests",
   "vendors","purchase_orders","prices","payments","spend","reorder","sales","margins",
   "users","approvals","audit_own","audit_all"]
@@ -154,6 +156,10 @@ Ask only when one of these is unclear AND no conventional default fits:
 Conventional defaults (do not ask): "this month" = current calendar month; "last month" =
 previous calendar month; "last week" = previous Monday–Sunday; "last N POs" = most recent by
 date; stock questions = current stock, all warehouses.
+Questions about the current state (current stock, overdue, open or pending items, status
+splits, totals with no period mentioned) need no period: use all current records. Explicit
+periods ("last 3 quarters", "August", a date such as "tomorrow") are already clear.
+If unsure, do not ask.
 Write the question and 2–4 options in the user's language, using real values from <data>
 (actual item names, actual ranges such as "23–30 Sep 2026").
 Return {needs_clarification, dimension, question, options, default_applied}.
@@ -292,6 +298,7 @@ Still open (small, has a default): **conversation history window.** The default 
 | 0.1 | 2026-09-30 | First draft | — |
 | 0.2 | 2026-09-30 | Explicit system-vs-user message split per call; applied answers to open questions; help mode; renamed to InventoryMantra | User, 2026-09-30 |
 | 0.3 | 2026-10-01 | Guard output gains `entity_mentions` (copy-as-typed spans for the D-026 matcher) | User, 2026-10-01 |
+| 0.5 | 2026-10-03 | §3: current-state questions need no period, explicit periods are clear, "if unsure, do not ask"; §2: intent out_of_scope if ANY part is unrelated, still listing data areas (first smoke test, D-036) | User, 2026-10-03 |
 | 0.4 | 2026-10-02 | §4: replace the non-existent `expected_delivery_latest` with `expected_delivery_date` (already the latest date; NULL means none recorded) | User, 2026-10-02 |
 
 ## 13. Why `entity_mentions` exists (v0.3, D-026)
@@ -309,7 +316,7 @@ No such column exists. The views (C1.4) expose **`expected_delivery_date`**, whi
 ```
 Applied in C4.2: the code and this document changed in the same commit, and the drift test checks they stay equal.
 
-## 15. Proposed change for v0.5 (NOT approved, not in use)
+## 15. Change for v0.5 (APPROVED 2026-10-03, applied)
 From the first smoke test (DECISION D-036). Code backstops already handle both patterns. These lines make the model get them right first time, which saves a wasted call per turn.
 
 **§3 CLARIFY: add after the "Conventional defaults" line:**
@@ -325,5 +332,5 @@ If unsure, do not ask.
   (use "out_of_scope" if ANY part of the message is unrelated, e.g. "... and write a poem",
   and still list the data_areas of the other parts)
 ```
-Approve it as v0.5, and the code and this document change in one commit, with the drift test kept green.
+Applied: the code and this document changed in one commit, and the drift test keeps them equal.
 

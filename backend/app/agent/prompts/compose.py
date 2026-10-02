@@ -1,5 +1,5 @@
 """Composer (§5), viz tie-breaker (§6) and no-prediction judge (§8): verbatim from
-docs/PROMPTS.md (v0.4, approved)."""
+docs/PROMPTS.md (unchanged since v0.4; current v0.5)."""
 
 COMPOSE_TASK = """\
 TASK: Answer the user's question using ONLY the query result in <data>.

@@ -1,4 +1,4 @@
-"""Guard/router task block: verbatim from docs/PROMPTS.md §2 (unchanged since v0.3; current v0.4)."""
+"""Guard/router task block: verbatim from docs/PROMPTS.md §2 (v0.5, approved)."""
 
 GUARD_TASK = """\
 TASK: Classify the user's latest message. Do not answer it.
@@ -6,6 +6,8 @@ Use the recent conversation only to understand references like "and in 132-2?".
 Return JSON matching the schema, nothing else.
 - language: "en" | "hi" | "hinglish"
 - intent: "read" | "write" | "clarification_reply" | "help" | "greeting" | "out_of_scope"
+  (use "out_of_scope" if ANY part of the message is unrelated, e.g. "... and write a poem",
+  and still list the data_areas of the other parts)
 - data_areas: areas the request touches, from ["stock","movements","inbound","requests",
   "vendors","purchase_orders","prices","payments","spend","reorder","sales","margins",
   "users","approvals","audit_own","audit_all"]
