@@ -248,3 +248,31 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Offline after a choice (user-found, 2026-10-03):** picking `2` resolved the right bush, but offline mode then said "not recorded", which was misleading. Offline SQL now handles simple questions about one chosen record: an item's stock (optionally in a resolved warehouse), its incoming quantity, and a PO's status (header for PM/Owner, inbound lines for IM). It uses templates filled only with DB-resolved codes, and they still pass the guard and run as the role. Anything else offline gets an honest `offline` failure ("Offline demo mode … can only answer known test questions …"), never "not recorded".
 - **Status:** Accepted
 
+### D-033 · Answer composer, charts, grounding and no-prediction (C4.4)
+- **Graph:** `execute_sql → compose → finalize`. `compose` picks the chart, gets prose from the composer model (approved §5 prompt, the only free-text call), and checks it before the user sees anything.
+- **Grounding** (`grounding.py`): every number in the answer must equal (within rounding) one of these:
+  - a value in the rows, or a number inside a text cell (codes, names);
+  - a column sum, average, min, max or count, the row count, or a share of a column total;
+  - a number in the user's question, the assumptions, the clarification answers or the chosen records.
+
+  It understands Indian grouping (₹47,89,288.83), lakh/crore/thousand in English and Hindi, `%`, and Devanagari digits. Numbers glued to letters (OD40, M3) are names.
+  - **Date rule (found while testing):** at first a date's day, month and year backed any number, so "29 purchase orders" passed whenever a date fell on the 29th. Now **date parts only back numbers written as dates** ("29 Aug 2026", "2026-08-29", "Aug 31", "29–31 Aug", "२९ अगस्त").
+  - **Known limit:** grounding proves each number *exists in or follows from* the result, **not that it's attached to the right claim**. For example, "31 POs are overdue" passes if some value or average is 31. Mislabelled real figures are measured by execution accuracy and faithfulness in the C7.1 eval.
+- **No prediction** (`prediction.py`):
+  - **Banned phrases** in en/hi/Hinglish ("will probably", "should arrive", "projected", "shayad … aa jayega", "शायद", "आ जाएगा"…) are rejected by code.
+  - **The judge model** (approved §8 prompt) runs **only** when future-ish wording appears ("will", "next month", "agle"…). Plain factual answers never pay for a judge call, and a test checks this.
+- **Failure handling:** a rejected answer is regenerated once at temperature 0.2. If it fails again, the user gets a **template answer built straight from the rows**, which is grounded and factual by construction. That's also what offline mode shows. LangSmith tags: `answer_rejected` and `fallback_answer` (openai mode).
+- **Charts** (`viz.py`, D-008 rules, no model call), in order:
+  - an explicit request, if the data can carry it;
+  - a process/lifecycle question → `flow` (a Mermaid PO status flow with **live counts**);
+  - no rows → `none`; one row → `kpi` (or `table` if the user asked to "show/list" the record);
+  - detail lists (2+ text columns, a date with text, or more than 12 rows) → `table`;
+  - a pure time series → `line`;
+  - a share/split question with ≤ 6 parts → `pie`;
+  - category + numbers → `bar`.
+
+  **100% of the corpus's 62 expected chart types** are met through the real offline pipeline. These rules were tuned while looking at those cases, so the live eval is the real measure. The §6 tie-breaker prompt is reserved: the rules decide every current case, so no viz model calls are made.
+- **Composer input:** question (with clarification answers), assumptions, `<denied_parts>` only when something was denied, and `<data columns="…">`. Results over 50 rows send the first 50 plus column totals. The fixed DENIAL is appended by code if the model left it out, exactly once.
+- **Formatting** (`formatting.py`): ₹ with Indian grouping, dates like "8 Aug 2026", `%` for `_pct` columns, "not recorded" for NULL.
+- **Status:** Accepted
+

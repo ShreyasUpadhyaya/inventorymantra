@@ -78,3 +78,13 @@ def test_clarify_task_is_verbatim() -> None:
 
     blocks = text_blocks(section("## 3. Call: CLARIFY", "## 4. Call: SQL GENERATION"))
     assert blocks == [CLARIFY_TASK]
+
+
+def test_composer_viz_and_judge_are_verbatim() -> None:
+    from app.agent.prompts.compose import COMPOSE_TASK, JUDGE_SYSTEM, VIZ_TASK
+
+    assert text_blocks(section("## 5. Call: ANSWER COMPOSER", "## 6. Call: VIZ")) == [COMPOSE_TASK]
+    assert text_blocks(section("## 6. Call: VIZ", "## 7. Call: WRITE")) == [VIZ_TASK]
+    assert text_blocks(section("## 8. Call: NO-PREDICTION JUDGE", "## 9. Help mode")) == [
+        JUDGE_SYSTEM
+    ]

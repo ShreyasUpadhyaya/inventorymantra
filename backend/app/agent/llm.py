@@ -21,7 +21,13 @@ from app.core.config import get_settings
 Tier = Literal["fast", "reasoning"]
 
 # Output-token caps per node; generous enough for the schema, small enough to bound cost.
-MAX_TOKENS: dict[str, int] = {"guard": 400, "clarify": 300, "sql": 700}
+MAX_TOKENS: dict[str, int] = {
+    "guard": 400,
+    "clarify": 300,
+    "sql": 700,
+    "compose": 450,
+    "judge": 120,
+}
 DEFAULT_MAX_TOKENS = 800
 
 
@@ -83,6 +89,20 @@ def chat_model(tier: Tier, node: str) -> ChatOpenAI:
         timeout=30,
         max_retries=1,
     )
+
+
+def text_call(node: str, tier: Tier, messages: list[BaseMessage], temperature: float = 0.0) -> str:
+    """Free-text reply (the composer is the only prose call, PROMPTS.md §5)."""
+    if get_settings().llm_mode == "fake":
+        return str(fake.respond_text(node, messages))
+    budget.check()
+    model = chat_model(tier, node)
+    if temperature:
+        model = model.model_copy(update={"temperature": temperature})
+    reply = model.invoke(messages, config={"run_name": f"llm:{node}"})
+    usage = getattr(reply, "usage_metadata", None) or {}
+    budget.add(int(usage.get("total_tokens", 0)))
+    return str(reply.content).strip()
 
 
 def structured_call[T: BaseModel](

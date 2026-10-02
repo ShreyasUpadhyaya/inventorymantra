@@ -42,6 +42,21 @@ def respond[T: BaseModel](node: str, schema: type[T], messages: list[BaseMessage
     return out if isinstance(out, schema) else schema.model_validate(out)
 
 
+class NotScripted(LookupError):
+    """No offline text for this node: the caller uses its own template instead."""
+
+
+def is_scripted(node: str) -> bool:
+    return node in _overrides
+
+
+def respond_text(node: str, messages: list[BaseMessage]) -> str:
+    handler = _overrides.get(node)
+    if handler is None:
+        raise NotScripted(node)
+    return str(handler(messages))
+
+
 def latest_user_text(messages: list[BaseMessage]) -> str:
     for message in reversed(messages):
         if isinstance(message, HumanMessage):
@@ -327,4 +342,14 @@ def fake_clarify(messages: list[BaseMessage]) -> dict[str, Any]:
     return no
 
 
-_DEFAULTS: dict[str, Handler] = {"guard": fake_guard, "sql": fake_sql, "clarify": fake_clarify}
+def fake_judge(messages: list[BaseMessage]) -> dict[str, Any]:
+    """Offline judge: banned phrases are already caught by code; nothing else is flagged."""
+    return {"predictive": False, "span": None}
+
+
+_DEFAULTS: dict[str, Handler] = {
+    "guard": fake_guard,
+    "sql": fake_sql,
+    "clarify": fake_clarify,
+    "judge": fake_judge,
+}

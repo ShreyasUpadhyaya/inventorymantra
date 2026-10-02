@@ -22,10 +22,8 @@ from app.agent.prompts import DENIAL, render
 from app.agent.prompts.replies import (
     DID_YOU_MEAN,
     FAILURE,
-    FOUND_ROWS,
     KIND_WORD,
     NO_CHOICE,
-    NO_ROWS,
     NOT_FOUND,
     WHICH_ONE,
 )
@@ -186,14 +184,14 @@ def after_sql(state: AgentState) -> Literal["execute_sql", "respond_failure"]:
     return "respond_failure" if state.get("failure") else "execute_sql"
 
 
-def after_execute(state: AgentState) -> Literal["present_rows", "generate_sql", "respond_failure"]:
+def after_execute(state: AgentState) -> Literal["compose", "generate_sql", "respond_failure"]:
     if state.get("failure"):
         return "respond_failure"
     if state.get("sql_error"):
         return (
             "generate_sql" if state.get("sql_attempts", 0) < MAX_SQL_ATTEMPTS else "respond_failure"
         )
-    return "present_rows"
+    return "compose"
 
 
 def respond_failure(state: AgentState) -> AgentState:
@@ -202,13 +200,3 @@ def respond_failure(state: AgentState) -> AgentState:
     if state.get("denied_areas"):
         answer = f"{answer} {DENIAL[state['lang']]}"
     return {"answer": answer, "suggestions": [], "failure": kind}
-
-
-def present_rows(state: AgentState) -> AgentState:
-    """Interim reply until the composer (C4.4): a count plus the rows for the UI table."""
-    lang = state["lang"]
-    n = state.get("row_count", 0)
-    answer = FOUND_ROWS[lang].format(n=n) if n else NO_ROWS[lang]
-    if state.get("denied_areas"):
-        answer = f"{answer} {DENIAL[lang]}"
-    return {"answer": answer, "suggestions": []}

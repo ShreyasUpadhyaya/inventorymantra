@@ -4,7 +4,7 @@ START -> guard -> refuse_scope | refuse_rbac | help --------------------> respon
                -> write ----------------------------------------------> pending_capability
                -> read -> resolve_entities -> clarify/not_found -----> respond_entity
                                            -> denied (nothing left) --> respond_fixed
-                                           -> generate_sql -> execute_sql -> present_rows
+                                           -> generate_sql -> execute_sql -> compose
                                                    ^              | error, < 3 attempts
                                                    +--------------+
                                               failure / attempts used -> respond_failure
@@ -28,6 +28,7 @@ from app.agent.nodes.clarify import (
     ask_entity,
     clarify_check,
 )
+from app.agent.nodes.compose import compose
 from app.agent.nodes.guard import guard_node
 from app.agent.nodes.read import (
     after_entities,
@@ -35,7 +36,6 @@ from app.agent.nodes.read import (
     after_sql,
     execute_sql,
     generate_sql,
-    present_rows,
     resolve_entities,
     respond_entity,
     respond_failure,
@@ -74,7 +74,7 @@ def build_graph() -> CompiledStateGraph:  # type: ignore[type-arg]
         ("ask_clarify", ask_clarify),
         ("generate_sql", generate_sql),
         ("execute_sql", execute_sql),
-        ("present_rows", present_rows),
+        ("compose", compose),
         ("respond_failure", respond_failure),
         ("finalize", finalize),
     ]:
@@ -87,7 +87,7 @@ def build_graph() -> CompiledStateGraph:  # type: ignore[type-arg]
     graph.add_conditional_edges("ask_clarify", after_ask_clarify)
     graph.add_conditional_edges("generate_sql", after_sql)
     graph.add_conditional_edges("execute_sql", after_execute)
-    for terminal in ("respond_fixed", "pending_capability", "respond_entity", "present_rows",
+    for terminal in ("respond_fixed", "pending_capability", "respond_entity", "compose",
                      "respond_failure"):  # fmt: skip
         graph.add_edge(terminal, "finalize")
     graph.add_edge("finalize", END)

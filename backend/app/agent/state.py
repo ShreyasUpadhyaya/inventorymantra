@@ -72,6 +72,8 @@ class AgentState(TypedDict, total=False):
     rows: list[list[Any]]
     row_count: int
     failure: str | None  # sql_failed | timeout | unanswerable | unavailable
-    # reply
+    # reply (C4.4)
+    viz: dict[str, Any] | None  # VizSpec for the UI
+    answer_checks: dict[str, Any]  # {fallback, problems} from grounding / prediction
     answer: str
     suggestions: list[str]  # clickable follow-ups (help mode, options)

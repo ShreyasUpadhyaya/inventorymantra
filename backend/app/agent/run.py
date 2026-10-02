@@ -41,6 +41,8 @@ class TurnResult(BaseModel):
     rows: list[list[Any]] = []
     row_count: int = 0
     failure: str | None = None
+    viz: dict[str, Any] | None = None
+    answer_checks: dict[str, Any] = {}
 
 
 def trace_tags(role: str, state: AgentState) -> list[str]:
@@ -49,6 +51,11 @@ def trace_tags(role: str, state: AgentState) -> list[str]:
         tags.append("injection_suspected")
     if state.get("denied_areas"):
         tags.append("rbac_denied")
+    checks = state.get("answer_checks") or {}
+    if checks.get("problems"):
+        tags.append("answer_rejected")
+    if checks.get("fallback") and get_settings().llm_mode != "fake":
+        tags.append("fallback_answer")
     return tags
 
 
@@ -69,6 +76,7 @@ def fresh_turn(user: AuthUser, message: str, history: list[Turn]) -> AgentState:
         "mention_index": 0, "entity_asks": 0, "clarify": None, "clarifications": [],
         "sql": None, "sql_error": None, "sql_attempts": 0, "assumptions": [], "columns": [],
         "rows": [], "row_count": 0, "failure": None, "answer": "", "suggestions": [],
+        "viz": None, "answer_checks": {},
     }  # fmt: skip
 
 
@@ -113,6 +121,8 @@ def _result(thread_id: str, out: dict[str, Any]) -> TurnResult:
         rows=[] if payload else state.get("rows", []),
         row_count=0 if payload else state.get("row_count", 0),
         failure=None if payload else state.get("failure"),
+        viz=None if payload else state.get("viz"),
+        answer_checks={} if payload else state.get("answer_checks", {}),
     )
 
 
