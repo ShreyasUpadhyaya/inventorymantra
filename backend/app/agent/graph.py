@@ -14,12 +14,10 @@ START -> guard -> refuse_scope | refuse_rbac | help --------------------> respon
 from functools import lru_cache
 from typing import Literal
 
-from langgraph.checkpoint.base import BaseCheckpointSaver
-from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
+from app.agent.checkpoint import get_checkpointer
 from app.agent.nodes.clarify import (
     after_ask_clarify,
     after_ask_entity,
@@ -50,14 +48,6 @@ def after_guard(
     if state["route"] == "read":
         return "resolve_entities"
     return "pending_capability" if state["route"] == "write" else "respond_fixed"
-
-
-# Paused (interrupted) turns are saved per thread. In-process for now; C4.5 moves this to
-# Postgres so a pause survives restarts and works across API workers.
-# Only our own state models may be rebuilt from a saved checkpoint (no arbitrary types).
-CHECKPOINT_TYPES = [("app.agent.state", "GuardOutput"), ("app.agent.state", "EntityMention")]
-_serde = JsonPlusSerializer(allowed_msgpack_modules=CHECKPOINT_TYPES)
-_checkpointer: BaseCheckpointSaver = InMemorySaver(serde=_serde)  # type: ignore[type-arg]
 
 
 @lru_cache
@@ -91,4 +81,4 @@ def build_graph() -> CompiledStateGraph:  # type: ignore[type-arg]
                      "respond_failure"):  # fmt: skip
         graph.add_edge(terminal, "finalize")
     graph.add_edge("finalize", END)
-    return graph.compile(checkpointer=_checkpointer)
+    return graph.compile(checkpointer=get_checkpointer())

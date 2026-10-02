@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from app.agent.tracing import configure_tracing
-from app.api.routes import auth, dashboard, users
+from app.api.routes import auth, chat, dashboard, users
 from app.core.config import app_today, get_settings
 from app.core.logging import configure_logging
 from app.db.pool import close_pool
@@ -44,6 +44,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(dashboard.router)
+app.include_router(chat.router)
 
 
 class Health(BaseModel):

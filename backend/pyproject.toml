@@ -21,6 +21,7 @@ dependencies = [
     "langsmith>=0.4",
     "jsonpatch>=1.33",
     "sqlglot>=26",
+    "langgraph-checkpoint-postgres>=2.0",
 ]
 
 [dependency-groups]

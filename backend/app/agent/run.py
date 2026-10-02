@@ -5,6 +5,7 @@ A paused turn is saved under its thread_id; only the user who started it may res
 """
 
 import uuid
+from collections.abc import Callable
 from typing import Any, cast
 
 import langsmith
@@ -80,15 +81,37 @@ def fresh_turn(user: AuthUser, message: str, history: list[Turn]) -> AgentState:
     }  # fmt: skip
 
 
-def _invoke(user: AuthUser, graph_input: Any, config: RunnableConfig, label: str) -> dict[str, Any]:
+StepCallback = Callable[[str], None]
+
+
+def _execute(
+    graph_input: Any, config: RunnableConfig, on_step: StepCallback | None
+) -> dict[str, Any]:
+    """Run the graph step by step (reporting each finished node), then read the saved state."""
     graph = build_graph()
+    for chunk in graph.stream(graph_input, config=config, stream_mode="updates"):
+        for node in chunk:
+            if on_step and node != "__interrupt__":
+                on_step(node)
+    snapshot = graph.get_state(config)
+    out = dict(snapshot.values)
+    pauses = [pause for task in snapshot.tasks for pause in task.interrupts]
+    if pauses:
+        out["__interrupt__"] = pauses
+    return out
+
+
+def _invoke(
+    user: AuthUser, graph_input: Any, config: RunnableConfig, label: str,
+    on_step: StepCallback | None = None,
+) -> dict[str, Any]:  # fmt: skip
     if not tracing_enabled():
-        return cast(dict[str, Any], graph.invoke(graph_input, config=config))
+        return _execute(graph_input, config, on_step)
     with langsmith.trace(
         "chat_turn", inputs={"message": label}, tags=[f"role:{user.role}"],
         metadata=config.get("metadata", {}),
     ) as run:  # fmt: skip
-        out = cast(dict[str, Any], graph.invoke(graph_input, config=config))
+        out = _execute(graph_input, config, on_step)
         tags = trace_tags(user.role, cast(AgentState, out))
         if out.get("__interrupt__"):
             tags = [t for t in tags if not t.startswith("route:")] + ["route:clarify"]
@@ -127,11 +150,15 @@ def _result(thread_id: str, out: dict[str, Any]) -> TurnResult:
 
 
 def run_turn(
-    user: AuthUser, message: str, history: list[Turn] | None = None, thread_id: str | None = None
+    user: AuthUser,
+    message: str,
+    history: list[Turn] | None = None,
+    thread_id: str | None = None,
+    on_step: StepCallback | None = None,
 ) -> TurnResult:
     thread_id = thread_id or str(uuid.uuid4())
     config = _config(user, thread_id)
-    out = _invoke(user, fresh_turn(user, message, history or []), config, message)
+    out = _invoke(user, fresh_turn(user, message, history or []), config, message, on_step)
     return _result(thread_id, out)
 
 
@@ -143,7 +170,9 @@ def pending_question(thread_id: str) -> dict[str, Any] | None:
     return None
 
 
-def resume_turn(user: AuthUser, thread_id: str, answer: str) -> TurnResult:
+def resume_turn(
+    user: AuthUser, thread_id: str, answer: str, on_step: StepCallback | None = None
+) -> TurnResult:
     """Continue a paused turn with the user's choice (option text, code, number or free text)."""
     snapshot = build_graph().get_state({"configurable": {"thread_id": thread_id}})
     if snapshot.values.get("owner_ref") != user_ref(user.id):
@@ -151,5 +180,5 @@ def resume_turn(user: AuthUser, thread_id: str, answer: str) -> TurnResult:
     if pending_question(thread_id) is None:
         raise ThreadAccessError("There is no question waiting for an answer in this conversation.")
     config = _config(user, thread_id)
-    out = _invoke(user, Command(resume=answer[:200]), config, f"[resume] {answer[:200]}")
+    out = _invoke(user, Command(resume=answer[:200]), config, f"[resume] {answer[:200]}", on_step)
     return _result(thread_id, out)

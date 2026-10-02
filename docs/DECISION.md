@@ -276,3 +276,15 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Formatting** (`formatting.py`): ₹ with Indian grouping, dates like "8 Aug 2026", `%` for `_pct` columns, "not recorded" for NULL.
 - **Status:** Accepted
 
+### D-034 · Chat API, history and durable pauses (C4.5)
+- **Endpoints:**
+  - `POST /chat {message, thread_id?}` and `POST /chat/{thread_id}/resume {answer}` return **Server-Sent Events**: `thread` (the id), `status`\* (one per graph step: "Understanding your question", "Writing the query", …), then exactly one of `answer`, `clarify` or `error`.
+  - `GET /chat/threads` and `GET /chat/threads/{id}` serve the history.
+  - Internal fields (`answer_checks`, `entity_mentions`, `resolved`) aren't sent to the client. They remain visible in LangSmith.
+- **Threading:** the graph runs in a worker thread and reports finished nodes through a queue. LangSmith's trace context is thread-bound, and Starlette may advance a streaming generator from different threads. Any exception becomes one fixed `error` event ("Something went wrong…"); details go only to the (redacted) server log.
+- **Durable pauses:** LangGraph `PostgresSaver` on its own small autocommit pool, created with `setup()` at first use; its tables live in `public`, out of reach of the read-only role users. A test simulates a restart (new graph, new checkpointer, new pool) between a question and its answer. `AGENT_CHECKPOINTER=memory` remains for quick experiments.
+- **History** (migration 0004): `chat_threads` (owner, title = first message) and `chat_messages` (role, content, payload with route, chart, up to 200 rows, options, sql). The **last 6 messages feed the router** for follow-ups like "and which vendor is the oldest?". The server owns the history, so the client can't inject fake earlier turns.
+- **Ownership:** every lookup is scoped to the owner. **Another user's thread answers 404, exactly like a missing one**, for reading, resuming or posting into it. Resuming a thread with no waiting question answers 409.
+- **Limits:** messages up to 2,000 characters (answers up to 200); unknown fields rejected; **20 messages per minute per user** (`CHAT_MESSAGES_PER_MINUTE`, in-process like the login limiter).
+- **Status:** Accepted
+

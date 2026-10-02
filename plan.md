@@ -148,7 +148,7 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 - [x] **C4.2** `feat(agent): role schema context, entity resolution (D-026 matcher) and guarded SQL execution`
 - [x] **C4.3** `feat(agent): clarification interrupt with options`
 - [x] **C4.4** `feat(agent): answer composer, VizSpec selection, grounding check, Hindi replies`
-- [ ] **C4.5** `feat(api): /chat SSE streaming and thread history`
+- [x] **C4.5** `feat(api): /chat SSE streaming and thread history`
 
 ### Phase 5 — Frontend (Day 2 PM)
 - [ ] **C5.1** `feat(web): login, session handling, route guards and app shell`

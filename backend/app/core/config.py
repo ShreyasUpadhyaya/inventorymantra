@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     openai_model_fast: str = ""
     openai_daily_token_budget: int = 200_000
 
+    agent_checkpointer: Literal["postgres", "memory"] = "postgres"
+    chat_messages_per_minute: int = 20
+
     langsmith_tracing: bool = False
     langsmith_project: str = "inventorymantra-dev"
 
