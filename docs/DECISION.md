@@ -176,3 +176,23 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Config:** `JWT_SECRET_KEY` must be at least 32 characters, otherwise token creation and checks refuse to run. CI uses its own throwaway value.
 - **Status:** Accepted
 
+### D-028 · Owner user management (C3.2)
+- **Endpoints:** `GET /users`, `POST /users`, `POST /users/{id}/deactivate` and `/activate`. They are guarded by `require_action("create_user" | "deactivate_user")` from `app/policy/permissions.py`, the single source of truth for authorisation (default deny).
+- **Passwords are never chosen through the API.** `POST /users` generates a temporary password server-side and returns it **once** in the response. It isn't stored (only the bcrypt hash is), logged or audited. A forced change on first login is out of scope for the case study.
+- **Deactivation is immediate:** it sets `is_active = false`, revokes every refresh token and bumps `token_version`, so live access tokens die on the next request. The Owner can't deactivate their own account, so they can't lock themselves out.
+- **Every change is audited** in `agent_audit_log` (`app/services/audit.py`) with before/after state and no secrets, so it shows in the Owner's audit view. The full write framework (preview, idempotency) arrives in C6.1.
+- **Status:** Accepted
+
+### D-029 · Role dashboards (C3.3)
+- **`GET /dashboard`** returns `{role, today, kpis[], sections[]}` for the signed-in user's role. Layouts are declared in `app/services/dashboard.py`:
+  - Inventory Manager: 4 KPIs and 5 sections.
+  - Procurement Manager: 5 KPIs and 7 sections.
+  - Owner: 6 KPIs and 9 sections.
+- **Same boundary as the chatbot:** every KPI and section query runs inside `readonly_session` as the role's read-only DB user against its view schema. A dashboard bug can't show more than the role may see. Tests also scan the IM payload for vendor, price and people data.
+- **Generic sections** have the shape `{viz: table|bar|line|pie, x, y[], columns, rows, empty_message}`, so the frontend can render dashboards and chat answers with the same components (C5.2 and C5.3). Money is returned as numbers; formatting (₹, lakh/crore) is the frontend's job, using each KPI's `format`.
+- **Definitions:**
+  - "Out of stock" means the total across all warehouses is ≤ 0.
+  - "Last completed quarter" means the latest quarter starting before the current quarter (Q2 2026 on 30 Sep 2026).
+  - Overdue days and reorder dates use `app_today()`.
+- **Status:** Accepted
+

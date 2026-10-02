@@ -1,16 +1,12 @@
 """Policy contract: who may read which data areas and run which write actions.
 
 Mirrors plan.md §1 (role responsibilities) and docs/WRITE_PATH.md §4 (action catalogue).
-Implementation: app/policy/permissions.py in C3.2.
+Implementation: app/policy/permissions.py (C3.2).
 """
 
 from types import ModuleType
 
 import pytest
-
-from tests.pending import pending
-
-pytestmark = pending("C3.2")
 
 IM, PM, OW = "inventory_manager", "procurement_manager", "owner"
 ROLES = [IM, PM, OW]
