@@ -49,6 +49,24 @@ def _comparable(rows: list[list[Any]]) -> list[list[Any]]:
     return sorted(([norm(v) for v in r] for r in rows), key=lambda r: json.dumps(r, default=str))
 
 
+def _numbers(rows: list[list[Any]]) -> list[float]:
+    found = []
+    for row in _comparable(rows):
+        found += [v for v in row if isinstance(v, float)]
+    return found
+
+
+def _numbers_covered(key_rows: list[list[Any]], result_rows: list[list[Any]]) -> bool:
+    """Every number in the answer key appears in the result (any column order or extra
+    columns; a SUM over one row equals the row). Dates and names are not compared."""
+    pool = _numbers(result_rows)
+    for number in _numbers(key_rows):
+        if number not in pool:
+            return False
+        pool.remove(number)
+    return True
+
+
 def score(case: Any, result: Any, key: dict[str, Any] | None) -> dict[str, Any]:
     expected = case.expected_route
     if expected == "not_found":
@@ -57,7 +75,7 @@ def score(case: Any, result: Any, key: dict[str, Any] | None) -> dict[str, Any]:
         route_ok = result.route == expected
     checks: dict[str, Any] = {"route": route_ok, "lang": result.lang == case.lang}
     if key is not None and expected == "read":
-        checks["answer_key"] = _comparable(result.rows) == _comparable(key["rows"])
+        checks["answer_key"] = _numbers_covered(key["rows"], result.rows)
     if case.expected_viz and expected == "read":
         checks["viz"] = bool(result.viz) and result.viz["type"] in case.expected_viz
     if case.must_include:

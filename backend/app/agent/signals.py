@@ -20,6 +20,13 @@ VAGUE_TIME = re.compile(
     re.I,
 )
 
+# Vague measures: only then may the bot ask "what would you like to see?"
+VAGUE_MEASURE = re.compile(
+    r"how are we doing|how(?:'s| is) (?:business|it going|everything)|overall (?:status|picture)|"
+    r"performance overview|kaisa chal raha|kya haal|कैसा चल रहा|क्या हाल",
+    re.I,
+)
+
 # Clearly unrelated requests: the out-of-scope sentence is always added for these.
 OFF_TOPIC = re.compile(
     r"\b(poem|poetry|story|joke|song|lyrics|recipe|weather|horoscope|shayari|essay|"

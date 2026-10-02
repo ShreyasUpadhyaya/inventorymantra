@@ -93,3 +93,25 @@ def test_date_parts_only_back_numbers_written_as_dates() -> None:
     ]
     for ok in written_as_dates:
         assert check_grounding(ok, columns, rows, ctx).ok, ok
+
+
+def test_count_claims_must_match_a_real_count() -> None:
+    """Smoke run 2: '31 purchase orders' when the rows held 28; 31 existed elsewhere in the data."""
+    rows = [
+        ["PO-2026-0009", "Granite Steels", 53, 31.0],
+        ["PO-2026-0003", "Falcon Steels", 48, 9.0],
+        ["PO-2026-0012", "Falcon Steels", 44, 2.0],
+    ]
+    columns = ["po_number", "vendor_name", "days_overdue", "amount"]
+    ctx = ["Which POs are overdue?"]
+    assert check_grounding("3 purchase orders are overdue.", columns, rows, ctx).ok
+    assert check_grounding("2 POs are from Falcon Steels.", columns, rows, ctx).ok  # group count
+    assert check_grounding("They come from 2 vendors.", columns, rows, ctx).ok  # distinct count
+    bad = check_grounding("31 purchase orders are overdue.", columns, rows, ctx)
+    assert not bad.ok and "31 purchase orders" in bad.unsupported
+    assert not check_grounding("There are 53 overdue orders.", columns, rows, ctx).ok
+    question = ["132-1 में कितने आइटम का स्टॉक शून्य है?"]
+    hindi = check_grounding(
+        "132-1 में ७८ आइटम का स्टॉक शून्य है।", ["zero_stock_items"], [[78]], question
+    )
+    assert hindi.ok

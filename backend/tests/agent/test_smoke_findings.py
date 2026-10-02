@@ -125,3 +125,50 @@ def test_roman_script_hindi_is_hinglish() -> None:
         result = run_turn(demo(IM), "bush OD40 kitne hain?")
     assert result.lang == "hinglish"
     assert result.answer.startswith("MS Bush – OD40×ID26.5×70mm ke liye: ")
+
+
+# ------------------------------------------------------------------ smoke run 2 (prompt v0.5)
+RUN2_WRONG_COUNT = (
+    "There are 31 purchase orders overdue, with days overdue ranging from 12 to 53 days.\n\n"
+    "- The most overdue PO is PO-2026-0009 from Granite Steels Pvt. Ltd., overdue by 53 days."
+)
+
+
+def test_wrong_count_from_the_real_model_is_rejected() -> None:
+    """Run 2: SQL and rows were right (28), the prose said 31 and grounding let it through."""
+    good = "28 purchase orders are overdue; the oldest is PO-2026-0009 at 53 days."
+    calls: list[int] = []
+
+    def composer(_: Any) -> str:
+        calls.append(1)
+        return RUN2_WRONG_COUNT if len(calls) == 1 else good
+
+    with fake.scripted("compose", composer):
+        result = run_turn(demo(PM), "Which purchase orders are overdue?")
+    assert len(calls) == 2 and result.answer == good  # first (31) rejected, second used
+
+
+def test_composer_is_told_the_row_count() -> None:
+    seen: list[str] = []
+
+    def composer(messages: Any) -> str:
+        seen.append(str(messages[-1].content))
+        return "28 purchase orders are overdue."
+
+    with fake.scripted("compose", composer):
+        run_turn(demo(PM), "Which purchase orders are overdue?")
+    assert '{"row_count": 28, "rows": [' in seen[0]
+
+
+def test_no_measure_question_without_vague_wording() -> None:
+    """Run 2: 'gross, operating or net margin?' although only gross margin exists."""
+    model = {"needs_clarification": True, "dimension": "measure",
+             "question": "Do you mean gross margin, operating margin, or net margin?",
+             "options": ["Gross margin", "Operating margin", "Net margin"],
+             "default_applied": None}  # fmt: skip
+    with fake.scripted("clarify", model):
+        result = run_turn(demo(OW), "What were our profit margins for the last 3 quarters?")
+    assert result.interrupt is None and result.row_count == 3
+    with fake.scripted("clarify", model):
+        vague = run_turn(demo(OW), "How are we doing?")
+    assert vague.route == "clarify"

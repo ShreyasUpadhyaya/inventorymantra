@@ -142,6 +142,31 @@ def _supported(found: _Found, allowed: set[float]) -> bool:
     return False
 
 
+# "N purchase orders / items / records ..." is a count claim: N must be a real count.
+COUNT_NOUNS = re.compile(
+    r"(\d[\d,]*)\s+(?:\w+\s+)?(purchase orders?|POs?|orders?|items?|records?|rows?|vendors?|"
+    r"suppliers?|requests?|users?|customers?|deliveries|receipts?|instalments?|lines?|"
+    r"आइटम|ऑर्डर|रिकॉर्ड|वेंडर)\b",
+    re.I,
+)
+
+
+def _counts(columns: list[str], rows: list[list[Any]], context: list[str]) -> set[float]:
+    """Numbers a count claim may use: the row count, distinct values per column, how many
+    rows share each value, count-like cells, a single row's figures, numbers the user gave."""
+    counts: set[float] = {float(len(rows))}
+    for index in range(len(columns)):
+        values = [r[index] for r in rows]
+        counts.add(float(len({str(v) for v in values})))
+        for value in set(map(str, values)):
+            counts.add(float(sum(1 for v in values if str(v) == value)))
+        if len(rows) == 1 or re.search(r"count|pos$|items|orders|number|^n$", columns[index]):
+            counts.update(float(v) for v in values if _is_value(v))
+    for text in context:
+        counts.update(extract_numbers(text))
+    return counts
+
+
 def check_grounding(
     answer: str, columns: list[str], rows: list[list[Any]], context: list[str]
 ) -> Grounding:
@@ -151,4 +176,9 @@ def check_grounding(
         for f in _find(answer)
         if not _supported(f, allowed | date_parts if f.in_date else allowed)
     ]
+    counts = _counts(columns, rows, context)
+    for claim in COUNT_NOUNS.finditer(answer.translate(DEVANAGARI_DIGITS)):
+        number = float(claim.group(1).replace(",", ""))
+        if number not in counts and claim.group(0) not in unsupported:
+            unsupported.append(claim.group(0))  # smoke run 2: "31 purchase orders" for 28
     return Grounding(ok=not unsupported, unsupported=unsupported)

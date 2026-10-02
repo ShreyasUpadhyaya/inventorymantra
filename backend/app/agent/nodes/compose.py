@@ -53,8 +53,8 @@ def name_matched_records(answer: str, state: AgentState) -> str:
 
 
 def _payload(columns: list[str], rows: list[list[Any]]) -> str:
-    if len(rows) <= ROWS_FOR_MODEL:
-        return json.dumps(rows, ensure_ascii=False, default=str)
+    if len(rows) <= ROWS_FOR_MODEL:  # the count is stated so the model never has to count
+        return json.dumps({"row_count": len(rows), "rows": rows}, ensure_ascii=False, default=str)
     totals = {
         c: round(sum(r[i] for r in rows if isinstance(r[i], int | float)), 2)
         for i, c in enumerate(columns)
