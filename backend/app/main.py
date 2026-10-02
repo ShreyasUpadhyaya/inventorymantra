@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from app.agent.tracing import configure_tracing
 from app.api.routes import auth, dashboard, users
 from app.core.config import app_today, get_settings
 from app.core.logging import configure_logging
@@ -26,6 +27,8 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         settings.jwt_secret()
     except RuntimeError as exc:  # keep /health up, but make the problem obvious
         logger.error("Login disabled: %s Check the exact name in .env, then restart.", exc)
+    if configure_tracing():
+        logger.info("LangSmith tracing on (project %s).", settings.langsmith_project)
     yield
     close_pool()
 

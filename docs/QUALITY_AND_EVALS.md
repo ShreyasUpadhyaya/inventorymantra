@@ -131,6 +131,8 @@ Tests written before their code are marked `pending("Cx.y")` (`backend/tests/pen
 | `tests/api/test_auth.py`, `test_auth_config.py` | login, cookies, identical failures, rate limit, 8 forged-token kinds, DB-sourced role, refresh rotation and replay, logout, 503 on missing secret | ✅ live (C3.1) |
 | `tests/api/test_users.py` | Owner-only list/create/(de)activate; temp password works once created; duplicates 409; deactivation kills live sessions; self-deactivation blocked; audited without secrets | ✅ live (C3.2) |
 | `tests/api/test_dashboard.py` | KPIs and sections per role match the frozen answer keys; IM dashboard has no vendor, price or people data; PM sees no Owner data; every section renderable; 401 and 503 paths | ✅ live (C3.3) |
+| `tests/agent/test_prompts_match_doc.py` | code prompt text equals approved PROMPTS.md (core, roles, guard, fixed sentences, help) | ✅ live (C4.1) |
+| `tests/agent/test_guard.py`, `test_llm.py`, `test_tracing.py`, `test_fake_router.py` | access decided in code (16 cases), trusted system message, tag breakout, history limit, fixed replies per language, budget guard before network, trace tags, offline router vs corpus fixed-reply cases | ✅ live (C4.1) |
 | `tests/unit/test_sql_guard.py` | 9 accepted shapes, LIMIT enforcement, 40 rejections with fixed reason codes, reasons never name relations | ⏳ pending C4.2 |
 | `tests/integration/test_entity_match.py` | D-026 matcher: match, clarify, not_found, denied; vendors, locations, PO numbers; mentions are data | ⏳ pending C4.2 |
 | `tests/unit/test_notification_visibility.py` | per-role payload allow-lists; IM never sees vendor, price or Owner data; refused recipients; unknown events | ⏳ pending C6.5 |

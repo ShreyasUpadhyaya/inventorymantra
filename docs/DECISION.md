@@ -20,7 +20,8 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Context:** The user chose OpenAI. Different nodes need different cost and quality.
 - **Decision:** Use `langchain-openai` `ChatOpenAI` with **`OPENAI_MODEL_REASONING`** (SQL generation, answer composition) and **`OPENAI_MODEL_FAST`** (guard, clarification, viz routing). Exact model IDs get pinned here in C4.1 after checking what the account has. Temperature 0 and structured output (JSON schema) wherever a node returns data.
 - **Consequences:** The model is swappable via env. Eval results are recorded per model ID.
-- **Status:** Accepted (model IDs pending C4.1)
+- **Pinned (C4.1, chosen by the user 2026-10-02):** `gpt-4.1-mini-2025-04-14` for **both** tiers, verified available on the account by listing models (no tokens). The dated id prevents silent model drift between eval runs. It supports `temperature=0` and strict JSON-schema output. If the first smoke test shows weak SQL or Hindi, only `OPENAI_MODEL_REASONING` is raised (to `gpt-4.1` or `gpt-5.4-mini`), based on the measured failures.
+- **Status:** Accepted
 
 ### D-004 · RBAC in two layers: role views + read-only DB roles
 - **Context:** LLM-generated SQL can't be trusted to respect visibility rules.
@@ -194,5 +195,18 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
   - "Out of stock" means the total across all warehouses is ≤ 0.
   - "Last completed quarter" means the latest quarter starting before the current quarter (Q2 2026 on 30 Sep 2026).
   - Overdue days and reorder dates use `app_today()`.
+- **Status:** Accepted
+
+### D-030 · Agent skeleton (C4.1)
+- **Graph:** `START → guard → respond_fixed | pending_capability → END`. Read, write and clarify nodes replace `pending_capability` in C4.2–C4.4 and C6. No checkpointer yet; PostgresSaver arrives with `/chat` in C4.5.
+- **Identity in config, not state:** `role`, `user_id` and `thread_id` travel in `config["configurable"]`, set from the authenticated session. Model output and user text can't write them.
+- **Prompt fidelity:** `app/agent/prompts/` holds the approved v0.3 text. `tests/agent/test_prompts_match_doc.py` compares it with PROMPTS.md character by character, including help examples and fixed sentences. Templates are filled by plain `{name}` replacement, because the approved text contains literal JSON braces.
+- **Safe assembly:** the system message is built only from trusted values. User text and earlier user turns go inside `<user_message>` tags, after our own tag names are stripped from them (no breakout). History is the last 6 messages.
+- **Access decided in code:** `decide()` uses `permissions.denied_areas`. If everything asked for is denied, the answer is the fixed DENIAL. Mixed requests continue, carrying `denied_areas`. Out-of-scope gets the fixed OUT_OF_SCOPE sentence. Help and greeting give the role's examples. A suspected injection is logged and tagged; it never grants anything.
+- **One door to models:** `app/agent/llm.structured_call`.
+  - `fake` mode uses `app/agent/fake.py`, keyword rules that make the offline demo route sensibly. They're checked against the corpus's refusal and help cases, but they are *not* a quality measure.
+  - `openai` mode uses ChatOpenAI at temperature 0, strict JSON schema, per-node output caps (guard 400 tokens), 1 retry and a 30 s timeout, and a process-local **daily token budget** that refuses calls before any network request once it's spent.
+- **Tracing:** pydantic-settings doesn't export `.env`, so the API and CLI export the LangSmith settings at start-up (`configure_tracing`); tests never do, so test runs send no traces. Each turn is one `chat_turn` run tagged `role:` / `lang:` / `route:` (+ `injection_suspected`, `rbac_denied`). Its metadata has a hashed user reference, the prompt version and the LLM mode, never raw ids or emails.
+- **Tooling:** `make ask ROLE=… Q="…"` runs one turn from the terminal. uv uses `link-mode = "copy"`, because OneDrive rejects hard links.
 - **Status:** Accepted
 
