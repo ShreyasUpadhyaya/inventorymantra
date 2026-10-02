@@ -54,6 +54,19 @@ class Resolution:
     candidates: list[Candidate] = field(default_factory=list)
 
 
+def singular(word: str) -> str:
+    """'acs' -> 'ac', 'nuts' -> 'nut', 'boxes' -> 'box', 'valves' -> 'valve'; keeps 'ss', 'bus'."""
+    if word.endswith("es") and word[:-2].endswith(("x", "sh", "ch", "ss")):
+        return word[:-2]
+    if len(word) >= 3 and word.endswith("s") and not word.endswith(("ss", "us", "is")):
+        return word[:-1]
+    return word
+
+
+def singular_text(text: str) -> str:
+    return " ".join(word if re.search(r"\d", word) else singular(word) for word in text.split())
+
+
 def normalise(text: str) -> str:
     text = text.lower().translate(_TRANSLATE)
     text = re.sub(r"\s+", " ", text).strip()
@@ -153,7 +166,7 @@ def _resolve_item(conn: psycopg.Connection, text: str) -> Resolution:
         ).fetchone()
         if row:
             return Resolution("match", [Candidate(row[0], row[1], 1.0)])
-    query = normalise(text)
+    query = singular_text(normalise(text))
     n = SQL_NORMALISED.format(col="name")
     scored = _trigram(
         conn,

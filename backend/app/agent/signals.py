@@ -1,0 +1,38 @@
+"""Deterministic signals that back up model judgements (smoke-test findings, D-036).
+
+The real model (gpt-4.1-mini) over-asked for periods, missed off-topic parts and mislabelled
+Roman-script Hindi. These checks are cheap, testable and identical online and offline.
+"""
+
+import re
+from typing import Literal, cast
+
+Lang = Literal["en", "hi", "hinglish"]
+DEVANAGARI = re.compile(r"[ऀ-ॿ]")
+
+# Vague time wording: only then may the bot ask "which period?"
+VAGUE_TIME = re.compile(
+    r"a few days (?:back|ago)|few days ago|couple of days|some (?:days|time|while) (?:back|ago)|"
+    r"a while (?:back|ago)|the other day|\brecent(?:ly)?\b|\blately\b|\bearlier\b|"
+    r"past few (?:days|weeks)|last few (?:days|weeks)|thode din pehle|kuch din pehle|"
+    r"kuch samay pehle|haal hi mein|pichle kuch din|pichle dino|"
+    r"कुछ दिन पहले|हाल ही में|पिछले कुछ दिन|कुछ समय पहले",
+    re.I,
+)
+
+# Clearly unrelated requests: the out-of-scope sentence is always added for these.
+OFF_TOPIC = re.compile(
+    r"\b(poem|poetry|story|joke|song|lyrics|recipe|weather|horoscope|shayari|essay|"
+    r"stock market|sensex|nifty|cricket score)\b|कविता|कहानी|चुटकुला|गाना|मौसम",
+    re.I,
+)
+
+
+def script_language(declared: str, message: str) -> Lang:
+    """Hindi is Devanagari; Hindi words in Roman letters are Hinglish (D-036)."""
+    has_devanagari = bool(DEVANAGARI.search(message))
+    if declared == "hi" and not has_devanagari:
+        return "hinglish"
+    if declared == "hinglish" and has_devanagari:
+        return "hi"
+    return cast(Lang, declared)

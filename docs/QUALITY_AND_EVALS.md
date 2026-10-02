@@ -146,4 +146,5 @@ Tests written before their code are marked `pending("Cx.y")` (`backend/tests/pen
 ## 7. Eval run log
 | Date | Commit | Models | Prompt ver | EX | Leak | Route | Clarify P/R | Viz | Lang | p95 | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|
+| 2026-10-03 | 5d5a616 | gpt-4.1-mini-2025-04-14 | 0.4 | smoke 12 cases: **4/12** | 0 leaks | — | over-asked periods ×5 | — | Roman Hindi as hi | 8.4 s max | first real run; 5 failure patterns fixed in code (D-036), replay tests added |
 | — | — | — | — | — | — | — | — | — | — | — | first run in C7.1 |

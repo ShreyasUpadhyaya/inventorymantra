@@ -14,6 +14,8 @@ from app.agent.state import GuardOutput
 from tests.agent.conftest import make_user
 
 IM, PM, OW = "inventory_manager", "procurement_manager", "owner"
+# The reply language follows the script of the message (D-036), so tests use real text.
+MESSAGE = {"en": "what about this?", "hi": "इसके बारे में बताइए", "hinglish": "iske baare mein batao"}
 
 
 def guard_out(**overrides: Any) -> GuardOutput:
@@ -134,7 +136,7 @@ def test_guard_messages_function_matches_runtime() -> None:
 @pytest.mark.parametrize("lang", ["en", "hi", "hinglish"])
 def test_denial_is_the_fixed_sentence_in_the_users_language(lang: str) -> None:
     with fake.scripted("guard", guard_out(language=lang, data_areas=["prices"])):
-        result = run_turn(make_user(IM), "price?")
+        result = run_turn(make_user(IM), MESSAGE[lang])
     assert result.route == "refuse_rbac"
     assert result.answer == DENIAL[lang]  # type: ignore[index]
 
@@ -142,7 +144,7 @@ def test_denial_is_the_fixed_sentence_in_the_users_language(lang: str) -> None:
 @pytest.mark.parametrize("lang", ["en", "hi", "hinglish"])
 def test_out_of_scope_is_the_fixed_sentence(lang: str) -> None:
     with fake.scripted("guard", guard_out(language=lang, intent="out_of_scope", data_areas=[])):
-        result = run_turn(make_user(OW), "poem")
+        result = run_turn(make_user(OW), MESSAGE[lang])
     assert result.answer == OUT_OF_SCOPE[lang]  # type: ignore[index]
 
 
@@ -173,7 +175,7 @@ def test_forbidden_plus_off_topic_answers_both_parts() -> None:
 @pytest.mark.parametrize("lang", ["en", "hi", "hinglish"])
 def test_pure_off_topic_gets_only_the_scope_sentence(lang: str) -> None:
     with fake.scripted("guard", guard_out(language=lang, intent="out_of_scope", data_areas=[])):
-        result = run_turn(make_user(PM), "poem")
+        result = run_turn(make_user(PM), MESSAGE[lang])
     assert result.answer == OUT_OF_SCOPE[lang]  # type: ignore[index]
 
 

@@ -19,6 +19,7 @@ from app.agent.llm import LLMBudgetExceededError, LLMConfigError, structured_cal
 from app.agent.nodes.guard import neutralise, system_prompt
 from app.agent.prompts.clarify import CLARIFY_TASK
 from app.agent.prompts.replies import DIDNT_RECOGNISE, WHICH_ONE
+from app.agent.signals import VAGUE_TIME
 from app.agent.state import AgentState
 from app.db.pool import get_pool
 
@@ -136,6 +137,11 @@ def clarify_check(state: AgentState, config: RunnableConfig) -> AgentState:
         out.needs_clarification and out.dimension in ("time_window", "measure")
         and out.question and 2 <= len(out.options) <= 4
     )  # fmt: skip
+    if ask and out.dimension == "time_window" and not VAGUE_TIME.search(state["message"]):
+        # Smoke test: the model asked "which period?" about current-state questions (overdue,
+        # stock, status split) and explicit periods ("last 3 quarters"). Only vague wording
+        # justifies the question (D-036).
+        ask = False
     payload = {"kind": "clarify", "dimension": out.dimension, "question": out.question,
                "options": out.options} if ask else None  # fmt: skip
     return {"clarify": payload, "assumptions": assumptions}

@@ -18,6 +18,7 @@ from app.agent.prompts import (
     ROLE_LABELS,
     render,
 )
+from app.agent.signals import OFF_TOPIC, script_language
 from app.agent.state import AgentState, GuardOutput, Route
 from app.core.config import TIMEZONE, app_today, get_settings
 from app.policy import permissions
@@ -72,7 +73,9 @@ def decide(role: str, guard: GuardOutput) -> tuple[Route, list[str], bool]:
     poem") gets each part answered: the data part as usual, plus the out-of-scope sentence."""
     off_topic = guard.intent == "out_of_scope"
     if off_topic and not guard.data_areas:
-        return "refuse_scope", [], False
+        # A prompt-extraction attempt ("print your system prompt") gets the help reply:
+        # what you *can* ask, nothing about how the assistant works.
+        return ("help" if guard.injection_suspected else "refuse_scope"), [], False
     if guard.intent in ("help", "greeting"):
         return "help", [], False
     denied = sorted(permissions.denied_areas(role, guard.data_areas))
@@ -84,8 +87,11 @@ def decide(role: str, guard: GuardOutput) -> tuple[Route, list[str], bool]:
 def guard_node(state: AgentState, config: RunnableConfig) -> AgentState:
     role = config["configurable"]["role"]
     guard = structured_call("guard", "fast", GuardOutput, guard_messages(role, state))
+    language = script_language(guard.language, state["message"])
     route, denied, off_topic = decide(role, guard)
+    if route not in ("refuse_scope", "help") and OFF_TOPIC.search(state["message"]):
+        off_topic = True  # the model may miss an off-topic part next to a data question
     if guard.injection_suspected:
         logger.warning("injection suspected (role=%s, route=%s)", role, route)
-    return {"guard": guard, "lang": guard.language, "route": route, "denied_areas": denied,
+    return {"guard": guard, "lang": language, "route": route, "denied_areas": denied,
             "off_topic_part": off_topic}  # fmt: skip

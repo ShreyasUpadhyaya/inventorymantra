@@ -309,3 +309,21 @@ No such column exists. The views (C1.4) expose **`expected_delivery_date`**, whi
 ```
 Applied in C4.2: the code and this document changed in the same commit, and the drift test checks they stay equal.
 
+## 15. Proposed change for v0.5 (NOT approved, not in use)
+From the first smoke test (DECISION D-036). Code backstops already handle both patterns. These lines make the model get them right first time, which saves a wasted call per turn.
+
+**§3 CLARIFY: add after the "Conventional defaults" line:**
+```text
+Questions about the current state (current stock, overdue, open or pending items, status
+splits, totals with no period mentioned) need no period: use all current records. Explicit
+periods ("last 3 quarters", "August", a date such as "tomorrow") are already clear.
+If unsure, do not ask.
+```
+**§2 GUARD: change the intent line to:**
+```text
+- intent: "read" | "write" | "clarification_reply" | "help" | "greeting" | "out_of_scope"
+  (use "out_of_scope" if ANY part of the message is unrelated, e.g. "... and write a poem",
+  and still list the data_areas of the other parts)
+```
+Approve it as v0.5, and the code and this document change in one commit, with the drift test kept green.
+
