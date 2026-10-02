@@ -127,7 +127,9 @@ Tests written before their code are marked `pending("Cx.y")` (`backend/tests/pen
 | `tests/rbac/test_role_views.py` | role × view matrix, base tables denied, no writes or escalation, forbidden columns, row-level `my_*` views | ✅ live (C1.4) |
 | `tests/integration/test_seed.py`, `test_fabricate.py` | seed counts and facts, deterministic demo data within the approved ranges | ✅ live (C1.2, C1.3) |
 | `tests/evals/test_corpus.py` | corpus schema, coverage minimums, fixed denials, answer keys match the DB | ✅ live (C2.1) |
-| `tests/unit/test_policy.py` | `can_read` / `can` / `denied_areas` / `requires_approval` matrices; unknown means deny | ⏳ pending C3.2 |
+| `tests/unit/test_policy.py` | `can_read` / `can` / `denied_areas` / `requires_approval` matrices; unknown means deny | ✅ live (C3.2) |
+| `tests/api/test_auth.py`, `test_auth_config.py` | login, cookies, identical failures, rate limit, 8 forged-token kinds, DB-sourced role, refresh rotation and replay, logout, 503 on missing secret | ✅ live (C3.1) |
+| `tests/api/test_users.py` | Owner-only list/create/(de)activate; temp password works once created; duplicates 409; deactivation kills live sessions; self-deactivation blocked; audited without secrets | ✅ live (C3.2) |
 | `tests/unit/test_sql_guard.py` | 9 accepted shapes, LIMIT enforcement, 40 rejections with fixed reason codes, reasons never name relations | ⏳ pending C4.2 |
 | `tests/integration/test_entity_match.py` | D-026 matcher: match, clarify, not_found, denied; vendors, locations, PO numbers; mentions are data | ⏳ pending C4.2 |
 | `tests/unit/test_notification_visibility.py` | per-role payload allow-lists; IM never sees vendor, price or Owner data; refused recipients; unknown events | ⏳ pending C6.5 |

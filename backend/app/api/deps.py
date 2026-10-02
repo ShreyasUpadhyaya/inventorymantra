@@ -1,6 +1,6 @@
 """Shared FastAPI dependencies. `current_user` is the single gate for authenticated routes."""
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from typing import Annotated
 
 import psycopg
@@ -9,6 +9,7 @@ from fastapi import Depends, HTTPException, Request, status
 from app.auth.service import AuthUser, load_user
 from app.auth.tokens import ACCESS_COOKIE, InvalidTokenError, decode_access_token
 from app.db.pool import get_pool
+from app.policy import permissions
 
 
 def get_conn() -> Iterator[psycopg.Connection]:
@@ -54,3 +55,27 @@ def current_user(request: Request, conn: Conn) -> AuthUser:
 
 
 CurrentUser = Annotated[AuthUser, Depends(current_user)]
+
+FORBIDDEN = HTTPException(status.HTTP_403_FORBIDDEN, "Not permitted for your role.")
+
+
+def require_action(action: str) -> Callable[[AuthUser], AuthUser]:
+    """Route dependency: the current user must be allowed to perform `action`."""
+
+    def check(user: CurrentUser) -> AuthUser:
+        if not permissions.can(user.role, action):
+            raise FORBIDDEN
+        return user
+
+    return check
+
+
+def require_area(area: str) -> Callable[[AuthUser], AuthUser]:
+    """Route dependency: the current user must be allowed to read data `area`."""
+
+    def check(user: CurrentUser) -> AuthUser:
+        if not permissions.can_read(user.role, area):
+            raise FORBIDDEN
+        return user
+
+    return check
