@@ -37,6 +37,18 @@ class Settings(BaseSettings):
     po_approval_threshold_inr: int = 100_000
     cors_origins: list[str] = ["http://localhost:3000"]
 
+    # Auth (DECISION D-014)
+    access_token_minutes: int = 15
+    refresh_token_days: int = 7
+    cookie_secure: bool = False  # True in deployment (HTTPS); False for http://localhost
+    login_max_failures: int = 5
+    login_window_seconds: int = 900
+
+    def jwt_secret(self) -> str:
+        if self.jwt_secret_key is None or len(self.jwt_secret_key.get_secret_value()) < 32:
+            raise RuntimeError("JWT_SECRET_KEY must be set to at least 32 characters.")
+        return self.jwt_secret_key.get_secret_value()
+
 
 @lru_cache
 def get_settings() -> Settings:

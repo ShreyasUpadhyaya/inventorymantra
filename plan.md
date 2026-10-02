@@ -139,7 +139,7 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 - [x] **C2.2** `test: policy, SQL-guard, entity-matcher and notification-visibility unit tests (xfail until implemented)`
 
 ### Phase 3 — Auth and API (Day 1 PM)
-- [ ] **C3.1** `feat(api): login, refresh, logout and /me with bcrypt + JWT cookie`
+- [x] **C3.1** `feat(api): login, refresh, logout and /me with bcrypt + JWT cookie`
 - [ ] **C3.2** `feat(api): policy module and owner user management`
 - [ ] **C3.3** `feat(api): role dashboard endpoints (stock, low stock, PO pipeline, spend, margins)`
 

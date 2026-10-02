@@ -62,6 +62,22 @@ def test_demo_users_can_log_in(tx: psycopg.Connection, demo_password: str) -> No
         assert demo_password not in password_hash
 
 
+def test_fresh_seed_has_only_demo_users_and_no_sessions_or_audit(tx: psycopg.Connection) -> None:
+    """Old sessions/audit rows never survive a reseed, and no legacy users are carried over."""
+    tx.execute(
+        """INSERT INTO users (id, email, password_hash, full_name, role)
+           VALUES (gen_random_uuid(), 'leftover@example.com', 'x', 'Leftover', 'owner')"""
+    )
+    fabricate(tx)
+    row = tx.execute(
+        """SELECT (SELECT count(*) FROM users),
+                  (SELECT count(*) FROM users WHERE email LIKE '%%@demo.inventorymantra'),
+                  (SELECT count(*) FROM refresh_tokens),
+                  (SELECT count(*) FROM agent_audit_log)"""
+    ).fetchone()
+    assert row == (3, 3, 0, 0)
+
+
 def test_every_fabricated_row_is_labelled_demo(tx: psycopg.Connection) -> None:
     fabricate(tx)
     for table in ("reorder_policy", "stock_requests", "sales_orders"):
