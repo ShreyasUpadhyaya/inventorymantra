@@ -1,5 +1,5 @@
 # InventoryMantra developer commands (see CLAUDE.md §3). Run from the repo root.
-.PHONY: up down db-shell api web install test test-backend test-frontend lint seed ask answer-keys eval
+.PHONY: up down db-shell api web install test test-backend test-frontend lint seed ask smoke answer-keys eval
 
 up:            ## start Postgres and wait until healthy
 	docker compose up -d --wait db
@@ -33,6 +33,9 @@ seed:          ## migrate + load data/seed + deterministic demo data (idempotent
 
 ask:           ## one chat turn: make ask ROLE=owner Q="What can I ask?"  (Hindi: FILE=q.txt; ANSWER=2)
 	cd backend && uv run python -m app.agent.cli --role $(or $(ROLE),inventory_manager) $(if $(FILE),--file "$(abspath $(FILE))","$(Q)") $(if $(ANSWER),--answer "$(ANSWER)")
+
+smoke:         ## 12-case smoke test; offline unless CONFIRM=yes (real OpenAI calls, costs tokens)
+	cd backend && uv run python -m evals.smoke $(if $(filter yes,$(CONFIRM)),--confirm)
 
 answer-keys:   ## recompute frozen answer keys for evals/corpus (review the diff!)
 	cd backend && uv run python -m evals.build_answer_keys

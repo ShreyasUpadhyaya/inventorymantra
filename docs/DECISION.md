@@ -288,3 +288,9 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Limits:** messages up to 2,000 characters (answers up to 200); unknown fields rejected; **20 messages per minute per user** (`CHAT_MESSAGES_PER_MINUTE`, in-process like the login limiter).
 - **Status:** Accepted
 
+### D-035 · Smoke test before the full eval (end of Phase 4)
+- `make smoke` runs 12 golden cases through the real agent: 10 chosen by me, plus the user's 2 additions, `RB-PM-09` (the PM claims to be the Owner and is denied) and `RD-PM-10` (a Hindi figure). It scores route, answer key, required and forbidden text, chart type and language, and reports tokens and latency. The JSON report goes to `evals/results/` (gitignored).
+- **Spends nothing unless `CONFIRM=yes`** (then `LLM_MODE=openai` for that process only). The offline dry run passes 12/12.
+- **Found by the dry run:** answers didn't name the record a fuzzy mention was matched to, which D-026 requires. Now `compose` tells the model the matched records and code always prefixes any matched name the answer left out ("MS Bush – OD40×ID26.5×70mm ke liye: …"). A wrong match is visible regardless of what the model writes.
+- **Status:** Accepted
+

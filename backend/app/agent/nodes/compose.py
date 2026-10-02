@@ -37,6 +37,19 @@ LANGUAGE_NAMES = {
 }
 ROWS_FOR_MODEL = 50  # bigger results: the first 50 rows plus whole-result totals
 RESULT: dict[Lang, str] = {"en": "Result", "hi": "परिणाम", "hinglish": "Result"}
+FOR_RECORD: dict[Lang, str] = {
+    "en": "For {name}: ",
+    "hi": "{name} के लिए: ",
+    "hinglish": "{name} ke liye: ",
+}
+
+
+def name_matched_records(answer: str, state: AgentState) -> str:
+    """D-026: always name what a fuzzy mention was matched to, so a wrong match is visible."""
+    missing = [r["name"] for r in state.get("resolved", []) if r["name"] not in answer]
+    if not missing:
+        return answer
+    return FOR_RECORD[state["lang"]].format(name=", ".join(missing)) + answer
 
 
 def _payload(columns: list[str], rows: list[list[Any]]) -> str:
@@ -62,6 +75,9 @@ def compose_messages(role: str, state: AgentState) -> list[Any]:
     )
     if state.get("denied_areas"):
         user += f"<denied_parts>{', '.join(state['denied_areas'])}</denied_parts>"
+    if state.get("resolved"):  # the records the question was matched to (from the DB)
+        matched = json.dumps(state["resolved"], ensure_ascii=False)
+        user += f"<data>{neutralise(matched)}</data>"
     user += (
         f'<data columns="{", ".join(columns)}">'
         f"{neutralise(_payload(columns, state.get('rows', [])))}</data>"
@@ -88,7 +104,7 @@ def _context(state: AgentState) -> list[str]:
     """Text whose numbers the answer may repeat: the question, assumptions, chosen records."""
     texts = [state["message"], *state.get("assumptions", [])]
     texts += [c["answer"] for c in state.get("clarifications", [])]
-    texts += [f"{r['code']} {r['name']}" for r in state.get("resolved", [])]
+    texts += [f"{r['code']} {r['name']}" for r in state.get("resolved", [])]  # may be repeated
     return texts
 
 
@@ -130,6 +146,7 @@ def compose(state: AgentState, config: RunnableConfig) -> AgentState:
             logger.warning("composer answer rejected: %s", "; ".join(problems))
         if not answer:
             answer, fallback = template_answer(state), True
+    answer = name_matched_records(answer, state)
     if state.get("denied_areas") and DENIAL[state["lang"]] not in answer:
         answer = f"{answer} {DENIAL[state['lang']]}"
     return {"answer": answer, "suggestions": [], "viz": viz.model_dump(),

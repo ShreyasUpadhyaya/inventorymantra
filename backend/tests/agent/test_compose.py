@@ -60,7 +60,11 @@ def test_chart_choice_on_corpus_questions(case: EvalCase) -> None:
 def test_template_answers_are_grounded_and_factual(case: EvalCase) -> None:
     result = run_turn(demo(case.role), case.query)
     assert result.answer_checks.get("fallback") is True  # offline: the template answered
-    grounding = check_grounding(result.answer, result.columns, result.rows, [case.query])
+    context = [
+        case.query,
+        *(f"{r['code']} {r['name']}" for r in result.resolved),
+    ]  # as the app does
+    grounding = check_grounding(result.answer, result.columns, result.rows, context)
     assert grounding.ok, grounding.unsupported
     assert banned_span(result.answer) is None
 
@@ -177,3 +181,14 @@ def test_template_answer_shapes() -> None:
     assert template_answer(state) == "Result — open value: ₹47,89,288.83; open pos: 36."
     state = {"lang": "hi", "columns": ["x"], "rows": []}
     assert template_answer(state) == "कोई मिलता-जुलता रिकॉर्ड नहीं मिला।"
+
+
+def test_answers_name_the_matched_record() -> None:
+    """D-026 / smoke dry run: 'bush OD40 kitne hain?' must name MS Bush – OD40×ID26.5×70mm."""
+    result = run_turn(demo(IM), "bush OD40 kitne hain?")
+    assert result.answer.startswith("MS Bush – OD40×ID26.5×70mm ke liye: ")
+    script, calls = composer("132-1 mein 100 pcs hain.")
+    with script:
+        modelled = run_turn(demo(IM), "bush OD40 kitne hain?")
+    assert modelled.answer == "MS Bush – OD40×ID26.5×70mm ke liye: 132-1 mein 100 pcs hain."
+    assert "MS Bush – OD40×ID26.5×70mm" in str(calls[0][-1].content)  # the model is told too
