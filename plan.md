@@ -141,7 +141,7 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 ### Phase 3 — Auth and API (Day 1 PM)
 - [x] **C3.1** `feat(api): login, refresh, logout and /me with bcrypt + JWT cookie`
 - [x] **C3.2** `feat(api): policy module and owner user management`
-- [ ] **C3.3** `feat(api): role dashboard endpoints (stock, low stock, PO pipeline, spend, margins)`
+- [x] **C3.3** `feat(api): role dashboard endpoints (stock, low stock, PO pipeline, spend, margins)`
 
 ### Phase 4 — Agent read path (Day 2 AM)
 - [ ] **C4.1** `feat(agent): LangGraph skeleton, LangSmith tracing and guard node`

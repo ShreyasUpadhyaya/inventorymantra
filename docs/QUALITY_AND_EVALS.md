@@ -130,6 +130,7 @@ Tests written before their code are marked `pending("Cx.y")` (`backend/tests/pen
 | `tests/unit/test_policy.py` | `can_read` / `can` / `denied_areas` / `requires_approval` matrices; unknown means deny | ✅ live (C3.2) |
 | `tests/api/test_auth.py`, `test_auth_config.py` | login, cookies, identical failures, rate limit, 8 forged-token kinds, DB-sourced role, refresh rotation and replay, logout, 503 on missing secret | ✅ live (C3.1) |
 | `tests/api/test_users.py` | Owner-only list/create/(de)activate; temp password works once created; duplicates 409; deactivation kills live sessions; self-deactivation blocked; audited without secrets | ✅ live (C3.2) |
+| `tests/api/test_dashboard.py` | KPIs and sections per role match the frozen answer keys; IM dashboard has no vendor, price or people data; PM sees no Owner data; every section renderable; 401 and 503 paths | ✅ live (C3.3) |
 | `tests/unit/test_sql_guard.py` | 9 accepted shapes, LIMIT enforcement, 40 rejections with fixed reason codes, reasons never name relations | ⏳ pending C4.2 |
 | `tests/integration/test_entity_match.py` | D-026 matcher: match, clarify, not_found, denied; vendors, locations, PO numbers; mentions are data | ⏳ pending C4.2 |
 | `tests/unit/test_notification_visibility.py` | per-role payload allow-lists; IM never sees vendor, price or Owner data; refused recipients; unknown events | ⏳ pending C6.5 |

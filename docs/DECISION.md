@@ -183,3 +183,16 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Every change is audited** in `agent_audit_log` (`app/services/audit.py`) with before/after state and no secrets, so it shows in the Owner's audit view. The full write framework (preview, idempotency) arrives in C6.1.
 - **Status:** Accepted
 
+### D-029 · Role dashboards (C3.3)
+- **`GET /dashboard`** returns `{role, today, kpis[], sections[]}` for the signed-in user's role. Layouts are declared in `app/services/dashboard.py`:
+  - Inventory Manager: 4 KPIs and 5 sections.
+  - Procurement Manager: 5 KPIs and 7 sections.
+  - Owner: 6 KPIs and 9 sections.
+- **Same boundary as the chatbot:** every KPI and section query runs inside `readonly_session` as the role's read-only DB user against its view schema. A dashboard bug can't show more than the role may see. Tests also scan the IM payload for vendor, price and people data.
+- **Generic sections** have the shape `{viz: table|bar|line|pie, x, y[], columns, rows, empty_message}`, so the frontend can render dashboards and chat answers with the same components (C5.2 and C5.3). Money is returned as numbers; formatting (₹, lakh/crore) is the frontend's job, using each KPI's `format`.
+- **Definitions:**
+  - "Out of stock" means the total across all warehouses is ≤ 0.
+  - "Last completed quarter" means the latest quarter starting before the current quarter (Q2 2026 on 30 Sep 2026).
+  - Overdue days and reorder dates use `app_today()`.
+- **Status:** Accepted
+

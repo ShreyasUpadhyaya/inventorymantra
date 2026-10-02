@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app.api.routes import auth, users
+from app.api.routes import auth, dashboard, users
 from app.core.config import app_today, get_settings
 from app.core.logging import configure_logging
 from app.db.pool import close_pool
@@ -40,6 +40,7 @@ app.add_middleware(
 )
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(dashboard.router)
 
 
 class Health(BaseModel):
