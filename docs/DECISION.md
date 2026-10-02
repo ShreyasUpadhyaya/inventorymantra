@@ -229,3 +229,22 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Failure replies** (`prompts/replies.py`, en/hi/Hinglish, formal "aap"): sql_failed, timeout, unanswerable (with "in the data available to you", which reveals nothing about other roles) and unavailable (budget or config).
 - **Status:** Accepted
 
+### D-032 · Clarification as a LangGraph interrupt (C4.3)
+- **Two kinds of asking back:**
+  - **Which record?** The matcher found several close matches. `resolve_entities` stops at that mention, and `ask_entity` pauses with the options.
+  - **Which period or measure?** `clarify_check` makes one fast-model call using the approved §3 prompt; only `time_window` and `measure` with 2–4 options lead to a pause. `ask_clarify` then pauses.
+- **A pause never repeats work:** LangGraph re-runs an interrupted node from its first line on resume, so every DB lookup or model call sits in a node *before* the pausing node, and the pausing nodes only call `interrupt()`. A test counts the clarify model calls across a pause and resume: exactly one.
+- **Answers accepted:** the option text, its 1-based number, its code, a fragment that fits exactly one option (`OD40`), or free text. Free text is looked up again as the same kind of record (`ms bush od40` resolves directly).
+- **Unusable answers (bug found by the user, 2026-10-03):** nonsense like `qwefqwegwe` used to end the turn at once with a misleading "couldn't find qwefqwegwe". Now:
+  - The **first** unusable answer re-asks with the **same options**, prefixed "I didn't recognise “…”."
+  - The **second** stops: "I couldn't tell which one you meant for “bush”, so I haven't looked anything up", with the options as suggestions. It **never guesses a record**.
+  - Period answers get the same treatment. A free-text period must contain a number, month or period word (en/hi/Hinglish), or the bot re-asks once and then refuses (`no_choice`).
+- **Where answers go:** a chosen record joins `resolved`, which the SQL prompt sees in `<data>`. A period or measure answer is appended to the user's message as `[answer]`, inside `<user_message>`, because it's user text.
+- **Not found (no close match) isn't a pause:** the reply lists up to 3 suggestions, which in the UI are new questions to click.
+- **Threads:** the paused state is saved by a checkpointer under `thread_id`. In-process `InMemorySaver` for now; C4.5 moves it to Postgres. `resume_turn` checks that the resuming user is the one who started the thread (`owner_ref`, a hashed id) and that a question is actually waiting. A new question on a paused thread resets every per-turn field (`fresh_turn`), so nothing leaks between questions. The checkpoint serializer only rebuilds our own state models.
+- **One clarification of each kind per turn**, to avoid ask-loops. Defaults the model applies (e.g. "this month") go into `assumptions` for the composer (C4.4) to state.
+- **Offline stand-ins:** fake clarify spots vague periods ("a few days back", "recently", "earlier", "thode din pehle", "कुछ दिन पहले") and vague measures ("how are we doing"). It builds period options from `app_today()` in the user's language, and measure options per role (no revenue options for the IM). Fake router item and vendor mention spotting is also added. 72 of 73 corpus read, clarify and not-found cases now behave correctly offline; the remaining one, "Add 3 AC", is a write case (Phase 6).
+- **CLI:** answers clarifications at a prompt, or with `--answer` / `make ask … ANSWER=2`.
+- **Offline after a choice (user-found, 2026-10-03):** picking `2` resolved the right bush, but offline mode then said "not recorded", which was misleading. Offline SQL now handles simple questions about one chosen record: an item's stock (optionally in a resolved warehouse), its incoming quantity, and a PO's status (header for PM/Owner, inbound lines for IM). It uses templates filled only with DB-resolved codes, and they still pass the guard and run as the role. Anything else offline gets an honest `offline` failure ("Offline demo mode … can only answer known test questions …"), never "not recorded".
+- **Status:** Accepted
+

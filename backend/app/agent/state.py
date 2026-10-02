@@ -48,6 +48,7 @@ class Turn(TypedDict):
 
 
 class AgentState(TypedDict, total=False):
+    owner_ref: str  # hashed id of the user who started the thread (resume check)
     message: str  # the user's latest message (untrusted)
     history: list[Turn]  # earlier turns, oldest first (untrusted)
     guard: GuardOutput
@@ -58,6 +59,11 @@ class AgentState(TypedDict, total=False):
     # read path (C4.2)
     resolved: list[dict[str, str]]  # matched entities {type, text, code, name}
     entity_issue: dict[str, Any] | None  # clarify / not_found for one mention
+    mention_index: int  # next mention to resolve (resumes after a clarification)
+    entity_asks: int
+    # clarification (C4.3)
+    clarify: dict[str, Any] | None  # pending question {kind, dimension, question, options}
+    clarifications: list[dict[str, str]]  # answered {question, answer} this turn
     sql: str | None
     sql_error: str | None  # sanitised error fed to the repair attempt
     sql_attempts: int

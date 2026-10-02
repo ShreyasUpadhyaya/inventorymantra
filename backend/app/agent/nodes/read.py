@@ -15,6 +15,7 @@ from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel, ConfigDict
 
 from app.agent.entity_match import AREA_FOR_KIND, resolve
+from app.agent.fake import OFFLINE_UNSUPPORTED
 from app.agent.llm import LLMBudgetExceededError, LLMConfigError, structured_call
 from app.agent.nodes.guard import neutralise, system_prompt
 from app.agent.prompts import DENIAL, render
@@ -23,6 +24,7 @@ from app.agent.prompts.replies import (
     FAILURE,
     FOUND_ROWS,
     KIND_WORD,
+    NO_CHOICE,
     NO_ROWS,
     NOT_FOUND,
     WHICH_ONE,
@@ -55,11 +57,15 @@ class SqlOutput(BaseModel):
 
 # ------------------------------------------------------------------ entities
 def resolve_entities(state: AgentState, config: RunnableConfig) -> AgentState:
+    """Resolve mentions in order, resuming from `mention_index` after a clarification."""
     role = config["configurable"]["role"]
-    resolved: list[dict[str, str]] = []
+    mentions = state["guard"].entity_mentions
+    index = state.get("mention_index", 0)
+    resolved = list(state.get("resolved", []))
     denied = list(state.get("denied_areas", []))
     with get_pool().connection() as conn:
-        for mention in state["guard"].entity_mentions:
+        while index < len(mentions):
+            mention = mentions[index]
             result = resolve(conn, role, mention.type, mention.text)
             if result.outcome == "match":
                 top = result.candidates[0]
@@ -67,25 +73,34 @@ def resolve_entities(state: AgentState, config: RunnableConfig) -> AgentState:
                                  "code": top.code, "name": top.name})  # fmt: skip
             elif result.outcome == "denied":
                 denied.append(AREA_FOR_KIND[mention.type])
-            else:  # clarify / not_found: stop and ask (interrupt in C4.3)
+            else:  # clarify -> ask (interrupt); not_found -> reply with suggestions
                 return {
                     "entity_issue": {
                         "outcome": result.outcome, "type": mention.type, "text": mention.text,
                         "options": [c.name for c in result.candidates],
+                        "codes": [c.code for c in result.candidates],
                     },
+                    "mention_index": index,
                     "resolved": resolved,
                     "denied_areas": sorted(set(denied)),
                 }  # fmt: skip
+            index += 1
     allowed_left = set(state["guard"].data_areas) - set(denied)
     if denied and not allowed_left and not resolved:
         return {"route": "refuse_rbac", "denied_areas": sorted(set(denied)), "resolved": []}
-    return {"resolved": resolved, "denied_areas": sorted(set(denied)), "entity_issue": None}
+    return {"resolved": resolved, "denied_areas": sorted(set(denied)), "entity_issue": None,
+            "mention_index": index}  # fmt: skip
 
 
-def after_entities(state: AgentState) -> Literal["respond_fixed", "respond_entity", "generate_sql"]:
+def after_entities(
+    state: AgentState,
+) -> Literal["respond_fixed", "respond_entity", "ask_entity", "clarify_check"]:
     if state.get("route") == "refuse_rbac":
         return "respond_fixed"
-    return "respond_entity" if state.get("entity_issue") else "generate_sql"
+    issue = state.get("entity_issue")
+    if issue:
+        return "ask_entity" if issue["outcome"] == "clarify" else "respond_entity"
+    return "clarify_check"
 
 
 def respond_entity(state: AgentState) -> AgentState:
@@ -93,6 +108,8 @@ def respond_entity(state: AgentState) -> AgentState:
     lang = state["lang"]
     if issue["outcome"] == "clarify":
         answer = WHICH_ONE[lang].format(text=issue["text"])
+    elif issue["outcome"] == "no_choice":
+        answer = NO_CHOICE[lang].format(text=issue["text"])
     else:
         answer = NOT_FOUND[lang].format(kind=KIND_WORD[lang][issue["type"]], text=issue["text"])
         if issue["options"]:
@@ -101,6 +118,14 @@ def respond_entity(state: AgentState) -> AgentState:
 
 
 # ------------------------------------------------------------------ SQL
+def effective_message(state: AgentState) -> str:
+    """The user's question plus their clarification answers, all as user text."""
+    answers = state.get("clarifications", [])
+    if not answers:
+        return state["message"]
+    return f"{state['message']} [{'; '.join(a['answer'] for a in answers)}]"
+
+
 def sql_messages(role: str, state: AgentState) -> list[Any]:
     task = render(
         SQL_TASK,
@@ -109,7 +134,8 @@ def sql_messages(role: str, state: AgentState) -> list[Any]:
         few_shots=few_shots(role),  # type: ignore[arg-type]
     )
     data = json.dumps(state.get("resolved", []), ensure_ascii=False)
-    user = f"<user_message>{neutralise(state['message'])}</user_message><data>{data}</data>"
+    message = effective_message(state)
+    user = f"<user_message>{neutralise(message)}</user_message><data>{data}</data>"
     if state.get("sql_error"):
         user += (
             f"<previous_sql>{neutralise(state.get('sql') or '')}</previous_sql>"
@@ -127,7 +153,9 @@ def generate_sql(state: AgentState, config: RunnableConfig) -> AgentState:
         logger.warning("model unavailable: %s", exc.__class__.__name__)
         return {"failure": "unavailable", "sql_attempts": attempts}
     if not out.answerable or not out.sql:
-        return {"failure": "unanswerable", "assumptions": out.assumptions, "sql_attempts": attempts}
+        offline = OFFLINE_UNSUPPORTED in out.assumptions  # honest: a demo limit, not missing data
+        kind = "offline" if offline else "unanswerable"
+        return {"failure": kind, "assumptions": out.assumptions, "sql_attempts": attempts}
     return {"sql": out.sql, "assumptions": out.assumptions, "sql_attempts": attempts,
             "failure": None}  # fmt: skip
 

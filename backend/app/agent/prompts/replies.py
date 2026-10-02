@@ -22,6 +22,22 @@ FAILURE: dict[str, dict[Lang, str]] = {
         "hi": "यह जानकारी आपके लिए उपलब्ध डेटा में दर्ज नहीं है।",
         "hinglish": "Ye jaankari aapke liye uplabdh data mein darj nahi hai.",
     },
+    "no_choice": {
+        "en": "I couldn't tell which period you meant, so I haven't looked anything up. "
+        "Please ask again with a period, for example “last 30 days” or “August 2026”.",
+        "hi": "मैं समझ नहीं सका कि आपका मतलब कौन सी अवधि से है, इसलिए मैंने कुछ नहीं खोजा। "
+        "कृपया अवधि के साथ दोबारा पूछें, जैसे “पिछले 30 दिन” या “अगस्त 2026”।",
+        "hinglish": "Main samajh nahi saka ki aapka matlab kaun si avadhi se hai, isliye maine "
+        "kuch nahi dhoondha. Kripya avadhi ke saath dobara poochhiye, jaise “pichle 30 din”.",
+    },
+    "offline": {
+        "en": "Offline demo mode (LLM_MODE=fake) can only answer known test questions and simple "
+        "questions about one chosen record. With the real model this question would be answered.",
+        "hi": "ऑफ़लाइन डेमो मोड (LLM_MODE=fake) केवल ज्ञात टेस्ट सवालों और किसी एक चुने हुए रिकॉर्ड "
+        "के सरल सवालों का उत्तर देता है। असली मॉडल के साथ इस सवाल का उत्तर दिया जाएगा।",
+        "hinglish": "Offline demo mode (LLM_MODE=fake) sirf jaane-pehchaane test sawaalon aur ek "
+        "chune hue record ke saral sawaalon ka jawab deta hai. Asli model ke saath iska jawab milega.",
+    },
     "unavailable": {
         "en": "The assistant is temporarily unavailable. Dashboards still work.",
         "hi": "सहायक अभी उपलब्ध नहीं है। डैशबोर्ड काम कर रहे हैं।",
@@ -49,6 +65,19 @@ WHICH_ONE: dict[Lang, str] = {
     "en": "“{text}” matches more than one record. Which one do you mean?",
     "hi": "“{text}” एक से ज़्यादा रिकॉर्ड से मिलता है। आपका मतलब कौन सा है?",
     "hinglish": "“{text}” ek se zyada record se milta hai. Aapka matlab kaun sa hai?",
+}
+DIDNT_RECOGNISE: dict[Lang, str] = {
+    "en": "I didn't recognise “{answer}”.",
+    "hi": "मैं “{answer}” को पहचान नहीं सका।",
+    "hinglish": "Main “{answer}” ko pehchaan nahi saka.",
+}
+NO_CHOICE: dict[Lang, str] = {
+    "en": "I couldn't tell which one you meant for “{text}”, so I haven't looked anything up. "
+    "You can ask again with one of these:",
+    "hi": "मैं समझ नहीं सका कि “{text}” से आपका मतलब कौन सा है, इसलिए मैंने कुछ नहीं खोजा। "
+    "आप इनमें से किसी एक के साथ दोबारा पूछ सकते हैं:",
+    "hinglish": "Main samajh nahi saka ki “{text}” se aapka matlab kaun sa hai, isliye maine kuch "
+    "nahi dhoondha. Aap inmein se kisi ek ke saath dobara pooch sakte hain:",
 }
 FOUND_ROWS: dict[Lang, str] = {
     "en": "Found {n} matching records.",

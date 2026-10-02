@@ -31,8 +31,8 @@ test-frontend:
 seed:          ## migrate + load data/seed + deterministic demo data (idempotent)
 	cd backend && uv run python -m scripts.seed
 
-ask:           ## one chat turn: make ask ROLE=owner Q="What can I ask?"  (Hindi: FILE=q.txt)
-	cd backend && uv run python -m app.agent.cli --role $(or $(ROLE),inventory_manager) $(if $(FILE),--file "$(abspath $(FILE))","$(Q)")
+ask:           ## one chat turn: make ask ROLE=owner Q="What can I ask?"  (Hindi: FILE=q.txt; ANSWER=2)
+	cd backend && uv run python -m app.agent.cli --role $(or $(ROLE),inventory_manager) $(if $(FILE),--file "$(abspath $(FILE))","$(Q)") $(if $(ANSWER),--answer "$(ANSWER)")
 
 answer-keys:   ## recompute frozen answer keys for evals/corpus (review the diff!)
 	cd backend && uv run python -m evals.build_answer_keys

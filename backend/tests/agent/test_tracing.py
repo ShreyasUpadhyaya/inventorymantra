@@ -69,3 +69,22 @@ def test_tracing_turns_on_with_flag_and_key(monkeypatch: pytest.MonkeyPatch) -> 
 def test_user_ref_is_stable_and_not_reversible() -> None:
     assert tracing.user_ref("abc") == tracing.user_ref("abc")
     assert tracing.user_ref("abc") != "abc" and len(tracing.user_ref("abc")) == 12
+
+
+def test_paused_turn_is_traced_as_clarify(monkeypatch: pytest.MonkeyPatch, db: object) -> None:
+    recorded: dict[str, Any] = {}
+
+    @contextmanager
+    def fake_trace(name: str, **kwargs: Any) -> Iterator[FakeRun]:
+        recorded["run"] = FakeRun()
+        yield recorded["run"]
+
+    from app.core.config import get_settings
+
+    if get_settings().readonly_db_password is None:
+        pytest.skip("READONLY_DB_PASSWORD not set")
+    monkeypatch.setattr(run_module, "tracing_enabled", lambda: True)
+    monkeypatch.setattr(run_module.langsmith, "trace", fake_trace)
+    run_module.run_turn(make_user("procurement_manager"), "What did we spend earlier?")
+    assert "route:clarify" in recorded["run"].tags
+    assert recorded["run"].outputs == {"answer": "", "paused": True, "route": "clarify"}

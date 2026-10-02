@@ -96,6 +96,20 @@ AREAS: list[tuple[str, re.Pattern[str]]] = [
 ]
 # Quantity words ("how many", "kitne") imply stock only when no other area is named:
 # "how many vendors" is about vendors, not stock (fallback below).
+ITEM_PHRASES = [  # where an item name usually sits in a question (offline stand-in only)
+    re.compile(r"\bstock of (?:the )?(.+?)\s*\??$", re.I),
+    re.compile(r"\bhow (?:much|many) (.+?) (?:do|have|are) we\b", re.I),
+    re.compile(r"^(.+?) stock\b", re.I),
+    re.compile(r"^(.+?) kitn[ei] hai", re.I),
+    re.compile(r"\bcoming in for (.+?)\s*\??$", re.I),
+    re.compile(r"^(.+?) kitni aa rahi", re.I),
+]
+VENDOR_PHRASE = re.compile(r"\b(?:from|with) ([a-z][\w.]*(?: [a-z][\w.]*){0,2})\s*\??$", re.I)
+QUESTION_START = re.compile(
+    r"^(which|what|what's|how|show|give|list|who|when|where|why|is|are|do|does|the|each|all)\b",
+    re.I,
+)
+NOT_ITEMS = re.compile(r"^(items?|it|them|all|everything|maal|stuff)$", re.I)
 MENTIONS: list[tuple[str, re.Pattern[str]]] = [
     ("po", re.compile(r"\bPO[\s-]*\d[\d-]*\b", re.I)),
     ("location", re.compile(r"\b(1\d\d-\d|C-?84)\b", re.I)),
@@ -133,6 +147,22 @@ def fake_guard(messages: list[BaseMessage]) -> dict[str, Any]:
         for kind, pattern in MENTIONS
         for m in pattern.finditer(text)
     ]
+    short_statement = len(text.split()) <= 6 and not QUESTION_START.match(text.strip())
+    if not any(m["type"] == "item" for m in mentions):
+        for phrase_pattern in ITEM_PHRASES:
+            if phrase_pattern.pattern.startswith("^") and not short_statement:
+                continue  # "^X stock" only for short phrases like "hex nut m3 stock"
+            found = phrase_pattern.search(text.strip())
+            if found and not NOT_ITEMS.match(found.group(1).strip()):
+                phrase = found.group(1).strip()
+                if not any(phrase in m["text"] or m["text"] in phrase for m in mentions):
+                    mentions.append({"type": "item", "text": phrase})
+                break
+    vendor = VENDOR_PHRASE.search(text.strip())
+    if vendor and QUESTION_START.match(vendor.group(1)):
+        vendor = None  # "from which vendor" names no vendor
+    if vendor and {"purchase_orders", "vendors", "spend"} & set(areas):
+        mentions.append({"type": "vendor", "text": vendor.group(1)})
     viz = re.search(r"\b(table|bar|line|pie)\b(?: chart)?", text, re.I)
     return {
         "language": language,
@@ -170,12 +200,131 @@ def fake_sql(messages: list[BaseMessage]) -> dict[str, Any]:
     system = str(messages[0].content) if messages else ""
     label = re.search(r"whose role is: ([A-Za-z ]+)\.", system)
     role = ROLE_BY_LABEL.get(label.group(1).strip(), "") if label else ""
-    sql = _corpus_sql().get((role, _plain(latest_user_text(messages))))
+    message = latest_user_text(messages)
+    sql = _corpus_sql().get((role, _plain(message)))
     if sql:
         return {"sql": sql, "assumptions": ["offline mode: reviewed SQL for a known question"],
                 "answerable": True}  # fmt: skip
-    return {"sql": None, "assumptions": ["offline mode answers only known evaluation questions"],
-            "answerable": False}  # fmt: skip
+    sql = _entity_sql(role, message, _resolved(messages))
+    if sql:
+        return {"sql": sql, "assumptions": ["offline mode: template for the chosen record"],
+                "answerable": True}  # fmt: skip
+    return {"sql": None, "assumptions": [OFFLINE_UNSUPPORTED], "answerable": False}
 
 
-_DEFAULTS: dict[str, Handler] = {"guard": fake_guard, "sql": fake_sql}
+OFFLINE_UNSUPPORTED = "offline mode answers only known evaluation questions"
+INBOUND_WORDS = re.compile(r"coming in|arriv|inbound|expected|aa rah|on order", re.I)
+
+
+def _resolved(messages: list[BaseMessage]) -> list[dict[str, str]]:
+    import json
+
+    for message in reversed(messages):
+        if isinstance(message, HumanMessage):
+            found = re.search(r"<data>(.*?)</data>", str(message.content), re.S)
+            if found:
+                data: list[dict[str, str]] = json.loads(found.group(1) or "[]")
+                return data
+    return []
+
+
+# Offline templates. Placeholders are filled only with codes the resolver read from the DB
+# (quote-escaped), never with user text; the result still passes the SQL guard and runs as
+# the role's read-only user.
+TEMPLATES = {
+    "item_inbound": "SELECT po_number, pending_qty, unit, expected_delivery_date "
+    "FROM inbound_by_item WHERE item_code = '{item}' ORDER BY expected_delivery_date",
+    "item_stock": "SELECT item_code, item_name, location_name, quantity, unit "
+    "FROM stock_by_location WHERE item_code = '{item}'{location} ORDER BY quantity DESC",
+    "po_status": "SELECT po_number, vendor_name, status, total_amount, expected_delivery_date, "
+    "days_overdue FROM purchase_orders WHERE po_number = '{po}'",
+    "po_inbound": "SELECT po_number, item_name, pending_qty, unit, expected_delivery_date "
+    "FROM inbound_by_item WHERE po_number = '{po}'",
+}
+
+
+def _entity_sql(role: str, message: str, resolved: list[dict[str, str]]) -> str | None:
+    """Simple questions about one chosen record, so the "which one?" flow completes offline."""
+    codes = {r["type"]: r["code"].replace("'", "''") for r in resolved}
+    if "item" in codes:
+        if INBOUND_WORDS.search(message):
+            return TEMPLATES["item_inbound"].format(item=codes["item"])
+        location = f" AND location_name = '{codes['location']}'" if "location" in codes else ""
+        return TEMPLATES["item_stock"].format(item=codes["item"], location=location)
+    if "po" in codes:
+        managers = role in ("procurement_manager", "owner")
+        return TEMPLATES["po_status" if managers else "po_inbound"].format(po=codes["po"])
+    return None
+
+
+# ------------------------------------------------------------------ clarify
+VAGUE_TIME = re.compile(
+    r"a few days (?:back|ago)|few days ago|\brecent(?:ly)?\b|\bearlier\b|some time ago|"
+    r"thode din pehle|kuch din pehle|haal hi mein|pichle dino|कुछ दिन पहले|हाल ही में",
+    re.I,
+)
+EXPLICIT_PERIOD = re.compile(
+    r"\b(today|yesterday|this|last|month|week|quarter|year|jan\w*|feb\w*|mar\w*|apr\w*|"
+    r"may|jun\w*|jul\w*|aug\w*|sep\w*|oct\w*|nov\w*|dec\w*|20\d\d)\b",
+    re.I,
+)
+VAGUE_MEASURE = re.compile(r"how are we doing|how is business|kaisa chal raha|कैसा चल रहा", re.I)
+MEASURE_OPTIONS = {
+    "inventory_manager": ["Stock levels", "Items to reorder", "Recent stock movements"],
+    "procurement_manager": ["Procurement spend", "Overdue purchase orders", "Items to reorder"],
+    "owner": ["Revenue and margins", "Procurement spend", "Overdue purchase orders"],
+}
+PERIOD_LABELS = {
+    "en": ("Last 7 days", "Last 30 days", "This month"),
+    "hi": ("पिछले 7 दिन", "पिछले 30 दिन", "इस महीने"),
+    "hinglish": ("Pichle 7 din", "Pichle 30 din", "Is mahine"),
+}
+QUESTIONS = {
+    "time_window": {"en": "Which period do you mean?", "hi": "आपका मतलब कौन सी अवधि से है?",
+                    "hinglish": "Aapka matlab kaun si avadhi se hai?"},
+    "measure": {"en": "What would you like to see?", "hi": "आप क्या देखना चाहेंगे?",
+                "hinglish": "Aap kya dekhna chahenge?"},
+}  # fmt: skip
+
+
+def _lang(text: str) -> str:
+    if DEVANAGARI.search(text):
+        return "hi"
+    return "hinglish" if HINGLISH.search(text) else "en"
+
+
+def fake_clarify(messages: list[BaseMessage]) -> dict[str, Any]:
+    from datetime import date, timedelta
+
+    from app.core.config import app_today
+
+    text = latest_user_text(messages)
+    lang = _lang(text)
+    no: dict[str, Any] = {"needs_clarification": False, "dimension": None, "question": None,
+                          "options": [], "default_applied": None}  # fmt: skip
+    if VAGUE_MEASURE.search(text):
+        system = str(messages[0].content) if messages else ""
+        label = re.search(r"whose role is: ([A-Za-z ]+)\.", system)
+        role = ROLE_BY_LABEL.get(label.group(1).strip(), "owner") if label else "owner"
+        question = QUESTIONS["measure"][lang]
+        return {**no, "needs_clarification": True, "dimension": "measure",
+                "question": question, "options": MEASURE_OPTIONS[role]}  # fmt: skip
+    if VAGUE_TIME.search(text) and not EXPLICIT_PERIOD.search(text):
+        today = app_today()
+
+        def day(d: date) -> str:
+            return f"{d.day} {d:%b}"
+
+        def span(start: date) -> str:
+            return f"{day(start)}–{day(today)} {today.year}"
+
+        week, month, this = PERIOD_LABELS[lang]
+        options = [f"{week} ({span(today - timedelta(days=6))})",
+                   f"{month} ({span(today - timedelta(days=29))})",
+                   f"{this} ({span(today.replace(day=1))})"]  # fmt: skip
+        return {**no, "needs_clarification": True, "dimension": "time_window",
+                "question": QUESTIONS["time_window"][lang], "options": options}  # fmt: skip
+    return no
+
+
+_DEFAULTS: dict[str, Handler] = {"guard": fake_guard, "sql": fake_sql, "clarify": fake_clarify}

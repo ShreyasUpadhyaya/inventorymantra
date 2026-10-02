@@ -2,6 +2,9 @@
 
     uv run python -m app.agent.cli --role inventory_manager "What price did we pay for SS sheet?"
     uv run python -m app.agent.cli --role owner --file question.txt   # Hindi: UTF-8 file
+    uv run python -m app.agent.cli --role inventory_manager "stock of bush" --answer 2
+
+When the assistant asks back, answer at the prompt (or pass --answer for each question).
 
 Uses LLM_MODE from .env (fake by default: no OpenAI calls). Runs as a synthetic demo user of
 the given role; nothing is written to the database.
@@ -17,7 +20,7 @@ import sys
 import uuid
 from pathlib import Path
 
-from app.agent.run import run_turn
+from app.agent.run import TurnResult, resume_turn, run_turn
 from app.agent.tracing import configure_tracing
 from app.auth.service import AuthUser
 from app.core.config import get_settings
@@ -40,6 +43,12 @@ def main() -> None:
     parser.add_argument("message", nargs="?", help="the question (omit when using --file)")
     parser.add_argument("--file", type=Path, help="read the question from a UTF-8 text file")
     parser.add_argument(
+        "--answer",
+        action="append",
+        default=[],
+        help="answer to a clarifying question (option number, text or code); repeatable",
+    )
+    parser.add_argument(
         "--role",
         choices=["inventory_manager", "procurement_manager", "owner"],
         default="inventory_manager",
@@ -59,9 +68,28 @@ def main() -> None:
         id=uuid.uuid4(), email="cli@local", full_name="CLI", role=args.role,
         is_active=True, token_version=0,
     )  # fmt: skip
-    result = run_turn(user, message)
     print(f"[llm_mode={get_settings().llm_mode} tracing={traced}]")
+    result = run_turn(user, message)
+    answers = list(args.answer)
+    while result.interrupt:
+        show_question(result)
+        if answers:
+            choice = answers.pop(0)
+            print(f"> {choice}")
+        elif sys.stdin.isatty():
+            choice = input("> ").strip()
+        else:
+            break  # non-interactive and no --answer left: show the paused turn
+        result = resume_turn(user, result.thread_id, choice)
     print(json.dumps(result.model_dump(), ensure_ascii=False, indent=2))
+
+
+def show_question(result: TurnResult) -> None:
+    print()
+    print(result.answer)
+    for number, option in enumerate(result.suggestions, start=1):
+        print(f"  {number}. {option}")
+    print("(type a number, the option, or your own answer)")
 
 
 if __name__ == "__main__":

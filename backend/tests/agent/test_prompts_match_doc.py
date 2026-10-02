@@ -71,3 +71,10 @@ def test_sql_task_is_verbatim() -> None:
 
     blocks = text_blocks(section("## 4. Call: SQL GENERATION", "## 5. Call: ANSWER COMPOSER"))
     assert blocks == [SQL_TASK]
+
+
+def test_clarify_task_is_verbatim() -> None:
+    from app.agent.prompts.clarify import CLARIFY_TASK
+
+    blocks = text_blocks(section("## 3. Call: CLARIFY", "## 4. Call: SQL GENERATION"))
+    assert blocks == [CLARIFY_TASK]

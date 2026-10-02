@@ -146,7 +146,7 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 ### Phase 4 — Agent read path (Day 2 AM)
 - [x] **C4.1** `feat(agent): LangGraph skeleton, LangSmith tracing and guard node`
 - [x] **C4.2** `feat(agent): role schema context, entity resolution (D-026 matcher) and guarded SQL execution`
-- [ ] **C4.3** `feat(agent): clarification interrupt with options`
+- [x] **C4.3** `feat(agent): clarification interrupt with options`
 - [ ] **C4.4** `feat(agent): answer composer, VizSpec selection, grounding check, Hindi replies`
 - [ ] **C4.5** `feat(api): /chat SSE streaming and thread history`
 
