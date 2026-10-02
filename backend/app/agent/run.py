@@ -1,7 +1,7 @@
 """Run one chat turn through the graph, with LangSmith tags role / lang / route."""
 
 import uuid
-from typing import cast
+from typing import Any, cast
 
 import langsmith
 from langchain_core.runnables import RunnableConfig
@@ -24,6 +24,13 @@ class TurnResult(BaseModel):
     denied_areas: list[str]
     injection_suspected: bool
     entity_mentions: list[dict[str, str]]
+    resolved: list[dict[str, str]] = []
+    sql: str | None = None
+    assumptions: list[str] = []
+    columns: list[str] = []
+    rows: list[list[Any]] = []
+    row_count: int = 0
+    failure: str | None = None
 
 
 def trace_tags(role: str, state: AgentState) -> list[str]:
@@ -66,4 +73,11 @@ def run_turn(
         denied_areas=state.get("denied_areas", []),
         injection_suspected=guard.injection_suspected,
         entity_mentions=[m.model_dump() for m in guard.entity_mentions],
+        resolved=state.get("resolved", []),
+        sql=state.get("sql"),
+        assumptions=state.get("assumptions", []),
+        columns=state.get("columns", []),
+        rows=state.get("rows", []),
+        row_count=state.get("row_count", 0),
+        failure=state.get("failure"),
     )

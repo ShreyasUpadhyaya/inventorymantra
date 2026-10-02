@@ -9,6 +9,7 @@ exact answers via `scripted(...)`.
 import re
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from functools import lru_cache
 from typing import Any
 
 from langchain_core.messages import BaseMessage, HumanMessage
@@ -126,6 +127,7 @@ def fake_guard(messages: list[BaseMessage]) -> dict[str, Any]:
         intent = "read"
     if intent in ("read", "write") and not areas:
         areas = ["stock"]
+    keep_areas = intent in ("read", "write") or (intent == "out_of_scope" and areas)
     mentions = [
         {"type": kind, "text": m.group(0)}
         for kind, pattern in MENTIONS
@@ -135,7 +137,7 @@ def fake_guard(messages: list[BaseMessage]) -> dict[str, Any]:
     return {
         "language": language,
         "intent": intent,
-        "data_areas": areas if intent in ("read", "write") else [],
+        "data_areas": areas if keep_areas else [],
         "injection_suspected": injection,
         "explicit_viz": viz.group(1).lower() if viz else None,
         "parts": [text.strip()],
@@ -143,4 +145,37 @@ def fake_guard(messages: list[BaseMessage]) -> dict[str, Any]:
     }
 
 
-_DEFAULTS: dict[str, Handler] = {"guard": fake_guard}
+# ------------------------------------------------------------------ SQL
+ROLE_BY_LABEL = {
+    "Inventory Manager": "inventory_manager",
+    "Procurement Manager": "procurement_manager",
+    "Owner": "owner",
+}
+
+
+def _plain(text: str) -> str:
+    return re.sub(r"[^\w]+", " ", text.lower()).strip()
+
+
+@lru_cache
+def _corpus_sql() -> dict[tuple[str, str], str]:
+    from evals.schema import load_corpus  # offline-only dependency on the eval corpus
+
+    return {(c.role, _plain(c.query)): c.answer_key_sql for c in load_corpus() if c.answer_key_sql}
+
+
+def fake_sql(messages: list[BaseMessage]) -> dict[str, Any]:
+    """Offline mode can't write SQL from English: it answers only golden-corpus questions,
+    with their reviewed answer-key SQL, and says so for anything else."""
+    system = str(messages[0].content) if messages else ""
+    label = re.search(r"whose role is: ([A-Za-z ]+)\.", system)
+    role = ROLE_BY_LABEL.get(label.group(1).strip(), "") if label else ""
+    sql = _corpus_sql().get((role, _plain(latest_user_text(messages))))
+    if sql:
+        return {"sql": sql, "assumptions": ["offline mode: reviewed SQL for a known question"],
+                "answerable": True}  # fmt: skip
+    return {"sql": None, "assumptions": ["offline mode answers only known evaluation questions"],
+            "answerable": False}  # fmt: skip
+
+
+_DEFAULTS: dict[str, Handler] = {"guard": fake_guard, "sql": fake_sql}

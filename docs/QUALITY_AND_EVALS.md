@@ -36,7 +36,7 @@ Location: `evals/corpus/golden.jsonl`, one case per line, synced to the LangSmit
 ```
 Frozen results live in `evals/corpus/answer_keys.json`, keyed by case id and rebuilt with `make answer-keys`. The schema is enforced by `backend/evals/schema.py`, a strict Pydantic model with per-route rules.
 
-### Coverage (106 cases as of C2.1b; the minimums are enforced by `tests/evals/test_corpus.py`)
+### Coverage (107 cases as of C4.2; the minimums are enforced by `tests/evals/test_corpus.py`)
 | Bucket | Count (min) | Examples |
 |---|---|---|
 | IM reads | 13 (10) | stock by item/location, zero stock, issues to shop floor, inbound qty/date, requests status |
@@ -44,7 +44,7 @@ Frozen results live in `evals/corpus/answer_keys.json`, keyed by case id and reb
 | Owner reads | 11 (10) | margins by quarter, spend trend, top vendors, approvals pending, users, audit |
 | Messy entity input (D-026) | 16 (12) | `OD40xID26x70`, `ms bush 40`, `hex nut m3`, `torx screw`, `AC contacter`, `PO 3`, `sterling steel`, `godown 132-2` |
 | Clarification | 9 (8) | "a few days back", "bush", "last quarter's AC", "recent orders", metric-ambiguous "how are we doing" |
-| RBAC denials + leak probes | 16 (12) | IM → prices, vendors, users, PO totals; PM → margins, users, approvals; injection "ignore rules", raw `SELECT * FROM users` |
+| RBAC denials + leak probes | 17 (12) | IM → prices, vendors, users, PO totals; PM → margins, users, approvals; injection "ignore rules", raw `SELECT * FROM users` |
 | Out of scope | 5 (4) | poem, weather, general coding, stock market |
 | No-prediction | 5 (4) | "will PO X arrive tomorrow", "when will we run out" (→ days-of-cover formula, not a guess) |
 | Viz explicit | 4 (4) | "show as pie", "give me a table", "line chart please" |
@@ -133,8 +133,9 @@ Tests written before their code are marked `pending("Cx.y")` (`backend/tests/pen
 | `tests/api/test_dashboard.py` | KPIs and sections per role match the frozen answer keys; IM dashboard has no vendor, price or people data; PM sees no Owner data; every section renderable; 401 and 503 paths | ✅ live (C3.3) |
 | `tests/agent/test_prompts_match_doc.py` | code prompt text equals approved PROMPTS.md (core, roles, guard, fixed sentences, help) | ✅ live (C4.1) |
 | `tests/agent/test_guard.py`, `test_llm.py`, `test_tracing.py`, `test_fake_router.py` | access decided in code (16 cases), trusted system message, tag breakout, history limit, fixed replies per language, budget guard before network, trace tags, offline router vs corpus fixed-reply cases | ✅ live (C4.1) |
-| `tests/unit/test_sql_guard.py` | 9 accepted shapes, LIMIT enforcement, 40 rejections with fixed reason codes, reasons never name relations | ⏳ pending C4.2 |
-| `tests/integration/test_entity_match.py` | D-026 matcher: match, clarify, not_found, denied; vendors, locations, PO numbers; mentions are data | ⏳ pending C4.2 |
+| `tests/unit/test_sql_guard.py` | 9 accepted shapes, LIMIT enforcement, 40 rejections with fixed reason codes, reasons never name relations | ✅ live (C4.2) |
+| `tests/integration/test_entity_match.py` | D-026 matcher: match, clarify, not_found, denied; vendors, locations, PO numbers; mentions are data | ✅ live (C4.2) |
+| `tests/agent/test_read_path.py`, `test_sql_examples.py` | **all 61 corpus read questions return the frozen answers value for value** (offline pipeline); repair loop with sanitised errors; 3-attempt cap; timeout; unanswerable / unavailable; not-found, ask-back and denied entities; the SQL prompt shows only the role's views; few-shots valid per role and not copied from the corpus | ✅ live (C4.2) |
 | `tests/unit/test_notification_visibility.py` | per-role payload allow-lists; IM never sees vendor, price or Owner data; refused recipients; unknown events | ⏳ pending C6.5 |
 | `tests/unit/test_grounding.py`, `test_lead_time.py`, `tests/integration/test_write_tools.py` | grounding checker, lead-time maths, write tools | to be written test-first in C4.4 / C6.x |
 

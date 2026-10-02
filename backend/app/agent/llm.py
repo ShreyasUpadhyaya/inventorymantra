@@ -21,7 +21,7 @@ from app.core.config import get_settings
 Tier = Literal["fast", "reasoning"]
 
 # Output-token caps per node; generous enough for the schema, small enough to bound cost.
-MAX_TOKENS: dict[str, int] = {"guard": 400}
+MAX_TOKENS: dict[str, int] = {"guard": 400, "sql": 700}
 DEFAULT_MAX_TOKENS = 800
 
 

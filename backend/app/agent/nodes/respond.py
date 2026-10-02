@@ -29,6 +29,15 @@ def respond_fixed(state: AgentState, config: RunnableConfig) -> AgentState:
     return {"answer": intro, "suggestions": list(examples)}
 
 
+def finalize(state: AgentState) -> AgentState:
+    """Every reply passes here: add the out-of-scope sentence for an off-topic part."""
+    if state.get("off_topic_part") and state["route"] != "refuse_scope":
+        extra = OUT_OF_SCOPE[state["lang"]]
+        if extra not in state.get("answer", ""):
+            return {"answer": f"{state.get('answer', '')} {extra}".strip()}
+    return {}
+
+
 def pending_capability(state: AgentState) -> AgentState:
     """Read/write/clarify nodes arrive in C4.2-C4.4 and C6; until then say so honestly."""
     answer = PENDING[state["lang"]]

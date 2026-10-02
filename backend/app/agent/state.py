@@ -5,7 +5,7 @@ Who the user is (id, role) is NOT in the state: it travels in the graph config
 from user text or model output can change it.
 """
 
-from typing import Literal, TypedDict
+from typing import Any, Literal, TypedDict
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -54,5 +54,18 @@ class AgentState(TypedDict, total=False):
     lang: Lang
     route: Route
     denied_areas: list[str]  # mixed requests: areas answered with the fixed denial
+    off_topic_part: bool  # the message also asked something out of scope
+    # read path (C4.2)
+    resolved: list[dict[str, str]]  # matched entities {type, text, code, name}
+    entity_issue: dict[str, Any] | None  # clarify / not_found for one mention
+    sql: str | None
+    sql_error: str | None  # sanitised error fed to the repair attempt
+    sql_attempts: int
+    assumptions: list[str]
+    columns: list[str]
+    rows: list[list[Any]]
+    row_count: int
+    failure: str | None  # sql_failed | timeout | unanswerable | unavailable
+    # reply
     answer: str
-    suggestions: list[str]  # clickable follow-ups (help mode)
+    suggestions: list[str]  # clickable follow-ups (help mode, options)

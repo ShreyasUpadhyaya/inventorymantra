@@ -28,28 +28,34 @@ def guard_out(**overrides: Any) -> GuardOutput:
 
 # ------------------------------------------------------------------ access decisions (code)
 @pytest.mark.parametrize(
-    ("role", "areas", "intent", "route", "denied"),
+    ("role", "areas", "intent", "route", "denied", "off_topic"),
     [
-        (IM, ["stock"], "read", "read", []),
-        (IM, ["prices"], "read", "refuse_rbac", ["prices"]),
-        (IM, ["vendors", "prices"], "read", "refuse_rbac", ["prices", "vendors"]),
-        (IM, ["stock", "prices"], "read", "read", ["prices"]),  # mixed: answer the rest
-        (IM, ["purchase_orders"], "write", "refuse_rbac", ["purchase_orders"]),
-        (IM, ["stock"], "write", "write", []),
-        (PM, ["margins"], "read", "refuse_rbac", ["margins"]),
-        (PM, ["audit_own"], "read", "read", []),
-        (PM, ["audit_all"], "read", "refuse_rbac", ["audit_all"]),
-        (PM, ["purchase_orders", "users"], "read", "read", ["users"]),
-        (OW, ["margins", "users", "audit_all"], "read", "read", []),
-        (OW, [], "read", "read", []),
-        (IM, ["prices"], "out_of_scope", "refuse_scope", []),
-        (IM, ["prices"], "help", "help", []),
-        (PM, [], "greeting", "help", []),
-        (OW, ["stock"], "clarification_reply", "read", []),
+        (IM, ["stock"], "read", "read", [], False),
+        (IM, ["prices"], "read", "refuse_rbac", ["prices"], False),
+        (IM, ["vendors", "prices"], "read", "refuse_rbac", ["prices", "vendors"], False),
+        (IM, ["stock", "prices"], "read", "read", ["prices"], False),  # mixed: answer the rest
+        (IM, ["purchase_orders"], "write", "refuse_rbac", ["purchase_orders"], False),
+        (IM, ["stock"], "write", "write", [], False),
+        (PM, ["margins"], "read", "refuse_rbac", ["margins"], False),
+        (PM, ["audit_own"], "read", "read", [], False),
+        (PM, ["audit_all"], "read", "refuse_rbac", ["audit_all"], False),
+        (PM, ["purchase_orders", "users"], "read", "read", ["users"], False),
+        (OW, ["margins", "users", "audit_all"], "read", "read", [], False),
+        (OW, [], "read", "read", [], False),
+        (IM, [], "out_of_scope", "refuse_scope", [], False),
+        # off-topic AND data: each part answered (user-found case, 2026-10-02)
+        (IM, ["prices", "purchase_orders"], "out_of_scope", "refuse_rbac",
+         ["prices", "purchase_orders"], True),
+        (PM, ["purchase_orders"], "out_of_scope", "read", [], True),
+        (IM, ["prices"], "help", "help", [], False),
+        (PM, [], "greeting", "help", [], False),
+        (OW, ["stock"], "clarification_reply", "read", [], False),
     ],
-)
-def test_decide(role: str, areas: list[str], intent: str, route: str, denied: list[str]) -> None:
-    assert decide(role, guard_out(data_areas=areas, intent=intent)) == (route, denied)
+)  # fmt: skip
+def test_decide(
+    role: str, areas: list[str], intent: str, route: str, denied: list[str], off_topic: bool
+) -> None:
+    assert decide(role, guard_out(data_areas=areas, intent=intent)) == (route, denied, off_topic)
 
 
 # ------------------------------------------------------------------ message assembly
@@ -154,6 +160,21 @@ def test_mixed_request_keeps_the_allowed_part_and_denies_the_rest() -> None:
         result = run_turn(make_user(IM), "MS Bush OD40 ka stock aur uska price batao")
     assert result.route == "read" and result.denied_areas == ["prices"]
     assert DENIAL["hinglish"] in result.answer
+
+
+def test_forbidden_plus_off_topic_answers_both_parts() -> None:
+    scripted = guard_out(intent="out_of_scope", data_areas=["prices", "purchase_orders"])
+    with fake.scripted("guard", scripted):
+        result = run_turn(make_user(IM), "price of PO 3 and then write a poem for hanuman")
+    assert result.route == "refuse_rbac"
+    assert result.answer == f"{DENIAL['en']} {OUT_OF_SCOPE['en']}"
+
+
+@pytest.mark.parametrize("lang", ["en", "hi", "hinglish"])
+def test_pure_off_topic_gets_only_the_scope_sentence(lang: str) -> None:
+    with fake.scripted("guard", guard_out(language=lang, intent="out_of_scope", data_areas=[])):
+        result = run_turn(make_user(PM), "poem")
+    assert result.answer == OUT_OF_SCOPE[lang]  # type: ignore[index]
 
 
 def test_injection_is_flagged_and_changes_nothing() -> None:

@@ -20,6 +20,7 @@ dependencies = [
     "langchain-openai>=0.3",
     "langsmith>=0.4",
     "jsonpatch>=1.33",
+    "sqlglot>=26",
 ]
 
 [dependency-groups]

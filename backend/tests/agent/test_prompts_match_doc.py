@@ -64,3 +64,10 @@ def test_help_examples_match_doc() -> None:
     for role, label in labels.items():
         row = next(line for line in table.splitlines() if line.startswith(f"| **{label}**"))
         assert re.findall(r'\d\. "([^"]+)"', row) == EXAMPLES[role]
+
+
+def test_sql_task_is_verbatim() -> None:
+    from app.agent.prompts.sql import SQL_TASK
+
+    blocks = text_blocks(section("## 4. Call: SQL GENERATION", "## 5. Call: ANSWER COMPOSER"))
+    assert blocks == [SQL_TASK]

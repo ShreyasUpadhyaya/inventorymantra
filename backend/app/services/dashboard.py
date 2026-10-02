@@ -6,14 +6,14 @@ and chat answers with the same components.
 """
 
 from dataclasses import dataclass
-from datetime import date, datetime
-from decimal import Decimal
+from datetime import date
 from typing import Any, Literal
 from uuid import UUID
 
 import psycopg
 from pydantic import BaseModel
 
+from app.core.jsonsafe import json_value
 from app.db.readonly import AppRole, readonly_session
 
 Viz = Literal["table", "bar", "line", "pie"]
@@ -242,18 +242,6 @@ LAYOUTS: dict[AppRole, tuple[tuple[KpiSpec, ...], tuple[SectionSpec, ...]]] = {
         ),
     ),  # fmt: skip
 }
-
-
-def json_value(value: Any) -> Any:
-    if isinstance(value, Decimal):
-        return int(value) if value == value.to_integral_value() else float(value)
-    if isinstance(value, float) and value.is_integer():
-        return int(value)
-    if isinstance(value, datetime | date):
-        return value.isoformat()
-    if isinstance(value, UUID):
-        return str(value)
-    return value
 
 
 def _kpi(conn: psycopg.Connection, spec: KpiSpec) -> Kpi:

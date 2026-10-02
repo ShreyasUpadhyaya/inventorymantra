@@ -1,5 +1,5 @@
 """SQL guard contract (DECISION D-005; CLAUDE.md §5). Implementation: app/agent/sql_guard.py
-in C4.2.
+(C4.2).
 
 validate_sql(sql, allowed, max_rows=500) -> result with:
   ok: bool, sql: str | None (the statement to run, LIMIT enforced), reason: str | None.
@@ -10,10 +10,6 @@ import re
 from typing import Any
 
 import pytest
-
-from tests.pending import pending
-
-pytestmark = pending("C4.2")
 
 IM_VIEWS = frozenset(
     {"items", "locations", "issue_targets", "stock_by_location", "stock_movements",

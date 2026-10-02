@@ -1,6 +1,6 @@
 # Prompts — InventoryMantra agent
 
-Status: **v0.3, APPROVED by the user on 2026-10-01** (gate G1 passed; v0.2 approved 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.3"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
+Status: **v0.4, APPROVED by the user on 2026-10-02** (gate G1 passed; v0.3 approved 2026-10-01, v0.2 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.4"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
 
 ---
 
@@ -171,7 +171,8 @@ TASK: Write ONE PostgreSQL query that answers the request.
   comments, no semicolons, no functions with side effects.
 - Filter with the resolved IDs given in <data> rather than fuzzy name matching.
 - Today is {today}; write explicit date literals and list the ranges in assumptions.
-- For expected dates use the column expected_delivery_latest.
+- expected_delivery_date already holds the latest recorded expected date (NULL if none was
+  recorded); say "no expected date recorded" rather than guessing one.
 - Return readable columns (names, codes), not raw IDs; snake_case aliases.
 - Aggregate in SQL; ORDER BY for rankings and time series; at most 500 rows.
 - If the request cannot be answered from these relations, return answerable=false and
@@ -291,6 +292,20 @@ Still open (small, has a default): **conversation history window.** The default 
 | 0.1 | 2026-09-30 | First draft | — |
 | 0.2 | 2026-09-30 | Explicit system-vs-user message split per call; applied answers to open questions; help mode; renamed to InventoryMantra | User, 2026-09-30 |
 | 0.3 | 2026-10-01 | Guard output gains `entity_mentions` (copy-as-typed spans for the D-026 matcher) | User, 2026-10-01 |
+| 0.4 | 2026-10-02 | §4: replace the non-existent `expected_delivery_latest` with `expected_delivery_date` (already the latest date; NULL means none recorded) | User, 2026-10-02 |
 
 ## 13. Why `entity_mentions` exists (v0.3, D-026)
 The AI **points** at the words that name a record, and the deterministic matcher **decides** which record they mean. That's why mentions are copied as typed: an AI that "corrects" `ms bush 40` into a full item name could pick OD42 and skip the clarification step. Each mention type is looked up only within the caller's role scope, so an IM's vendor mention gets the fixed denial, never "not found". Mentions are passed to lookups as query parameters and never pasted into SQL. The field adds about 20–40 output tokens to the existing guard call; there is no extra AI call.
+
+## 14. Change for v0.4 (APPROVED 2026-10-02, applied in C4.2)
+Found while building C4.2. The approved §4 SQL task says:
+```text
+- For expected dates use the column expected_delivery_latest.
+```
+No such column exists. The views (C1.4) expose **`expected_delivery_date`**, which already holds the *latest* recorded expected date, and it's NULL when none is recorded. A model following the approved line literally will write invalid SQL and burn repair attempts. Proposed replacement for that one line:
+```text
+- expected_delivery_date already holds the latest recorded expected date (NULL if none was
+  recorded); say "no expected date recorded" rather than guessing one.
+```
+Applied in C4.2: the code and this document changed in the same commit, and the drift test checks they stay equal.
+

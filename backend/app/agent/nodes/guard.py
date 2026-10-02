@@ -66,22 +66,26 @@ def guard_messages(role: str, state: AgentState) -> list[BaseMessage]:
     return messages
 
 
-def decide(role: str, guard: GuardOutput) -> tuple[Route, list[str]]:
-    """Route and denied areas. Access is decided here, never by the model."""
-    if guard.intent == "out_of_scope":
-        return "refuse_scope", []
+def decide(role: str, guard: GuardOutput) -> tuple[Route, list[str], bool]:
+    """(route, denied areas, has an off-topic part). Access is decided here, never by the
+    model. A message that is off-topic *and* touches data (e.g. "price of PO 3 and write a
+    poem") gets each part answered: the data part as usual, plus the out-of-scope sentence."""
+    off_topic = guard.intent == "out_of_scope"
+    if off_topic and not guard.data_areas:
+        return "refuse_scope", [], False
     if guard.intent in ("help", "greeting"):
-        return "help", []
+        return "help", [], False
     denied = sorted(permissions.denied_areas(role, guard.data_areas))
     if denied and len(denied) == len(set(guard.data_areas)):
-        return "refuse_rbac", denied  # everything asked for is outside the role
-    return ("write" if guard.intent == "write" else "read"), denied
+        return "refuse_rbac", denied, off_topic  # everything asked for is outside the role
+    return ("write" if guard.intent == "write" else "read"), denied, off_topic
 
 
 def guard_node(state: AgentState, config: RunnableConfig) -> AgentState:
     role = config["configurable"]["role"]
     guard = structured_call("guard", "fast", GuardOutput, guard_messages(role, state))
-    route, denied = decide(role, guard)
+    route, denied, off_topic = decide(role, guard)
     if guard.injection_suspected:
         logger.warning("injection suspected (role=%s, route=%s)", role, route)
-    return {"guard": guard, "lang": guard.language, "route": route, "denied_areas": denied}
+    return {"guard": guard, "lang": guard.language, "route": route, "denied_areas": denied,
+            "off_topic_part": off_topic}  # fmt: skip

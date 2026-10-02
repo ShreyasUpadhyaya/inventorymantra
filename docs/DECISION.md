@@ -210,3 +210,22 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Tooling:** `make ask ROLE=… Q="…"` runs one turn from the terminal. uv uses `link-mode = "copy"`, because OneDrive rejects hard links.
 - **Status:** Accepted
 
+### D-031 · Read path: entities, SQL guard, execution (C4.2)
+- **Graph:** `guard → resolve_entities → generate_sql → execute_sql → present_rows`. A guard rejection or DB error goes back to `generate_sql` with a **sanitised** error, for at most 3 attempts in total, then `respond_failure`. A clarify or not-found entity goes to `respond_entity` (a text question for now; the interrupt comes in C4.3). Entity mentions the role can't see, with nothing else asked, go to the fixed denial.
+- **SQL guard** (`app/agent/sql_guard.py`, sqlglot, Postgres dialect):
+  - It accepts exactly one SELECT, WITH or set operation.
+  - It rejects any write or command node anywhere (including DML inside a CTE), `SELECT INTO`, row locks, comments, catalog relations (`pg_*`, `pg_catalog`, `information_schema`), **any schema-qualified name**, relations outside the role's views (CTE names are allowed), and functions starting `pg_`, `lo_`, `dblink` or `xpath` plus `set_config` and the sequence functions.
+  - Unparseable text (sqlglot reads `SELEC * FRM x` as `a*b AS c`) is `parse_error`.
+  - LIMIT is enforced at 500 (a smaller limit is kept).
+  - Reasons are fixed codes. sqlglot's own warnings are silenced, so rejected SQL isn't echoed into the logs.
+- **Repair feedback** reaches the model only as a reason code ("rejected by the SQL guard: relation_not_allowed …"), or the role user's own DB error, which can only name role-visible objects because the guard ran first. Never other roles' names.
+- **Execution** uses `readonly_session(role, user_id, app_today())`. Statement timeout gives `timeout` (no retry). Rows are made JSON-safe and capped at 500.
+- **Schema context** (`schema_context.py`) is read live from the role's own view schema, plus one-line meanings. The IM prompt never mentions `vendors(`, `unit_price`, etc., and a test checks this.
+- **Few-shots** (`prompts/sql_examples.py`): 5–9 per role. Each passes the guard and runs as its role. **None repeats a corpus question or SQL** (contamination test). They teach the date conventions (calendar months, Mon–Sun weeks, quarters) for "today = Wed 30 Sep 2026", and include one unanswerable example.
+- **Entity matcher** (`entity_match.py`, D-026) is live. It adds one rule found during implementation: **a candidate must share a real word with the mention**, either exact or a close spelling of a 4+ letter word. Without it, `zzzz` matched bearings named "… ZZ" at a trigram score of 0.75.
+- **Offline SQL:** `fake` mode answers **only golden-corpus questions**, with their reviewed SQL, and says "can't answer offline" otherwise. All 61 corpus read questions return the frozen answers value for value through the full offline pipeline. That validates routing, matching, the guard, role execution and serialisation, **not** model quality.
+- **Off-topic plus data in one message** (a case the user found while testing): "price of PO 3 and then write a poem" used to get only the out-of-scope sentence. Now `decide()` routes the data part normally, and a final `finalize` node **adds** the out-of-scope sentence. So that example gets the fixed DENIAL and then OUT_OF_SCOPE, and an allowed data part gets its rows plus OUT_OF_SCOPE. A purely off-topic message is unchanged. Added to the corpus as `RB-IM-17`.
+- **Prompt v0.4** (approved 2026-10-02): §4 now points at the real column `expected_delivery_date` instead of the non-existent `expected_delivery_latest`.
+- **Failure replies** (`prompts/replies.py`, en/hi/Hinglish, formal "aap"): sql_failed, timeout, unanswerable (with "in the data available to you", which reveals nothing about other roles) and unavailable (budget or config).
+- **Status:** Accepted
+
