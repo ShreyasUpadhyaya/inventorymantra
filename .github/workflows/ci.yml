@@ -41,6 +41,7 @@ jobs:
       DATABASE_URL: postgresql+psycopg://inventorymantra:ci_only_password@127.0.0.1:5433/inventorymantra
       DEMO_PASSWORD: ci-only-demo-password
       READONLY_DB_PASSWORD: ci-only-readonly-password
+      JWT_SECRET_KEY: ci-only-jwt-secret-not-used-anywhere-else-0123456789
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5

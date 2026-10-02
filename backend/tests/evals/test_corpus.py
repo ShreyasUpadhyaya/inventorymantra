@@ -31,7 +31,7 @@ def test_ids_are_unique() -> None:
 
 def test_coverage_targets() -> None:
     by_bucket = Counter(bucket(c) for c in CORPUS)
-    minimums = {"RD": 30, "CL": 8, "RB": 12, "OS": 4, "NP": 4, "VZ": 4, "WR": 6, "HL": 3}
+    minimums = {"RD": 30, "ER": 12, "CL": 8, "RB": 12, "OS": 4, "NP": 4, "VZ": 4, "WR": 6, "HL": 3}
     assert {b: n for b, n in minimums.items() if by_bucket[b] < n} == {}
     reads_per_role = Counter(c.role for c in CORPUS if bucket(c) == "RD")
     assert min(reads_per_role.values()) >= 10

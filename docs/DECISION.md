@@ -145,3 +145,34 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Known limitation:** any Postgres user can read the system catalogs (`pg_catalog`, `information_schema`), which reveals object *names*. Row data stays protected. The SQL guard (D-005, C4.2) rejects catalog references, and denials never echo names.
 - **Status:** Accepted
 
+### D-026 · Entity matching for messy user input (refines D-016; raised by the user)
+- **Context:** Users won't type `MS Bush – OD40×ID26.5×70mm`. They type `ms bush 40`, `OD40xID26x70`, `torx screw`, `AC contacter`. Plain `pg_trgm` similarity finds the right family but is weak on what matters most in this catalogue, sizes and specs. "hex nut m3" ties M3 and M8 at 0.73, and "ms bush 40" ties OD40 and OD42.
+- **Decision:** a deterministic matcher in code (built in C4.2 and unit-tested offline in C2.2), applied to each **entity mention** (item, vendor, location, PO). The guard extracts the mentions, so the matcher never sees the whole sentence.
+  1. **Exact item code** (`BO-EL-0144`) or **PO number** (normalised: `PO 3`, `po-0003` and `3` all become `PO-2026-0003`) means a direct hit.
+  2. **Normalise** both sides: lowercase, `×` and `*` become `x`, dashes become spaces, collapse spaces. Then expand **synonyms taken from the catalogue's own naming standards** (`inv_sub_categories_2.convention_notes`): Torx means Hexalobular, Pen Head means Pan Head, ISMB means MS Beam.
+  3. **Candidates:** the top 15 by `greatest(similarity, word_similarity)` with a score of at least 0.3, among active items.
+  4. **Spec tokens decide:** words containing a digit are split into atoms (`od40xid26x70` gives od 40, id 26 and 70; units are dropped). Every atom must be present in the candidate, where a bare number matches any prefix and `id26` matches `id26.5`. A conflicting size (`m3` vs `m8`) eliminates the candidate.
+  5. **Word preference:** if some candidates contain every plain word the user typed, only those are kept. This removes noise like "Push Button Box" for "bush".
+  6. **Outcome:**
+     - **match** if the top score is at least 0.5 and it's unique or at least 0.15 ahead of the next. The answer **names the matched item in full**, so a wrong match is visible at once.
+     - **clarify** if two or more candidates score at least 0.5, offering up to 4 as options.
+     - **not_found** otherwise, showing up to 3 suggestions scoring at least 0.35, or none.
+  7. All matching runs inside the caller's role scope. An IM matching a vendor name gets the fixed denial, not "not found".
+- **Prototype check (seeded data):** `OD40xID26x70`, `ms bush 40`, `hex nut m3`, `torx screw m3`, `AC contacter`, `boom barrier motor` and `ss sheet 304 1500x3000x2` all match. `ms bush`, `hex nut`, `ss sheet` and `gear box` all clarify. `torx screw m4` gives not_found, suggesting the M3 Hexalobular screw, and `titanium flange` gives not_found.
+- **Consequences:** a new route, `not_found`, in the eval schema, and 16 `ER-*` corpus cases. The guard gets an `entity_mentions` output field (PROMPTS.md v0.3, approved 2026-10-01).
+- **Status:** Accepted (prompt field approved as v0.3 on 2026-10-01)
+
+### D-027 · Auth implementation details (refines D-014; built in C3.1)
+- **Tokens:**
+  - The access JWT is HS256 and lasts 15 min. Its claims are `sub`, `ver` (token_version), `iss`, `aud`, `iat` and `exp`, all required.
+  - **The role is not in the token.** `current_user` loads the user on every request, so the role, `is_active` and `token_version` all come from the DB. Demotion, deactivation and "log out everywhere" take effect on the next request.
+  - The refresh token is 48 random bytes. Only its SHA-256 hash is stored, it lasts 7 days, and it's **rotated on every use**. If an already-rotated token is presented, that counts as theft: every refresh token of that user is revoked and `token_version` is bumped, which also kills live access tokens.
+- **Cookies:** `im_access` (path `/`) and `im_refresh` (path `/auth` only) are both HttpOnly and SameSite=Lax, with `Secure` set from `COOKIE_SECURE` (true in deployment). A Bearer header is also accepted, for API clients and tests.
+- **CSRF:** SameSite=Lax cookies plus JSON-only request bodies, so a cross-site HTML form can't post JSON and a form post gets a 422. CORS is limited to the frontend origin, with methods GET and POST and headers Content-Type and Authorization.
+- **Login hardening:**
+  - One identical 401 message for an unknown email, a wrong password or an inactive user. Unknown emails are checked against a dummy bcrypt hash, so the response takes the same time.
+  - Email is trimmed and lowercased.
+  - 5 failures per email and IP within 15 min gives a 429, and while blocked even the correct password is refused. The counter is in memory per process, which is fine for one instance; use Redis or the DB when scaling out.
+- **Config:** `JWT_SECRET_KEY` must be at least 32 characters, otherwise token creation and checks refuse to run. CI uses its own throwaway value.
+- **Status:** Accepted
+

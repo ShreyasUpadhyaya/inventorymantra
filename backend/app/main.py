@@ -1,23 +1,44 @@
 """FastAPI entrypoint."""
 
+import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from app.api.routes import auth
 from app.core.config import app_today, get_settings
 from app.core.logging import configure_logging
+from app.db.pool import close_pool
 
 configure_logging()
 settings = get_settings()
 
-app = FastAPI(title="InventoryMantra API", version="0.1.0")
+
+logger = logging.getLogger("inventorymantra")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    try:
+        settings.jwt_secret()
+    except RuntimeError as exc:  # keep /health up, but make the problem obvious
+        logger.error("Login disabled: %s Check the exact name in .env, then restart.", exc)
+    yield
+    close_pool()
+
+
+app = FastAPI(title="InventoryMantra API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
 )
+app.include_router(auth.router)
 
 
 class Health(BaseModel):
