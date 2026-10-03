@@ -321,3 +321,13 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **UI kit:** shadcn/ui (base-nova style, Base UI primitives) with a signal-blue primary. Frontend unit tests use Vitest (`npm test`, run in CI and `make test`).
 - **Known limit:** behind the proxy, every login attempt reaches the API from the web server's IP. The login rate limit keys on email + IP, so it still limits per account, but per-IP limiting needs `X-Forwarded-For` handling at deploy time (C7.3).
 - **Status:** Accepted
+
+### D-038 · Temporary passwords and resets (C5.1b)
+- **Context:** the Owner creates accounts with a temporary password that is shown once (C3.2), but nobody could change a password, and a forgotten one could only be fixed with SQL.
+- **Decision:**
+  - `users.must_change_password` (migration 0005) is set when the Owner creates an account or resets a password. Seeded demo users are not flagged.
+  - **The API enforces it:** a flagged user can call only `/auth/me`, `/auth/password`, `/auth/refresh` and `/auth/logout`. Everything else answers `403 "Please change your password first."` The web app sends them to `/account/password` before anything else.
+  - `POST /auth/password {current_password, new_password}` lets anyone change their own password. Rules: at least 10 characters, different from the current one, not the email. Wrong current passwords count towards the login rate limit. The change ends every session (refresh tokens revoked, `token_version` bumped), then this browser gets a fresh one. It is audited as `change_password`, without the password.
+  - `POST /users/{id}/reset-password` (Owner only, action `reset_password`) creates a new temporary password, shown once, flags the account and signs it out everywhere. It is audited without the secret. The Owner changes their own password on the account page, not through a reset.
+- **Not done:** self-service "forgot password" by email (no mail service in this case study) and password-strength scoring.
+- **Status:** Accepted

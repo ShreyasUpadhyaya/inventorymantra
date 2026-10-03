@@ -81,6 +81,7 @@ def test_login_sets_httponly_cookies_and_returns_safe_profile(client: TestClient
         "email": PM_EMAIL,
         "full_name": "Test procurement_manager",
         "role": "procurement_manager",
+        "must_change_password": False,
     }
     cookies = r.headers.get_list("set-cookie")
     access = next(c for c in cookies if c.startswith(f"{ACCESS_COOKIE}="))
@@ -88,7 +89,7 @@ def test_login_sets_httponly_cookies_and_returns_safe_profile(client: TestClient
     for cookie in (access, refresh):
         assert "HttpOnly" in cookie and "samesite=lax" in cookie.lower()
     assert "Path=/auth" in refresh
-    assert "password" not in r.text and "$2b$" not in r.text
+    assert "password_hash" not in r.text and "$2b$" not in r.text
 
 
 @pytest.mark.usefixtures("users")

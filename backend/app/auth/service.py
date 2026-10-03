@@ -26,13 +26,14 @@ class AuthUser(BaseModel):
     role: Role
     is_active: bool
     token_version: int
+    must_change_password: bool = False  # temp password from the Owner (C5.1b)
 
 
 class RefreshReuseError(Exception):
     """An already-rotated refresh token was presented: treat it as stolen."""
 
 
-USER_COLUMNS = "id, email, full_name, role, is_active, token_version"
+USER_COLUMNS = "id, email, full_name, role, is_active, token_version, must_change_password"
 
 
 @lru_cache
@@ -106,6 +107,29 @@ def revoke_refresh(conn: psycopg.Connection, refresh: str) -> None:
         "UPDATE refresh_tokens SET revoked_at = now() WHERE token_hash = %s AND revoked_at IS NULL",
         (hash_refresh_token(refresh),),
     )
+
+
+def set_password(
+    conn: psycopg.Connection, user_id: UUID, password: str, *, must_change: bool
+) -> None:
+    """Store a new password and end every session of the user (refresh tokens + access tokens).
+    The caller issues a fresh session if the user should stay signed in on this device."""
+    conn.execute(
+        "UPDATE users SET password_hash = %s, must_change_password = %s WHERE id = %s",
+        (hash_password(password), must_change, user_id),
+    )
+    revoke_all_sessions(conn, user_id)
+
+
+def password_problem(user: AuthUser, current: str, new: str) -> str | None:
+    """Simple rules for a new password; the message is shown to the user as is."""
+    if len(new) < 10:
+        return "Use at least 10 characters."
+    if new == current:
+        return "Choose a password different from the current one."
+    if normalise_email(new) == user.email:
+        return "Don't use your email as your password."
+    return None
 
 
 def revoke_all_sessions(conn: psycopg.Connection, user_id: UUID) -> None:

@@ -5,7 +5,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 
 import { auth, type User } from "@/lib/api";
 
-type Session = { user: User; logout: () => Promise<void> };
+type Session = { user: User; setUser: (user: User) => void; logout: () => Promise<void> };
 
 const SessionContext = createContext<Session | null>(null);
 
@@ -51,5 +51,5 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  return <SessionContext.Provider value={{ user, logout }}>{children}</SessionContext.Provider>;
+  return <SessionContext.Provider value={{ user, setUser, logout }}>{children}</SessionContext.Provider>;
 }

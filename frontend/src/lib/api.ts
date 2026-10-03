@@ -4,7 +4,13 @@
 
 import type { Role } from "./roles";
 
-export type User = { id: string; email: string; full_name: string; role: Role };
+export type User = {
+  id: string;
+  email: string;
+  full_name: string;
+  role: Role;
+  must_change_password: boolean; // temporary password from the Owner: change it first
+};
 
 export class ApiError extends Error {
   constructor(
@@ -72,5 +78,10 @@ export const auth = {
   login: (email: string, password: string) =>
     apiJson<User>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
   me: () => apiJson<User>("/auth/me"),
+  changePassword: (current_password: string, new_password: string) =>
+    apiJson<User>("/auth/password", {
+      method: "POST",
+      body: JSON.stringify({ current_password, new_password }),
+    }),
   logout: () => apiFetch("/auth/logout", { method: "POST" }).catch(() => undefined),
 };

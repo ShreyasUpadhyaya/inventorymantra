@@ -15,6 +15,7 @@ describe("route guards (UX only; the API is the authority)", () => {
   it("protects app pages but not login, assets or look-alike paths", () => {
     expect(isProtected("/dashboard")).toBe(true);
     expect(isProtected("/chat/123")).toBe(true);
+    expect(isProtected("/account/password")).toBe(true);
     expect(isProtected("/login")).toBe(false);
     expect(isProtected("/usersettings")).toBe(false);
   });

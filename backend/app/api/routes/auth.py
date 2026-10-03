@@ -6,7 +6,8 @@ from uuid import UUID
 from fastapi import APIRouter, Body, HTTPException, Request, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.api.deps import UNAUTHORIZED, Conn, CurrentUser
+from app.api.deps import UNAUTHORIZED, Conn, SessionUser
+from app.auth.passwords import verify_password
 from app.auth.rate_limit import login_limiter
 from app.auth.service import (
     AuthUser,
@@ -14,12 +15,16 @@ from app.auth.service import (
     Role,
     authenticate,
     issue_tokens,
+    load_user,
     normalise_email,
+    password_problem,
     revoke_refresh,
     rotate_refresh,
+    set_password,
 )
 from app.auth.tokens import ACCESS_COOKIE, REFRESH_COOKIE
 from app.core.config import get_settings
+from app.services import audit
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 API_PREFIX = "/api"  # every route is also served here for the web app (app/main.py)
@@ -39,10 +44,19 @@ class UserOut(BaseModel):
     email: str
     full_name: str
     role: Role
+    must_change_password: bool
 
     @classmethod
     def of(cls, user: AuthUser) -> "UserOut":
-        return cls(id=user.id, email=user.email, full_name=user.full_name, role=user.role)
+        return cls(id=user.id, email=user.email, full_name=user.full_name, role=user.role,
+                   must_change_password=user.must_change_password)  # fmt: skip
+
+
+class PasswordChangeIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    current_password: str = Field(min_length=1, max_length=256)
+    new_password: str = Field(min_length=1, max_length=256)
 
 
 def _refresh_path(request: Request) -> str:
@@ -134,5 +148,36 @@ def logout(request: Request, response: Response, conn: Conn) -> None:
 
 
 @router.get("/me", response_model=UserOut)
-def me(user: CurrentUser) -> UserOut:
+def me(user: SessionUser) -> UserOut:
     return UserOut.of(user)
+
+
+@router.post("/password", response_model=UserOut)
+def change_password(
+    body: Annotated[PasswordChangeIn, Body()],
+    user: SessionUser,
+    request: Request,
+    response: Response,
+    conn: Conn,
+) -> UserOut:
+    """Change your own password (also how a temporary one is replaced). Every other session
+    ends; this browser gets a fresh one (C5.1b)."""
+    client_ip = request.client.host if request.client else "unknown"
+    if login_limiter.is_blocked(user.email, client_ip):
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS, "Too many failed attempts. Try again later."
+        )
+    row = conn.execute("SELECT password_hash FROM users WHERE id = %s", (user.id,)).fetchone()
+    if row is None or not verify_password(body.current_password, row[0]):
+        login_limiter.record_failure(user.email, client_ip)
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Your current password is incorrect.")
+    problem = password_problem(user, body.current_password, body.new_password)
+    if problem:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, problem)
+    set_password(conn, user.id, body.new_password, must_change=False)
+    updated = load_user(conn, user.id)
+    assert updated is not None
+    access, refresh = issue_tokens(conn, updated)
+    _set_session_cookies(request, response, access, refresh)
+    audit.record(conn, updated, "change_password", "user", str(user.id), None, None)
+    return UserOut.of(updated)

@@ -1,4 +1,4 @@
-"""Owner-only user management: list, create (temp password shown once), (de)activate."""
+"""Owner-only user management: list, create and reset (temp password shown once), (de)activate."""
 
 import re
 import secrets
@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.api.deps import Conn, require_action
 from app.auth.passwords import hash_password
-from app.auth.service import AuthUser, Role, normalise_email, revoke_all_sessions
+from app.auth.service import AuthUser, Role, normalise_email, revoke_all_sessions, set_password
 from app.services import audit
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -21,6 +21,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 CanManage = Annotated[AuthUser, Depends(require_action("create_user"))]
 CanDeactivate = Annotated[AuthUser, Depends(require_action("deactivate_user"))]
+CanReset = Annotated[AuthUser, Depends(require_action("reset_password"))]
 
 
 class UserRow(BaseModel):
@@ -77,8 +78,9 @@ def create_user(body: Annotated[CreateUserIn, Body()], owner: CanManage, conn: C
     user_id = uuid.uuid4()
     try:
         conn.execute(
-            """INSERT INTO users (id, email, password_hash, full_name, role, created_by)
-               VALUES (%s, %s, %s, %s, %s, %s)""",
+            """INSERT INTO users (id, email, password_hash, full_name, role, created_by,
+                                  must_change_password)
+               VALUES (%s, %s, %s, %s, %s, %s, true)""",
             (
                 user_id,
                 body.email,
@@ -129,3 +131,25 @@ def deactivate(user_id: UUID, owner: CanDeactivate, conn: Conn) -> UserRow:
 @router.post("/{user_id}/activate", response_model=UserRow)
 def activate(user_id: UUID, owner: CanDeactivate, conn: Conn) -> UserRow:
     return _set_active(conn, owner, user_id, active=True)
+
+
+class ResetPassword(BaseModel):
+    user: UserRow
+    temp_password: str = Field(description="Shown once. The user must change it at next login.")
+
+
+@router.post("/{user_id}/reset-password", response_model=ResetPassword)
+def reset_password(user_id: UUID, owner: CanReset, conn: Conn) -> ResetPassword:
+    """A forgotten password: new temporary password, signed out everywhere (C5.1b)."""
+    target = _get(conn, user_id)
+    if target is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found.")
+    if user_id == owner.id:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "Change your own password from your account page."
+        )
+    temp_password = secrets.token_urlsafe(12)  # generated server-side, never logged or stored
+    set_password(conn, user_id, temp_password, must_change=True)
+    audit.record(conn, owner, "reset_password", "user", str(user_id), None,
+                 {"must_change_password": True})  # fmt: skip
+    return ResetPassword(user=target, temp_password=temp_password)

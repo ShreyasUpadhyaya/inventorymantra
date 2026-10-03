@@ -79,6 +79,7 @@ On an exception: `ROLLBACK`, then a separate short transaction writes the audit 
 | `set_reorder_policy` | PM, Owner | upsert `reorder_policy` | — |
 | `decide_approval` | Owner | `approvals` → PO status `placed` or `rejected` | PM: result + optional note; IM: date only, if linked to their request |
 | `create_user` / `deactivate_user` | Owner | `users` (bcrypt, `created_by`), deactivation bumps `token_version` (forces logout) | — |
+| `reset_password` | Owner | new temporary password, `must_change_password`, all sessions ended (C5.1b) | — |
 | `create_vendor` | PM, Owner | `proc_vendors` | — |
 
 **Not available via chat, on purpose:** deleting anything, editing past transactions, changing prices on received POs, changing roles of existing users. These are high-risk and rarely needed, and they're easy to add later behind the Owner role.

@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, TrainFront } from "lucide-react";
+import { KeyRound, LogOut, TrainFront } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -8,18 +8,21 @@ import { useEffect } from "react";
 import { useSession } from "@/components/session-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { HOME, ROLE_LABELS, canVisit, navFor } from "@/lib/roles";
+import { CHANGE_PASSWORD, HOME, ROLE_LABELS, canVisit, navFor } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useSession();
   const pathname = usePathname();
   const router = useRouter();
-  const allowed = canVisit(user.role, pathname);
+  // A temporary password must be changed before anything else (the API enforces it too).
+  const mustChange = user.must_change_password && pathname !== CHANGE_PASSWORD;
+  const allowed = canVisit(user.role, pathname) && !mustChange;
 
   useEffect(() => {
-    if (!allowed) router.replace(HOME); // e.g. an Inventory Manager typing /users
-  }, [allowed, router]);
+    if (mustChange) router.replace(CHANGE_PASSWORD);
+    else if (!allowed) router.replace(HOME); // e.g. an Inventory Manager typing /users
+  }, [allowed, mustChange, router]);
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
@@ -30,7 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             InventoryMantra
           </Link>
           <nav className="flex items-center gap-1" aria-label="Main">
-            {navFor(user.role).map((item) => {
+            {!user.must_change_password && navFor(user.role).map((item) => {
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
                 <Link
@@ -53,6 +56,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <div className="text-xs text-muted-foreground">{user.email}</div>
             </div>
             <Badge variant="secondary">{ROLE_LABELS[user.role]}</Badge>
+            <Link
+              href={CHANGE_PASSWORD}
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label="Change password"
+              title="Change password"
+            >
+              <KeyRound className="size-4" aria-hidden />
+            </Link>
             <Button variant="ghost" size="sm" onClick={logout}>
               <LogOut aria-hidden />
               Log out

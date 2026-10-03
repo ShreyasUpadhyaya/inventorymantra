@@ -19,14 +19,18 @@ export const NAV: readonly NavItem[] = [
 ];
 
 export const HOME = "/dashboard";
+export const CHANGE_PASSWORD = "/account/password";
+
+const under = (pathname: string, href: string) =>
+  pathname === href || pathname.startsWith(`${href}/`);
 
 /** Pages behind login. Anything else (login, Next assets, /api) is public. */
 export function isProtected(pathname: string): boolean {
-  return NAV.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
+  return under(pathname, "/account") || NAV.some((item) => under(pathname, item.href));
 }
 
 export function canVisit(role: Role, pathname: string): boolean {
-  const item = NAV.find((n) => pathname === n.href || pathname.startsWith(`${n.href}/`));
+  const item = NAV.find((n) => under(pathname, n.href));
   return item === undefined || item.roles.includes(role);
 }
 

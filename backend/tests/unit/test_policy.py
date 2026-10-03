@@ -47,6 +47,7 @@ WRITE_MATRIX = {
     "decide_approval": {OW},
     "create_user": {OW},
     "deactivate_user": {OW},
+    "reset_password": {OW},
 }
 
 
