@@ -26,7 +26,7 @@ test-backend:
 	cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy app scripts evals && uv run pytest -q
 
 test-frontend:
-	cd frontend && npm run lint && npm run typecheck
+	cd frontend && npm run lint && npm run typecheck && npm test
 
 seed:          ## migrate + load data/seed + deterministic demo data (idempotent)
 	cd backend && uv run python -m scripts.seed

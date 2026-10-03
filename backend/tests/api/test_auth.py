@@ -92,6 +92,21 @@ def test_login_sets_httponly_cookies_and_returns_safe_profile(client: TestClient
 
 
 @pytest.mark.usefixtures("users")
+def test_web_app_prefix_serves_the_same_session_flow(client: TestClient) -> None:
+    """C5.1: the web app proxies /api/* to the API (same origin), so the refresh cookie must be
+    scoped to /api/auth there, and refresh/me/logout must work through that prefix."""
+    r = client.post("/api/auth/login", json={"email": PM_EMAIL, "password": PASSWORD})
+    assert r.status_code == 200
+    refresh = next(c for c in r.headers.get_list("set-cookie") if c.startswith(REFRESH_COOKIE))
+    assert "Path=/api/auth" in refresh
+    assert client.get("/api/auth/me").json()["email"] == PM_EMAIL
+    assert client.post("/api/auth/refresh").status_code == 200
+    assert client.get("/api/dashboard").status_code in (200, 503)
+    assert client.post("/api/auth/logout").status_code == 204
+    assert "/api/auth/login" not in client.get("/openapi.json").json()["paths"]  # docs list once
+
+
+@pytest.mark.usefixtures("users")
 @pytest.mark.parametrize(
     ("email", "password"),
     [

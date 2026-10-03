@@ -151,7 +151,7 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 - [x] **C4.5** `feat(api): /chat SSE streaming and thread history`
 
 ### Phase 5 — Frontend (Day 2 PM)
-- [ ] **C5.1** `feat(web): login, session handling, route guards and app shell`
+- [x] **C5.1** `feat(web): login, session handling, route guards and app shell`
 - [ ] **C5.2** `feat(web): chat UI with VizSpec renderer (table, charts, KPI, Mermaid)`
 - [ ] **C5.3** `feat(web): role dashboards`
 

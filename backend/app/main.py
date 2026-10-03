@@ -41,10 +41,10 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type", "Authorization"],
 )
-app.include_router(auth.router)
-app.include_router(users.router)
-app.include_router(dashboard.router)
-app.include_router(chat.router)
+for router in (auth.router, users.router, dashboard.router, chat.router):
+    app.include_router(router)
+    # The web app proxies /api/* here, so the browser talks to one origin (D-037). Docs list once.
+    app.include_router(router, prefix=auth.API_PREFIX, include_in_schema=False)
 
 
 class Health(BaseModel):

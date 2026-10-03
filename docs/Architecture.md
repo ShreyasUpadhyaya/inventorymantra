@@ -40,7 +40,7 @@ flowchart LR
   LS[(LangSmith<br/>traces · datasets · evals)]
   OAI[(OpenAI API)]
 
-  Browser -->|HTTPS, cookie| API
+  Browser -->|HTTPS, cookie<br/>same origin via /api proxy| API
   ChatEP --> Graph
   Graph --> LLM --> OAI
   Graph --> Guard -->|role RO user,<br/>READ ONLY txn| Views
@@ -174,12 +174,12 @@ Role views (examples):
 
 ```mermaid
 flowchart LR
-  V[Vercel: Next.js] -->|HTTPS, CORS locked| R[Railway/Render: FastAPI + Uvicorn]
+  V[Vercel: Next.js<br/>proxies /api/*] -->|HTTPS| R[Railway/Render: FastAPI + Uvicorn]
   R --> P[(Managed Postgres)]
   R --> O[(OpenAI)]
   R -.-> L[(LangSmith)]
   subgraph Secrets
-    VS[Vercel env: API_BASE_URL]
+    VS[Vercel env: API_INTERNAL_URL]
     RS[Railway env: OPENAI_API_KEY, LANGSMITH_API_KEY,<br/>JWT_SECRET_KEY, DATABASE_URL]
   end
 ```

@@ -22,6 +22,7 @@ from app.auth.tokens import ACCESS_COOKIE, REFRESH_COOKIE
 from app.core.config import get_settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+API_PREFIX = "/api"  # every route is also served here for the web app (app/main.py)
 
 INVALID_LOGIN = "Invalid email or password."
 
@@ -44,12 +45,17 @@ class UserOut(BaseModel):
         return cls(id=user.id, email=user.email, full_name=user.full_name, role=user.role)
 
 
-def _set_session_cookies(response: Response, access: str, refresh: str) -> None:
+def _refresh_path(request: Request) -> str:
+    """/auth, or /api/auth when called through the web app's same-origin proxy (C5.1)."""
+    return f"{API_PREFIX}/auth" if request.url.path.startswith(f"{API_PREFIX}/") else "/auth"
+
+
+def _set_session_cookies(request: Request, response: Response, access: str, refresh: str) -> None:
     settings = get_settings()
     for name, value, max_age, path in (
         (ACCESS_COOKIE, access, settings.access_token_minutes * 60, "/"),
-        # the refresh token is only ever sent to /auth/*
-        (REFRESH_COOKIE, refresh, settings.refresh_token_days * 86_400, "/auth"),
+        # the refresh token is only ever sent to the auth endpoints
+        (REFRESH_COOKIE, refresh, settings.refresh_token_days * 86_400, _refresh_path(request)),
     ):
         response.set_cookie(
             name,
@@ -62,9 +68,9 @@ def _set_session_cookies(response: Response, access: str, refresh: str) -> None:
         )
 
 
-def _clear_session_cookies(response: Response) -> None:
+def _clear_session_cookies(request: Request, response: Response) -> None:
     response.delete_cookie(ACCESS_COOKIE, path="/")
-    response.delete_cookie(REFRESH_COOKIE, path="/auth")
+    response.delete_cookie(REFRESH_COOKIE, path=_refresh_path(request))
 
 
 AUTH_NOT_CONFIGURED = HTTPException(
@@ -97,7 +103,7 @@ def login(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, INVALID_LOGIN)
     login_limiter.reset(email, client_ip)
     access, refresh = issue_tokens(conn, user)
-    _set_session_cookies(response, access, refresh)
+    _set_session_cookies(request, response, access, refresh)
     return UserOut.of(user)
 
 
@@ -115,7 +121,7 @@ def refresh(request: Request, response: Response, conn: Conn) -> UserOut:
     if rotated is None:
         raise UNAUTHORIZED
     user, access, new_refresh = rotated
-    _set_session_cookies(response, access, new_refresh)
+    _set_session_cookies(request, response, access, new_refresh)
     return UserOut.of(user)
 
 
@@ -124,7 +130,7 @@ def logout(request: Request, response: Response, conn: Conn) -> None:
     token = request.cookies.get(REFRESH_COOKIE)
     if token:
         revoke_refresh(conn, token)
-    _clear_session_cookies(response)
+    _clear_session_cookies(request, response)
 
 
 @router.get("/me", response_model=UserOut)
