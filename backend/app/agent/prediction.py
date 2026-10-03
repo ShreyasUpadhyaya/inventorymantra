@@ -14,12 +14,15 @@ from pydantic import BaseModel, ConfigDict
 from app.agent.llm import structured_call
 from app.agent.prompts.compose import JUDGE_SYSTEM
 
+# Negative forms count too (smoke run 3: "is not expected to arrive on 1 Oct").
 BANNED = re.compile(
     r"\b(will (probably|likely|arrive|run out|be delivered|reach|cost|increase|decrease)|"
-    r"(is|are) (likely|expected|going) to|should (arrive|last|be (delivered|received))|"
+    r"(will not|won't) (arrive|run out|be delivered|reach|last)|"
+    r"(is|are)(n't| not)? (likely|unlikely|expected|going) to|unlikely to|"
+    r"should(n't| not)? (arrive|last|be (delivered|received))|"
     r"probably|forecast|projected|predict\w*|in the coming (days|weeks)|run out (by|in|on)|"
-    r"aa jayega|aa jaayega|shayad|ho jayega|ho sakta hai)\b|"
-    r"शायद|आ जाएगा|होने की संभावना|उम्मीद है कि|खत्म हो जाएगा|अनुमान",
+    r"aa jayega|aa jaayega|nahi aayega|nahin aayega|shayad|ho jayega|ho sakta hai)\b|"
+    r"शायद|आ जाएगा|नहीं आएगा|होने की संभावना|उम्मीद है कि|खत्म हो जाएगा|अनुमान",
     re.I,
 )
 FUTURE_HINT = re.compile(

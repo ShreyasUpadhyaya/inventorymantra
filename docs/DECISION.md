@@ -306,6 +306,10 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
   - **"Which measure?" over-asking:** it asked "gross, operating or net margin?" when only gross margin exists. A measure question is now allowed only for vague wording (`signals.VAGUE_MEASURE`: "how are we doing", "kaisa chal raha", …).
   - **Smoke scorer too strict:** it failed correct answers whose SQL had another shape (SUM vs a per-warehouse list, a different column order). It now requires the answer key's **numbers** to appear in the result.
   - **Kept as is:** the judge flagged an answer mentioning tomorrow's date as predictive, so the safe template answer was shown instead.
-- **Prompt v0.5 (proposed, PROMPTS.md §15):** two one-line clarifications so the model makes fewer of these mistakes in the first place, which saves tokens. The code backstops stay either way.
-- **Status:** Accepted (v0.5 pending approval)
+- **Prompt v0.5 (approved, PROMPTS.md §15):** two one-line clarifications so the model makes fewer of these mistakes in the first place, which saves tokens. The code backstops stay either way.
+- **Run 3 (after the count check): 10/12, 61,929 tokens.** The count is now right ("28 purchase orders overdue"). Two findings:
+  - **Negative prediction:** "PO-2026-0003 *is not expected to arrive* on 1 Oct" slipped the banned list, which only had the positive form. The list now also bans negative forms ("is not / isn't expected to", "won't arrive", "will not be delivered", "unlikely to", "nahi aayega", "नहीं आएगा"). Such an answer is rejected, and the safe template shows the recorded facts (status, expected date, days overdue).
+  - **Answer key asked for more than the question:** RD-OW-01 ("profit margins for the last 3 quarters") also expected revenue and cost. The prose was correct, so the key now holds only quarter and margin %.
+- **What the agent bases "will it arrive?" answers on:** only recorded fields: PO status, the expected delivery date(s) stored on the PO, receipts recorded so far, and days overdue (= today − expected date). It never uses vendor history, average delays, lead times or anything else to say whether something will or won't arrive.
+- **Status:** Accepted
 

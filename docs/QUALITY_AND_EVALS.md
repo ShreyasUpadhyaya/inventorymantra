@@ -148,4 +148,5 @@ Tests written before their code are marked `pending("Cx.y")` (`backend/tests/pen
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 2026-10-03 | 5d5a616 | gpt-4.1-mini-2025-04-14 | 0.4 | smoke 12 cases: **4/12** | 0 leaks | — | over-asked periods ×5 | — | Roman Hindi as hi | 8.4 s max | first real run; 5 failure patterns fixed in code (D-036), replay tests added |
 | 2026-10-03 | bd2ed39 | gpt-4.1-mini-2025-04-14 | 0.5 | smoke 12 cases: **8/12** | 0 leaks | — | measure over-ask ×1 | — | ok | 6.9 s max | wrong count "31" for 28 slipped grounding → count-claim check (D-036) |
+| 2026-10-03 | 263820c | gpt-4.1-mini-2025-04-14 | 0.5 | smoke 12 cases: **10/12** | 0 leaks | — | — | — | ok | 5.9 s max | soft prediction "is not expected to arrive" slipped → negative forms now banned; RD-OW-01 key narrowed to quarter + margin % (D-036) |
 | — | — | — | — | — | — | — | — | — | — | — | first run in C7.1 |

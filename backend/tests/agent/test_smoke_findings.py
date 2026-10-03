@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 from app.agent import fake
+from app.agent.prediction import banned_span
 from app.agent.prompts import DENIAL, OUT_OF_SCOPE
 from app.agent.run import run_turn
 from app.auth.service import AuthUser
@@ -172,3 +173,39 @@ def test_no_measure_question_without_vague_wording() -> None:
     with fake.scripted("clarify", model):
         vague = run_turn(demo(OW), "How are we doing?")
     assert vague.route == "clarify"
+
+
+# ------------------------------------------------------------------ smoke run 3
+RUN3_NEGATIVE_PREDICTION = (
+    "PO-2026-0003 is not expected to arrive on 1 Oct 2026; "
+    "its recorded expected delivery date is 13 Aug 2026."
+)
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        RUN3_NEGATIVE_PREDICTION,
+        "PO-2026-0003 won't arrive tomorrow.",
+        "It will not be delivered this week.",
+        "The order isn't likely to come soon.",
+        "PO-2026-0003 is unlikely to arrive tomorrow.",
+        "Yeh PO kal nahi aayega.",
+        "यह PO कल नहीं आएगा।",
+    ],
+)
+def test_negative_predictions_are_banned(answer: str) -> None:
+    assert banned_span(answer) is not None
+
+
+def test_recorded_dates_and_overdue_days_are_not_predictions() -> None:
+    fact = ("PO-2026-0003 had an expected delivery date of 13 Aug 2026 and is 48 days overdue "
+            "as of 30 Sep 2026; it is not marked as received.")  # fmt: skip
+    assert banned_span(fact) is None
+
+
+def test_negative_prediction_from_the_real_model_is_replaced() -> None:
+    with fake.scripted("compose", RUN3_NEGATIVE_PREDICTION):
+        result = run_turn(demo(PM), "Will PO-2026-0003 arrive tomorrow?")
+    assert "expected to arrive" not in result.answer
+    assert banned_span(result.answer) is None
