@@ -144,16 +144,17 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 - [x] **C3.3** `feat(api): role dashboard endpoints (stock, low stock, PO pipeline, spend, margins)`
 
 ### Phase 4 — Agent read path (Day 2 AM)
-- [ ] **C4.1** `feat(agent): LangGraph skeleton, LangSmith tracing and guard node`
-- [ ] **C4.2** `feat(agent): role schema context, entity resolution (D-026 matcher) and guarded SQL execution`
-- [ ] **C4.3** `feat(agent): clarification interrupt with options`
-- [ ] **C4.4** `feat(agent): answer composer, VizSpec selection, grounding check, Hindi replies`
-- [ ] **C4.5** `feat(api): /chat SSE streaming and thread history`
+- [x] **C4.1** `feat(agent): LangGraph skeleton, LangSmith tracing and guard node`
+- [x] **C4.2** `feat(agent): role schema context, entity resolution (D-026 matcher) and guarded SQL execution`
+- [x] **C4.3** `feat(agent): clarification interrupt with options`
+- [x] **C4.4** `feat(agent): answer composer, VizSpec selection, grounding check, Hindi replies`
+- [x] **C4.5** `feat(api): /chat SSE streaming and thread history`
 
 ### Phase 5 — Frontend (Day 2 PM)
-- [ ] **C5.1** `feat(web): login, session handling, route guards and app shell`
-- [ ] **C5.2** `feat(web): chat UI with VizSpec renderer (table, charts, KPI, Mermaid)`
-- [ ] **C5.3** `feat(web): role dashboards`
+- [x] **C5.1** `feat(web): login, session handling, route guards and app shell`
+- [x] **C5.1b** `feat(auth): first-login password change, own password change, Owner reset`
+- [x] **C5.2** `feat(web): chat UI with VizSpec renderer (table, charts, KPI, Mermaid)`
+- [x] **C5.3** `feat(web): role dashboards`
 
 ### Phase 6 — Writes, approvals, notifications, lead time (Day 3 AM)
 *(Built exactly as in `docs/WRITE_PATH.md`: one service per action, preview → confirm → single transaction with row locks, idempotent `operation_id`, audit before/after, role-filtered notifications.)*

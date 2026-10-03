@@ -36,7 +36,8 @@ def _token_from(request: Request) -> str | None:
     return token if scheme.lower() == "bearer" and token else None
 
 
-def current_user(request: Request, conn: Conn) -> AuthUser:
+def session_user(request: Request, conn: Conn) -> AuthUser:
+    """The signed-in user, even one who still has to change a temporary password."""
     token = _token_from(request)
     if token is None:
         raise UNAUTHORIZED
@@ -51,6 +52,20 @@ def current_user(request: Request, conn: Conn) -> AuthUser:
     user = load_user(conn, claims.sub)  # role and status always come from the DB
     if user is None or not user.is_active or user.token_version != claims.ver:
         raise UNAUTHORIZED
+    return user
+
+
+SessionUser = Annotated[AuthUser, Depends(session_user)]
+
+PASSWORD_CHANGE_REQUIRED = HTTPException(
+    status.HTTP_403_FORBIDDEN, "Please change your password first."
+)
+
+
+def current_user(user: SessionUser) -> AuthUser:
+    """The single gate for app routes: signed in and not on a temporary password (C5.1b)."""
+    if user.must_change_password:
+        raise PASSWORD_CHANGE_REQUIRED
     return user
 
 

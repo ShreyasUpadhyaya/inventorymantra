@@ -1,6 +1,6 @@
 # Prompts — InventoryMantra agent
 
-Status: **v0.3, APPROVED by the user on 2026-10-01** (gate G1 passed; v0.2 approved 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.3"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
+Status: **v0.6, APPROVED by the user on 2026-10-03** (gate G1 passed; earlier: v0.5 2026-10-03, v0.4 2026-10-02, v0.3 2026-10-01, v0.2 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.6"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
 
 ---
 
@@ -123,6 +123,8 @@ Use the recent conversation only to understand references like "and in 132-2?".
 Return JSON matching the schema, nothing else.
 - language: "en" | "hi" | "hinglish"
 - intent: "read" | "write" | "clarification_reply" | "help" | "greeting" | "out_of_scope"
+  (use "out_of_scope" if ANY part of the message is unrelated, e.g. "... and write a poem",
+  and still list the data_areas of the other parts)
 - data_areas: areas the request touches, from ["stock","movements","inbound","requests",
   "vendors","purchase_orders","prices","payments","spend","reorder","sales","margins",
   "users","approvals","audit_own","audit_all"]
@@ -154,6 +156,10 @@ Ask only when one of these is unclear AND no conventional default fits:
 Conventional defaults (do not ask): "this month" = current calendar month; "last month" =
 previous calendar month; "last week" = previous Monday–Sunday; "last N POs" = most recent by
 date; stock questions = current stock, all warehouses.
+Questions about the current state (current stock, overdue, open or pending items, status
+splits, totals with no period mentioned) need no period: use all current records. Explicit
+periods ("last 3 quarters", "August", a date such as "tomorrow") are already clear.
+If unsure, do not ask.
 Write the question and 2–4 options in the user's language, using real values from <data>
 (actual item names, actual ranges such as "23–30 Sep 2026").
 Return {needs_clarification, dimension, question, options, default_applied}.
@@ -171,7 +177,8 @@ TASK: Write ONE PostgreSQL query that answers the request.
   comments, no semicolons, no functions with side effects.
 - Filter with the resolved IDs given in <data> rather than fuzzy name matching.
 - Today is {today}; write explicit date literals and list the ranges in assumptions.
-- For expected dates use the column expected_delivery_latest.
+- expected_delivery_date already holds the latest recorded expected date (NULL if none was
+  recorded); say "no expected date recorded" rather than guessing one.
 - Return readable columns (names, codes), not raw IDs; snake_case aliases.
 - Aggregate in SQL; ORDER BY for rankings and time series; at most 500 rows.
 - If the request cannot be answered from these relations, return answerable=false and
@@ -188,7 +195,11 @@ EXAMPLES:
 ```text
 TASK: Answer the user's question using ONLY the query result in <data>.
 - First sentence: the direct answer with the key figure(s).
+- Write like a helpful colleague: plain sentences, no column names, no "field: value" lists.
+  Name the record (PO number, item, vendor) and say what matters about it.
 - Then up to 3 short supporting points if useful. Do not repeat the table; the app shows it.
+- If asked whether something will happen (arrive, run out, rise), say you can't predict that,
+  then give the recorded facts: status, expected date, days overdue.
 - If <assumptions> contains a default you applied (period, item or measure the user did not
   give), state it in one short clause. Otherwise do not mention assumptions.
 - Empty result: say no matching records were found for those filters. Do not guess why.
@@ -291,6 +302,49 @@ Still open (small, has a default): **conversation history window.** The default 
 | 0.1 | 2026-09-30 | First draft | — |
 | 0.2 | 2026-09-30 | Explicit system-vs-user message split per call; applied answers to open questions; help mode; renamed to InventoryMantra | User, 2026-09-30 |
 | 0.3 | 2026-10-01 | Guard output gains `entity_mentions` (copy-as-typed spans for the D-026 matcher) | User, 2026-10-01 |
+| 0.5 | 2026-10-03 | §3: current-state questions need no period, explicit periods are clear, "if unsure, do not ask"; §2: intent out_of_scope if ANY part is unrelated, still listing data areas (first smoke test, D-036) | User, 2026-10-03 |
+| 0.6 | 2026-10-03 | §5: the composer writes conversational sentences (no column names or "field: value" lists) and answers "will it…?" with "can't predict" plus the recorded facts (manual testing, D-040) | User, 2026-10-03 |
+| 0.4 | 2026-10-02 | §4: replace the non-existent `expected_delivery_latest` with `expected_delivery_date` (already the latest date; NULL means none recorded) | User, 2026-10-02 |
 
 ## 13. Why `entity_mentions` exists (v0.3, D-026)
 The AI **points** at the words that name a record, and the deterministic matcher **decides** which record they mean. That's why mentions are copied as typed: an AI that "corrects" `ms bush 40` into a full item name could pick OD42 and skip the clarification step. Each mention type is looked up only within the caller's role scope, so an IM's vendor mention gets the fixed denial, never "not found". Mentions are passed to lookups as query parameters and never pasted into SQL. The field adds about 20–40 output tokens to the existing guard call; there is no extra AI call.
+
+## 14. Change for v0.4 (APPROVED 2026-10-02, applied in C4.2)
+Found while building C4.2. The approved §4 SQL task says:
+```text
+- For expected dates use the column expected_delivery_latest.
+```
+No such column exists. The views (C1.4) expose **`expected_delivery_date`**, which already holds the *latest* recorded expected date, and it's NULL when none is recorded. A model following the approved line literally will write invalid SQL and burn repair attempts. Proposed replacement for that one line:
+```text
+- expected_delivery_date already holds the latest recorded expected date (NULL if none was
+  recorded); say "no expected date recorded" rather than guessing one.
+```
+Applied in C4.2: the code and this document changed in the same commit, and the drift test checks they stay equal.
+
+## 15. Change for v0.5 (APPROVED 2026-10-03, applied)
+From the first smoke test (DECISION D-036). Code backstops already handle both patterns. These lines make the model get them right first time, which saves a wasted call per turn.
+
+**§3 CLARIFY: add after the "Conventional defaults" line:**
+```text
+Questions about the current state (current stock, overdue, open or pending items, status
+splits, totals with no period mentioned) need no period: use all current records. Explicit
+periods ("last 3 quarters", "August", a date such as "tomorrow") are already clear.
+If unsure, do not ask.
+```
+**§2 GUARD: change the intent line to:**
+```text
+- intent: "read" | "write" | "clarification_reply" | "help" | "greeting" | "out_of_scope"
+  (use "out_of_scope" if ANY part of the message is unrelated, e.g. "... and write a poem",
+  and still list the data_areas of the other parts)
+```
+Applied: the code and this document changed in one commit, and the drift test keeps them equal.
+
+## 16. Change for v0.6 (APPROVED 2026-10-03, applied)
+Found in manual testing: the Owner asked "Will PO-2026-0003 arrive tomorrow?" and got `Result — po number: PO-2026-0003; vendor name: …; status: placed; …`. That was the safe fallback template, reached because the model's own answer ("is not expected to arrive") was rightly blocked as a soft prediction. Two instructions are added to the §5 composer task, so the model's first answer is conversational and prediction-free:
+```text
+- Write like a helpful colleague: plain sentences, no column names, no "field: value" lists.
+  Name the record (PO number, item, vendor) and say what matters about it.
+- If asked whether something will happen (arrive, run out, rise), say you can't predict that,
+  then give the recorded facts: status, expected date, days overdue.
+```
+Same for every role: no role-specific tone (decided with the user). The code side (DECISION D-040): the fallback template now writes sentences in the same style, and a plain "I can't predict…" disclaimer is no longer flagged by the banned-phrase list.

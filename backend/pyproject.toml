@@ -15,6 +15,13 @@ dependencies = [
     "bcrypt>=4.2",
     "pyjwt>=2.9",
     "psycopg-pool>=3.2",
+    "langgraph>=0.6",
+    "langchain-core>=0.3",
+    "langchain-openai>=0.3",
+    "langsmith>=0.4",
+    "jsonpatch>=1.33",
+    "sqlglot>=26",
+    "langgraph-checkpoint-postgres>=2.0",
 ]
 
 [dependency-groups]
@@ -27,6 +34,8 @@ dev = [
 
 [tool.uv]
 package = false
+# The repo lives in OneDrive, which rejects hardlinks (os error 396); copy instead.
+link-mode = "copy"
 
 [tool.ruff]
 line-length = 100
@@ -39,6 +48,8 @@ ignore = ["S101"]  # assert is fine in tests
 [tool.ruff.lint.per-file-ignores]
 # Migrations build DDL from module constants only (no external input).
 "app/db/migrations/**" = ["S608"]
+# Prompt text is verbatim from docs/PROMPTS.md (approved); wrapping it would change the prompt.
+"app/agent/prompts/**" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"

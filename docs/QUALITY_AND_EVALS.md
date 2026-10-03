@@ -36,7 +36,7 @@ Location: `evals/corpus/golden.jsonl`, one case per line, synced to the LangSmit
 ```
 Frozen results live in `evals/corpus/answer_keys.json`, keyed by case id and rebuilt with `make answer-keys`. The schema is enforced by `backend/evals/schema.py`, a strict Pydantic model with per-route rules.
 
-### Coverage (106 cases as of C2.1b; the minimums are enforced by `tests/evals/test_corpus.py`)
+### Coverage (107 cases as of C4.2; the minimums are enforced by `tests/evals/test_corpus.py`)
 | Bucket | Count (min) | Examples |
 |---|---|---|
 | IM reads | 13 (10) | stock by item/location, zero stock, issues to shop floor, inbound qty/date, requests status |
@@ -44,7 +44,7 @@ Frozen results live in `evals/corpus/answer_keys.json`, keyed by case id and reb
 | Owner reads | 11 (10) | margins by quarter, spend trend, top vendors, approvals pending, users, audit |
 | Messy entity input (D-026) | 16 (12) | `OD40xID26x70`, `ms bush 40`, `hex nut m3`, `torx screw`, `AC contacter`, `PO 3`, `sterling steel`, `godown 132-2` |
 | Clarification | 9 (8) | "a few days back", "bush", "last quarter's AC", "recent orders", metric-ambiguous "how are we doing" |
-| RBAC denials + leak probes | 16 (12) | IM → prices, vendors, users, PO totals; PM → margins, users, approvals; injection "ignore rules", raw `SELECT * FROM users` |
+| RBAC denials + leak probes | 17 (12) | IM → prices, vendors, users, PO totals; PM → margins, users, approvals; injection "ignore rules", raw `SELECT * FROM users` |
 | Out of scope | 5 (4) | poem, weather, general coding, stock market |
 | No-prediction | 5 (4) | "will PO X arrive tomorrow", "when will we run out" (→ days-of-cover formula, not a guess) |
 | Viz explicit | 4 (4) | "show as pie", "give me a table", "line chart please" |
@@ -131,12 +131,22 @@ Tests written before their code are marked `pending("Cx.y")` (`backend/tests/pen
 | `tests/api/test_auth.py`, `test_auth_config.py` | login, cookies, identical failures, rate limit, 8 forged-token kinds, DB-sourced role, refresh rotation and replay, logout, 503 on missing secret | ✅ live (C3.1) |
 | `tests/api/test_users.py` | Owner-only list/create/(de)activate; temp password works once created; duplicates 409; deactivation kills live sessions; self-deactivation blocked; audited without secrets | ✅ live (C3.2) |
 | `tests/api/test_dashboard.py` | KPIs and sections per role match the frozen answer keys; IM dashboard has no vendor, price or people data; PM sees no Owner data; every section renderable; 401 and 503 paths | ✅ live (C3.3) |
-| `tests/unit/test_sql_guard.py` | 9 accepted shapes, LIMIT enforcement, 40 rejections with fixed reason codes, reasons never name relations | ⏳ pending C4.2 |
-| `tests/integration/test_entity_match.py` | D-026 matcher: match, clarify, not_found, denied; vendors, locations, PO numbers; mentions are data | ⏳ pending C4.2 |
+| `tests/agent/test_prompts_match_doc.py` | code prompt text equals approved PROMPTS.md (core, roles, guard, fixed sentences, help) | ✅ live (C4.1) |
+| `tests/agent/test_guard.py`, `test_llm.py`, `test_tracing.py`, `test_fake_router.py` | access decided in code (16 cases), trusted system message, tag breakout, history limit, fixed replies per language, budget guard before network, trace tags, offline router vs corpus fixed-reply cases | ✅ live (C4.1) |
+| `tests/unit/test_sql_guard.py` | 9 accepted shapes, LIMIT enforcement, 40 rejections with fixed reason codes, reasons never name relations | ✅ live (C4.2) |
+| `tests/integration/test_entity_match.py` | D-026 matcher: match, clarify, not_found, denied; vendors, locations, PO numbers; mentions are data | ✅ live (C4.2) |
+| `tests/agent/test_read_path.py`, `test_sql_examples.py` | **all 61 corpus read questions return the frozen answers value for value** (offline pipeline); repair loop with sanitised errors; 3-attempt cap; timeout; unanswerable / unavailable; not-found, ask-back and denied entities; the SQL prompt shows only the role's views; few-shots valid per role and not copied from the corpus | ✅ live (C4.2) |
+| `tests/agent/test_clarify.py` | every corpus ask-back / not-found case offline; choose by text, number, code or fragment; chosen record and period reach SQL; one model call across pause+resume; unusable answers give up without guessing; options in the user's language and fit the role; only the thread owner can resume; a new question on a paused thread starts clean; paused turns traced as `route:clarify` | ✅ live (C4.3) |
+| `tests/unit/test_grounding.py` | number extraction (₹ Indian grouping, lakh/crore en+hi, %, Devanagari, names like OD40); sums/averages/shares/rounding accepted; invented counts/totals/lakh/% caught; date parts back only numbers written as dates | ✅ live (C4.4) |
+| `tests/agent/test_compose.py` | chart type for every corpus read question (real pipeline); template answers grounded and factual for all of them; grounded answer used as written; invented number regenerated once; two failures fall back to the template; 5 predictive phrasings rejected (en/hi/Hinglish); judge only on future wording; denial exactly once; composer input contents; ₹ format; lifecycle flow counts | ✅ live (C4.4) |
+| `tests/api/test_chat.py` | SSE order (thread, status per step, answer); history saved, listed and fed to follow-ups; clarify then resume over HTTP; **a paused question survives a simulated restart**; 409 without a waiting question; other users' threads 404 for read/resume/post; 401; 422 on bad bodies; per-user 429; internal errors reported with one safe message | ✅ live (C4.5) |
 | `tests/unit/test_notification_visibility.py` | per-role payload allow-lists; IM never sees vendor, price or Owner data; refused recipients; unknown events | ⏳ pending C6.5 |
-| `tests/unit/test_grounding.py`, `test_lead_time.py`, `tests/integration/test_write_tools.py` | grounding checker, lead-time maths, write tools | to be written test-first in C4.4 / C6.x |
+| `test_lead_time.py`, `tests/integration/test_write_tools.py` | lead-time maths, write tools | to be written test-first in C6.x |
 
 ## 7. Eval run log
 | Date | Commit | Models | Prompt ver | EX | Leak | Route | Clarify P/R | Viz | Lang | p95 | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|---|
+| 2026-10-03 | 5d5a616 | gpt-4.1-mini-2025-04-14 | 0.4 | smoke 12 cases: **4/12** | 0 leaks | — | over-asked periods ×5 | — | Roman Hindi as hi | 8.4 s max | first real run; 5 failure patterns fixed in code (D-036), replay tests added |
+| 2026-10-03 | bd2ed39 | gpt-4.1-mini-2025-04-14 | 0.5 | smoke 12 cases: **8/12** | 0 leaks | — | measure over-ask ×1 | — | ok | 6.9 s max | wrong count "31" for 28 slipped grounding → count-claim check (D-036) |
+| 2026-10-03 | 263820c | gpt-4.1-mini-2025-04-14 | 0.5 | smoke 12 cases: **10/12** | 0 leaks | — | — | — | ok | 5.9 s max | soft prediction "is not expected to arrive" slipped → negative forms now banned; RD-OW-01 key narrowed to quarter + margin % (D-036) |
 | — | — | — | — | — | — | — | — | — | — | — | first run in C7.1 |

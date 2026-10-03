@@ -8,7 +8,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from app.api.routes import auth, dashboard, users
+from app.agent.tracing import configure_tracing
+from app.api.routes import auth, chat, dashboard, users
 from app.core.config import app_today, get_settings
 from app.core.logging import configure_logging
 from app.db.pool import close_pool
@@ -26,6 +27,8 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         settings.jwt_secret()
     except RuntimeError as exc:  # keep /health up, but make the problem obvious
         logger.error("Login disabled: %s Check the exact name in .env, then restart.", exc)
+    if configure_tracing():
+        logger.info("LangSmith tracing on (project %s).", settings.langsmith_project)
     yield
     close_pool()
 
@@ -38,9 +41,10 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type", "Authorization"],
 )
-app.include_router(auth.router)
-app.include_router(users.router)
-app.include_router(dashboard.router)
+for router in (auth.router, users.router, dashboard.router, chat.router):
+    app.include_router(router)
+    # The web app proxies /api/* here, so the browser talks to one origin (D-037). Docs list once.
+    app.include_router(router, prefix=auth.API_PREFIX, include_in_schema=False)
 
 
 class Health(BaseModel):

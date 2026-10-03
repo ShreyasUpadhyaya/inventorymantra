@@ -49,6 +49,7 @@ ACTIONS: dict[str, frozenset[str]] = {
     "decide_approval": OWNER_ONLY,
     "create_user": OWNER_ONLY,
     "deactivate_user": OWNER_ONLY,
+    "reset_password": OWNER_ONLY,
 }
 
 

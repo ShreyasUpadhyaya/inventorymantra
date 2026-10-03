@@ -1,4 +1,4 @@
-"""Entity matcher contract (DECISION D-026). Implementation: app/agent/entity_match.py in C4.2.
+"""Entity matcher contract (DECISION D-026). Implementation: app/agent/entity_match.py (C4.2).
 
 resolve(conn, role, kind, text) -> result with:
   outcome: "match" | "clarify" | "not_found" | "denied"
@@ -13,10 +13,6 @@ from typing import Any
 
 import psycopg
 import pytest
-
-from tests.pending import pending
-
-pytestmark = pending("C4.2")
 
 IM, PM, OW = "inventory_manager", "procurement_manager", "owner"
 
