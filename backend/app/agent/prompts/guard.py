@@ -1,4 +1,4 @@
-"""Guard/router task block: verbatim from docs/PROMPTS.md §2 (v0.5, approved)."""
+"""Guard/router task block: verbatim from docs/PROMPTS.md §2 (unchanged since v0.5; current v0.6)."""
 
 GUARD_TASK = """\
 TASK: Classify the user's latest message. Do not answer it.

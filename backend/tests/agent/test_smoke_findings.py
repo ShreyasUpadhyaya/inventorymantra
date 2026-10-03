@@ -209,3 +209,23 @@ def test_negative_prediction_from_the_real_model_is_replaced() -> None:
         result = run_turn(demo(PM), "Will PO-2026-0003 arrive tomorrow?")
     assert "expected to arrive" not in result.answer
     assert banned_span(result.answer) is None
+    assert result.answer.startswith("I can't predict")  # D-040: honest, then the facts
+    assert "48 days overdue" in result.answer and "13 Aug 2026" in result.answer
+
+
+# ------------------------------------------------------------------ manual test: tone (v0.6)
+def test_will_it_arrive_gets_a_conversational_answer_not_a_field_list() -> None:
+    """Owner asked 'Will PO-2026-0003 arrive tomorrow?' and got 'Result — po number: …;'."""
+    result = run_turn(demo(OW), "Will PO-2026-0003 arrive tomorrow?")
+    assert result.answer == (
+        "I can't predict what will happen, but here is what is on record: "
+        "PO-2026-0003 from Falcon Steels Pvt. Ltd. is placed and worth ₹50,986. "
+        "Its expected delivery date is 13 Aug 2026. It is 48 days overdue."
+    )
+    assert not result.viz or result.viz["type"] == "none"  # no cards repeating the sentence
+
+
+def test_a_plain_disclaimer_is_not_a_prediction_but_a_prediction_after_it_still_is() -> None:
+    assert banned_span("I can't predict whether it will arrive tomorrow, but it is placed.") is None
+    assert banned_span("Main predict nahi kar sakta, lekin yeh PO placed hai.") is None
+    assert banned_span("I can't predict, but it will probably arrive soon.") is not None

@@ -1,4 +1,4 @@
-"""Clarify task block: verbatim from docs/PROMPTS.md §3 (v0.5, approved)."""
+"""Clarify task block: verbatim from docs/PROMPTS.md §3 (unchanged since v0.5; current v0.6)."""
 
 CLARIFY_TASK = """\
 TASK: Decide if the request can be answered precisely. Do not answer it.

@@ -94,7 +94,7 @@ def test_two_bad_answers_fall_back_to_the_template() -> None:
         result = run_turn(demo(PM), OVERDUE)
     assert len(calls) == 2
     assert result.answer_checks["fallback"] is True
-    assert result.answer.startswith("Found 28 matching records.")
+    assert result.answer.startswith("I found 28 matching records.")
     assert any(p.startswith(("ungrounded", "predictive")) for p in result.answer_checks["problems"])
 
 
@@ -172,14 +172,15 @@ def test_explicit_chart_requests_are_honoured_when_possible() -> None:
     rows = [["132-1", 266], ["132-3", 74], ["132-2", 51]]
     assert choose_viz("pie please", ["location_name", "n"], rows, "pie").type == "pie"
     assert choose_viz("as a table", ["location_name", "n"], rows, "table").type == "table"
-    assert choose_viz("bar", ["a", "b"], [["x", "y"]], "bar").type == "kpi"  # nothing to plot
+    assert choose_viz("bar", ["a", "b"], [["x", "y"]], "bar").type == "none"  # nothing to plot
     assert choose_viz("anything", ["n"], [], None).type == "none"
 
 
 def test_template_answer_shapes() -> None:
-    state: Any = {"lang": "en", "columns": ["open_value", "open_pos"], "rows": [[4789288.83, 36]]}
-    assert template_answer(state) == "Result — open value: ₹47,89,288.83; open pos: 36."
-    state = {"lang": "hi", "columns": ["x"], "rows": []}
+    state: Any = {"lang": "en", "message": "What is the open value?",
+                  "columns": ["open_value", "open_pos"], "rows": [[4789288.83, 36]]}  # fmt: skip
+    assert template_answer(state) == "Open value is ₹47,89,288.83 and open pos is 36."
+    state = {"lang": "hi", "message": "x", "columns": ["x"], "rows": []}
     assert template_answer(state) == "कोई मिलता-जुलता रिकॉर्ड नहीं मिला।"
 
 

@@ -11,6 +11,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel
 
+from app.agent.signals import FIGURE_QUESTION
+
 VizType = Literal["none", "kpi", "table", "bar", "line", "pie", "stacked_bar", "flow"]
 
 FLOW_WORDS = re.compile(r"\b(lifecycle|life cycle|process|workflow|flow|stages|steps)\b", re.I)
@@ -108,9 +110,14 @@ def choose_viz(
         return VizSpec(type="kpi", title=title, y=numeric)
     if explicit in ("bar", "line", "pie") and chartable:
         return VizSpec(type=explicit, title=title, x=x, y=y[:1] if explicit == "pie" else y)
-    if len(rows) == 1:  # one record: a figure, unless the user asked to see the record itself
-        wants_list = LIST_WORDS.search(question) and len(columns) > 2
-        return VizSpec(type="table" if wants_list else "kpi", title=title, y=numeric)
+    if len(rows) == 1:
+        # One record. Cards only for a figure ("how many", "total") or a row of pure metrics;
+        # a lookup is described in the sentence and its details stay under "Show data" (D-040).
+        if LIST_WORDS.search(question) and len(columns) > 2:
+            return VizSpec(type="table", title=title)
+        if FIGURE_QUESTION.search(question) or not labels:
+            return VizSpec(type="kpi", title=title, y=numeric)
+        return VizSpec(type="none", title=title)
     text_columns = [c for c in labels if c != time_axis]
     if len(text_columns) >= 2 or (time_axis and text_columns) or len(rows) > 12:
         return VizSpec(type="table", title=title)  # a detail list, not a series

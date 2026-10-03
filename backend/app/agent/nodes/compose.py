@@ -15,7 +15,6 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 
 from app.agent import fake
-from app.agent.formatting import label, show
 from app.agent.grounding import check_grounding
 from app.agent.llm import LLMBudgetExceededError, LLMConfigError, text_call
 from app.agent.nodes.guard import neutralise, system_prompt
@@ -23,8 +22,8 @@ from app.agent.nodes.read import effective_message
 from app.agent.prediction import check_prediction
 from app.agent.prompts import DENIAL, Lang, render
 from app.agent.prompts.compose import COMPOSE_TASK
-from app.agent.prompts.replies import FOUND_ROWS, NO_ROWS
 from app.agent.state import AgentState
+from app.agent.templates import template_answer as build_template
 from app.agent.viz import choose_viz
 from app.core.config import get_settings
 
@@ -36,7 +35,6 @@ LANGUAGE_NAMES = {
     "hinglish": "Hinglish (Hindi written in Roman script)",
 }
 ROWS_FOR_MODEL = 50  # bigger results: the first 50 rows plus whole-result totals
-RESULT: dict[Lang, str] = {"en": "Result", "hi": "परिणाम", "hinglish": "Result"}
 FOR_RECORD: dict[Lang, str] = {
     "en": "For {name}: ",
     "hi": "{name} के लिए: ",
@@ -86,18 +84,10 @@ def compose_messages(role: str, state: AgentState) -> list[Any]:
 
 
 def template_answer(state: AgentState) -> str:
-    """Built straight from the rows: always grounded, never predictive."""
-    lang = state["lang"]
-    columns, rows = state.get("columns", []), state.get("rows", [])
-    if not rows:
-        return NO_ROWS[lang]
-    if len(rows) == 1:
-        parts = [f"{label(c)}: {show(c, v)}" for c, v in zip(columns, rows[0], strict=True)]
-        return f"{RESULT[lang]} — " + "; ".join(parts) + "."
-    first = "; ".join(
-        f"{label(c)}: {show(c, v)}" for c, v in list(zip(columns, rows[0], strict=True))[:3]
+    """Built straight from the rows: always grounded, never predictive (D-040)."""
+    return build_template(
+        state["lang"], state.get("columns", []), state.get("rows", []), state["message"]
     )
-    return f"{FOUND_ROWS[lang].format(n=len(rows))} ({first} …)"
 
 
 def _context(state: AgentState) -> list[str]:

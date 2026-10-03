@@ -69,6 +69,11 @@ describe("toDrawable", () => {
     expect(toDrawable(null, [], [])).toEqual({ type: "none" });
   });
 
+  it("a lookup (viz none) shows no visual; the rows stay available", () => {
+    expect(toDrawable({ type: "none", title: "t" }, columns, rows)).toEqual({ type: "none" });
+    expect(toDrawable({ type: "none", title: "t" }, [], [])).toEqual({ type: "none" });
+  });
+
   it("KPI shows the requested figures of the single row", () => {
     const d = toDrawable({ type: "kpi", title: "t", y: ["overdue_pos"] }, ["overdue_pos"], [[28]]);
     expect(d).toEqual({ type: "kpi", items: [{ label: "overdue_pos", column: "overdue_pos", value: 28 }] });

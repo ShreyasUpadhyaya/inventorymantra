@@ -1,6 +1,6 @@
 # Prompts — InventoryMantra agent
 
-Status: **v0.5, APPROVED by the user on 2026-10-03** (gate G1 passed; earlier: v0.4 2026-10-02, v0.3 2026-10-01, v0.2 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.5"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
+Status: **v0.6, APPROVED by the user on 2026-10-03** (gate G1 passed; earlier: v0.5 2026-10-03, v0.4 2026-10-02, v0.3 2026-10-01, v0.2 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.6"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
 
 ---
 
@@ -195,7 +195,11 @@ EXAMPLES:
 ```text
 TASK: Answer the user's question using ONLY the query result in <data>.
 - First sentence: the direct answer with the key figure(s).
+- Write like a helpful colleague: plain sentences, no column names, no "field: value" lists.
+  Name the record (PO number, item, vendor) and say what matters about it.
 - Then up to 3 short supporting points if useful. Do not repeat the table; the app shows it.
+- If asked whether something will happen (arrive, run out, rise), say you can't predict that,
+  then give the recorded facts: status, expected date, days overdue.
 - If <assumptions> contains a default you applied (period, item or measure the user did not
   give), state it in one short clause. Otherwise do not mention assumptions.
 - Empty result: say no matching records were found for those filters. Do not guess why.
@@ -299,6 +303,7 @@ Still open (small, has a default): **conversation history window.** The default 
 | 0.2 | 2026-09-30 | Explicit system-vs-user message split per call; applied answers to open questions; help mode; renamed to InventoryMantra | User, 2026-09-30 |
 | 0.3 | 2026-10-01 | Guard output gains `entity_mentions` (copy-as-typed spans for the D-026 matcher) | User, 2026-10-01 |
 | 0.5 | 2026-10-03 | §3: current-state questions need no period, explicit periods are clear, "if unsure, do not ask"; §2: intent out_of_scope if ANY part is unrelated, still listing data areas (first smoke test, D-036) | User, 2026-10-03 |
+| 0.6 | 2026-10-03 | §5: the composer writes conversational sentences (no column names or "field: value" lists) and answers "will it…?" with "can't predict" plus the recorded facts (manual testing, D-040) | User, 2026-10-03 |
 | 0.4 | 2026-10-02 | §4: replace the non-existent `expected_delivery_latest` with `expected_delivery_date` (already the latest date; NULL means none recorded) | User, 2026-10-02 |
 
 ## 13. Why `entity_mentions` exists (v0.3, D-026)
@@ -334,3 +339,12 @@ If unsure, do not ask.
 ```
 Applied: the code and this document changed in one commit, and the drift test keeps them equal.
 
+## 16. Change for v0.6 (APPROVED 2026-10-03, applied)
+Found in manual testing: the Owner asked "Will PO-2026-0003 arrive tomorrow?" and got `Result — po number: PO-2026-0003; vendor name: …; status: placed; …`. That was the safe fallback template, reached because the model's own answer ("is not expected to arrive") was rightly blocked as a soft prediction. Two instructions are added to the §5 composer task, so the model's first answer is conversational and prediction-free:
+```text
+- Write like a helpful colleague: plain sentences, no column names, no "field: value" lists.
+  Name the record (PO number, item, vendor) and say what matters about it.
+- If asked whether something will happen (arrive, run out, rise), say you can't predict that,
+  then give the recorded facts: status, expected date, days overdue.
+```
+Same for every role: no role-specific tone (decided with the user). The code side (DECISION D-040): the fallback template now writes sentences in the same style, and a plain "I can't predict…" disclaimer is no longer flagged by the banned-phrase list.

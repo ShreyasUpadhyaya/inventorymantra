@@ -144,7 +144,8 @@ def _supported(found: _Found, allowed: set[float]) -> bool:
 
 # "N purchase orders / items / records ..." is a count claim: N must be a real count.
 COUNT_NOUNS = re.compile(
-    r"(\d[\d,]*)\s+(?:\w+\s+)?(purchase orders?|POs?|orders?|items?|records?|rows?|vendors?|"
+    r"(\d+(?:,\d+)*)\s+(?:(?!और\b|aur\b|and\b|or\b)\w+\s+)?"
+    r"(purchase orders?|POs?|orders?|items?|records?|rows?|vendors?|"
     r"suppliers?|requests?|users?|customers?|deliveries|receipts?|instalments?|lines?|"
     r"आइटम|ऑर्डर|रिकॉर्ड|वेंडर)\b",
     re.I,

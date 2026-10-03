@@ -21,9 +21,9 @@ export function VizView({ turn }: { turn: AssistantTurn }) {
   const drawable = toDrawable(turn.viz, turn.columns, turn.rows);
   const [showRows, setShowRows] = useState(false);
   const hasRows = turn.rows.length > 0 && turn.columns.length > 0;
-  if (drawable.type === "none") return null;
+  if (drawable.type === "none" && !hasRows) return null;
 
-  let visual: React.ReactNode;
+  let visual: React.ReactNode = null;
   if (drawable.type === "table") {
     visual = <DataTable columns={turn.columns} rows={turn.rows} total={turn.row_count} />;
   } else if (drawable.type === "kpi") {
@@ -39,16 +39,15 @@ export function VizView({ turn }: { turn: AssistantTurn }) {
     );
   } else if (drawable.type === "flow") {
     visual = <MermaidFlow code={drawable.mermaid} />;
-  } else {
+  } else if (drawable.type !== "none") {
     visual = <Chart type={drawable.type} x={drawable.x} y={drawable.y} data={drawable.data} />;
   }
 
   const canToggle = hasRows && drawable.type !== "table";
+  const title = drawable.type === "kpi" || drawable.type === "none" ? null : turn.viz?.title;
   return (
     <figure className="grid gap-2">
-      {turn.viz?.title && drawable.type !== "kpi" && (
-        <figcaption className="text-xs font-medium text-muted-foreground">{turn.viz.title}</figcaption>
-      )}
+      {title && <figcaption className="text-xs font-medium text-muted-foreground">{title}</figcaption>}
       {visual}
       {canToggle && (
         <div>

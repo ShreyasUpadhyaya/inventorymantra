@@ -115,3 +115,18 @@ def test_count_claims_must_match_a_real_count() -> None:
         "132-1 में ७८ आइटम का स्टॉक शून्य है।", ["zero_stock_items"], [[78]], question
     )
     assert hindi.ok
+
+
+def test_a_year_followed_by_a_comma_is_not_a_count_claim() -> None:
+    """Found offline: 'issue date is 19 Aug 2026, item code is …' read as '2026, item'."""
+    answer = "The first one: Truck: issue date is 19 Aug 2026, item code is FG-IA-0005."
+    columns = ["issue_date", "item_code"]
+    assert check_grounding(answer, columns, [["2026-08-19", "FG-IA-0005"]], ["q"]).ok
+
+
+def test_a_number_then_a_conjunction_then_a_noun_is_not_a_count_claim() -> None:
+    """Hindi template: 'lead time days 44 और order by date …' must not read as '44 orders'."""
+    answer = "Relay Base: lead time days 44 और order by date 17 Aug 2026."
+    columns = ["lead_time_days", "order_by_date"]
+    assert check_grounding(answer, columns, [[44, "2026-08-17"]], ["q"]).ok
+    assert not check_grounding("44 या order", columns, [[7, "2026-08-17"]], ["q"]).ok

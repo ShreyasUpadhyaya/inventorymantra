@@ -80,12 +80,24 @@ NO_CHOICE: dict[Lang, str] = {
     "nahi dhoondha. Aap inmein se kisi ek ke saath dobara pooch sakte hain:",
 }
 FOUND_ROWS: dict[Lang, str] = {
-    "en": "Found {n} matching records.",
-    "hi": "{n} मिलते-जुलते रिकॉर्ड मिले।",
-    "hinglish": "{n} matching records mile.",
+    "en": "I found {n} matching records.",
+    "hi": "मुझे {n} मिलते-जुलते रिकॉर्ड मिले।",
+    "hinglish": "Mujhe {n} matching records mile.",
 }
 NO_ROWS: dict[Lang, str] = {
     "en": "No matching records were found.",
     "hi": "कोई मिलता-जुलता रिकॉर्ड नहीं मिला।",
     "hinglish": "Koi matching record nahi mila.",
+}
+
+# Template (fallback) answer pieces: conversational, built from the rows (D-040).
+PREDICT_NOTE: dict[Lang, str] = {
+    "en": "I can't predict what will happen, but here is what is on record:",
+    "hi": "आगे क्या होगा, यह मैं नहीं बता सकता, लेकिन रिकॉर्ड में यह दर्ज है:",
+    "hinglish": "Aage kya hoga, yeh main nahi bata sakta, lekin record mein yeh darj hai:",
+}
+FIRST_ONE: dict[Lang, str] = {
+    "en": "The first one:",
+    "hi": "पहला रिकॉर्ड:",
+    "hinglish": "Pehla record:",
 }

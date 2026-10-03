@@ -43,3 +43,18 @@ def script_language(declared: str, message: str) -> Lang:
     if declared == "hinglish" and has_devanagari:
         return "hi"
     return cast(Lang, declared)
+
+
+# "Will it...?" questions: the answer says it can't predict, then gives the recorded facts (D-040).
+FUTURE_QUESTION = re.compile(
+    r"\b(will|won't|going to|run out|kal tak|aa jayega|aayega|jayega|kab tak)\b|"
+    r"आएगा|जाएगा|होगा|कल तक|कब तक",
+    re.I,
+)
+
+# A question that asks for a figure (shown as a KPI card, not a chart).
+FIGURE_QUESTION = re.compile(
+    r"\b(how many|how much|total|count|number of|average|sum|kitne|kitna|kitni|kul)\b|"
+    r"कितने|कितना|कितनी|कुल|औसत",
+    re.I,
+)

@@ -25,6 +25,14 @@ BANNED = re.compile(
     r"शायद|आ जाएगा|नहीं आएगा|होने की संभावना|उम्मीद है कि|खत्म हो जाएगा|अनुमान",
     re.I,
 )
+# Saying "I can't predict ..." is the right answer to a "will it ...?" question (PROMPTS.md v0.6),
+# so that disclaimer, and the clause it introduces, isn't a prediction.
+DISCLAIMER = re.compile(
+    r"\b(?:can't|cannot|can not|unable to|not able to|don't|do not)\s+(?:predict|forecast)\w*"
+    r"(?:\s+(?:whether|if|when|what|how)\b[^.,;:!?]*)?|"
+    r"predict\s+nahi\s+kar\w*|आगे\s+क्या\s+होगा[^।.;:]*नहीं\s+बता|अनुमान\s+नहीं\s+लगा\s+सक\w*",
+    re.I,
+)
 FUTURE_HINT = re.compile(
     r"\b(will|next (week|month|quarter)|soon|upcoming|expected to|going to|kal tak|agle)\b|"
     r"अगले|जल्द",
@@ -42,7 +50,7 @@ class JudgeOutput(BaseModel):
 
 
 def banned_span(answer: str) -> str | None:
-    found = BANNED.search(answer)
+    found = BANNED.search(DISCLAIMER.sub(" ", answer))
     return found.group(0) if found else None
 
 

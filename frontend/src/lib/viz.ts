@@ -16,9 +16,12 @@ export type Drawable =
 const CHARTS: VizType[] = ["bar", "line", "pie", "stacked_bar"];
 
 export function toDrawable(viz: VizSpec | null, columns: string[], rows: Cell[][]): Drawable {
-  if (!viz || viz.type === "none") return rows.length ? { type: "table" } : { type: "none" };
-  if (viz.type === "flow") return viz.mermaid ? { type: "flow", mermaid: viz.mermaid } : { type: "table" };
   if (!rows.length) return { type: "none" };
+  // "none": the sentence says it all; the rows stay behind "Show data". No viz at all (old
+  // history without one) shows the table.
+  if (viz?.type === "none") return { type: "none" };
+  if (!viz) return { type: "table" };
+  if (viz.type === "flow") return viz.mermaid ? { type: "flow", mermaid: viz.mermaid } : { type: "table" };
   if (viz.type === "kpi") {
     const wanted = viz.y?.length ? viz.y : columns;
     const items = wanted
