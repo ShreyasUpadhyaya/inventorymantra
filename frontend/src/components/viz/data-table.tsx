@@ -21,7 +21,7 @@ export function DataTable({ columns, rows, total }: { columns: string[]; rows: C
             {rows.map((row, r) => (
               <tr key={r} className="border-t">
                 {row.map((value, i) => (
-                  <td key={i} className={`px-3 py-1.5 ${numeric[i] ? "text-right tabular-nums" : ""}`}>
+                  <td key={i} className={`px-3 py-1.5 ${numeric[i] ? "text-right tabular-nums" : ""} ${/(number|code|date|_on)$/.test(columns[i]) ? "whitespace-nowrap" : ""}`}>
                     {formatCell(value, columns[i])}
                   </td>
                 ))}

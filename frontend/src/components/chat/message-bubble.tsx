@@ -44,7 +44,7 @@ export function MessageBubble({
   return (
     <div className="grid max-w-[92%] gap-3 rounded-2xl rounded-bl-sm border bg-card px-4 py-3 text-sm" lang={htmlLang(turn.lang)}>
       <p className="whitespace-pre-wrap leading-relaxed">{turn.answer}</p>
-      {!clarify && <VizView turn={turn} />}
+      {!clarify && <VizView viz={turn.viz} columns={turn.columns} rows={turn.rows} rowCount={turn.row_count} />}
       {choices.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {choices.map((choice) => (

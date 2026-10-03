@@ -31,6 +31,8 @@ describe("formatting", () => {
   it("uses Indian grouping, ₹ for money and % for shares", () => {
     expect(formatCell(4789288.83, "total_amount")).toBe("₹47,89,288.83");
     expect(formatCell(24.7, "margin_pct")).toBe("24.7%");
+    expect(formatCell(36363.6, "total_amount")).toBe("₹36,363.60");
+    expect(formatCell("2026-09-02", "date")).toBe("2 Sep 2026");
     expect(formatCell(28, "overdue_pos")).toBe("28");
     expect(formatCell("2026-08-13", "expected_delivery_date")).toBe("13 Aug 2026");
     expect(formatCell(null)).toBe("—");
@@ -41,6 +43,7 @@ describe("formatting", () => {
   it("labels columns readably", () => {
     expect(columnLabel("days_overdue")).toBe("Days overdue");
     expect(columnLabel("po_number")).toBe("PO number");
+    expect(columnLabel("margin_pct")).toBe("Margin %");
   });
 });
 

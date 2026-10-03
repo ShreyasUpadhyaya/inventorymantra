@@ -154,7 +154,7 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 - [x] **C5.1** `feat(web): login, session handling, route guards and app shell`
 - [x] **C5.1b** `feat(auth): first-login password change, own password change, Owner reset`
 - [x] **C5.2** `feat(web): chat UI with VizSpec renderer (table, charts, KPI, Mermaid)`
-- [ ] **C5.3** `feat(web): role dashboards`
+- [x] **C5.3** `feat(web): role dashboards`
 
 ### Phase 6 — Writes, approvals, notifications, lead time (Day 3 AM)
 *(Built exactly as in `docs/WRITE_PATH.md`: one service per action, preview → confirm → single transaction with row locks, idempotent `operation_id`, audit before/after, role-filtered notifications.)*

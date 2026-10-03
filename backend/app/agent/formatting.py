@@ -40,7 +40,8 @@ def number(value: float | int) -> str:
 
 
 def label(column: str) -> str:
-    return column.replace("_", " ")
+    """ "days_overdue" -> "days overdue"; "margin_pct" -> "margin" (its value shows the %)."""
+    return column.removesuffix("_pct").replace("_", " ")
 
 
 def show(column: str, value: Any) -> str:

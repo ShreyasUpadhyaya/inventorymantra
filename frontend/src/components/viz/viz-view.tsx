@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import type { AssistantTurn } from "@/lib/chat";
+import type { Cell, VizSpec } from "@/lib/chat";
 import { columnLabel, formatCell } from "@/lib/format";
 import { toDrawable } from "@/lib/viz";
 
@@ -17,15 +17,25 @@ const Chart = dynamic(() => import("./charts").then((m) => m.Chart), {
 const MermaidFlow = dynamic(() => import("./mermaid-flow").then((m) => m.MermaidFlow), { ssr: false });
 
 /** Draws the visual the backend chose (VizSpec), with the rows always one click away. */
-export function VizView({ turn }: { turn: AssistantTurn }) {
-  const drawable = toDrawable(turn.viz, turn.columns, turn.rows);
+export function VizView({
+  viz,
+  columns,
+  rows,
+  rowCount = rows.length,
+}: {
+  viz: VizSpec | null;
+  columns: string[];
+  rows: Cell[][];
+  rowCount?: number;
+}) {
+  const drawable = toDrawable(viz, columns, rows);
   const [showRows, setShowRows] = useState(false);
-  const hasRows = turn.rows.length > 0 && turn.columns.length > 0;
+  const hasRows = rows.length > 0 && columns.length > 0;
   if (drawable.type === "none" && !hasRows) return null;
 
   let visual: React.ReactNode = null;
   if (drawable.type === "table") {
-    visual = <DataTable columns={turn.columns} rows={turn.rows} total={turn.row_count} />;
+    visual = <DataTable columns={columns} rows={rows} total={rowCount} />;
   } else if (drawable.type === "kpi") {
     visual = (
       <div className="flex flex-wrap gap-3">
@@ -44,9 +54,9 @@ export function VizView({ turn }: { turn: AssistantTurn }) {
   }
 
   const canToggle = hasRows && drawable.type !== "table";
-  const title = drawable.type === "kpi" || drawable.type === "none" ? null : turn.viz?.title;
+  const title = drawable.type === "kpi" || drawable.type === "none" ? null : viz?.title;
   return (
-    <figure className="grid gap-2">
+    <figure className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)] gap-2">
       {title && <figcaption className="text-xs font-medium text-muted-foreground">{title}</figcaption>}
       {visual}
       {canToggle && (
@@ -54,7 +64,7 @@ export function VizView({ turn }: { turn: AssistantTurn }) {
           <Button variant="link" size="xs" className="px-0" onClick={() => setShowRows((v) => !v)}>
             {showRows ? "Hide data" : "Show data"}
           </Button>
-          {showRows && <DataTable columns={turn.columns} rows={turn.rows} total={turn.row_count} />}
+          {showRows && <DataTable columns={columns} rows={rows} total={rowCount} />}
         </div>
       )}
     </figure>
