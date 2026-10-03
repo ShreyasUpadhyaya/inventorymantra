@@ -331,3 +331,13 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
   - `POST /users/{id}/reset-password` (Owner only, action `reset_password`) creates a new temporary password, shown once, flags the account and signs it out everywhere. It is audited without the secret. The Owner changes their own password on the account page, not through a reset.
 - **Not done:** self-service "forgot password" by email (no mail service in this case study) and password-strength scoring.
 - **Status:** Accepted
+
+### D-039 · Chat UI and chart rendering (C5.2)
+- **Streaming:** `fetch` + a small SSE parser (`src/lib/sse.ts`), because `EventSource` can't POST JSON. It goes through the same 401 → refresh → retry wrapper as every other call. Step labels ("Reading the data…") show while the graph runs. Checked through the Next proxy: events arrive one by one, not buffered.
+- **Rendering follows the backend's VizSpec** (D-008): kpi cards, table, Recharts bar / line / pie / stacked bar, and a Mermaid flow (loaded only when needed, `securityLevel: "strict"`). If a spec doesn't fit the rows (missing column, nothing numeric), the UI falls back to a table rather than drawing something wrong. Charts always have "Show data" next to them.
+- **Formatting is display only:** Indian digit grouping, ₹ for money columns, % for percentage columns, dates as "13 Aug 2026". Raw values are never changed.
+- **Clarifying questions:** options are buttons that answer through `/chat/{id}/resume`. Typing while a question is waiting also answers it. Only the latest answer's buttons work.
+- **Conversations:** a sidebar lists your threads, and `/chat?thread=<id>` reopens one from the stored history (another user's thread is a 404, as in the API). Starter questions per role use the golden corpus's wording, so they also work offline.
+- **Hindi:** Noto Sans Devanagari is loaded next to Geist, which has no Devanagari glyphs.
+- **Not shown:** the generated SQL. It would reveal view and column names, and the answer rules keep schema details out of the UI.
+- **Status:** Accepted
