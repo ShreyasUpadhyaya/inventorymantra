@@ -30,7 +30,9 @@ VAGUE_MEASURE = re.compile(
 # Clearly unrelated requests: the out-of-scope sentence is always added for these.
 OFF_TOPIC = re.compile(
     r"\b(poem|poetry|story|joke|song|lyrics|recipe|weather|horoscope|shayari|essay|"
-    r"stock market|sensex|nifty|cricket score)\b|कविता|कहानी|चुटकुला|गाना|मौसम",
+    r"stock market|sensex|nifty|cricket|football|ipl|movie|film|bitcoin|crypto|election|"
+    r"net worth|richest|celebrity|prime minister|president of|capital of)\b|"
+    r"कविता|कहानी|चुटकुला|गाना|मौसम|क्रिकेट|फिल्म|संपत्ति",
     re.I,
 )
 

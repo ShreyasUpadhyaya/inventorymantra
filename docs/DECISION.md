@@ -359,3 +359,14 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Found by looking at screenshots in a real browser:** money columns such as `po_total` and `gross_profit` weren't formatted as ₹, "Sept" (from the browser's date formatting) disagreed with the "Sep" the answers use, and `margin_pct` was labelled "Margin pct". All fixed. (Charts looked tiny in a full-page screenshot only because the capture resized the window; at normal size they are correct.)
 - **Dev note:** `allowedDevOrigins` includes `127.0.0.1`; without it, Next's dev server serves the page but blocks its scripts when opened as http://127.0.0.1:3000, so the page never becomes interactive.
 - **Status:** Accepted
+
+### D-042 · RCA: two different answers to off-topic questions (found in manual testing, offline mode)
+- **Symptom:** an Inventory Manager asked "can you tell me the weather" and got the scope sentence ("I can only help with the company's inventory and procurement data."). Then "can you tell me elon musk's net worth?" got "Offline demo mode (LLM_MODE=fake) can only answer…".
+- **Root cause:** scope is judged by the guard model. Offline, `fake.fake_guard` stands in for it, and its out-of-scope check was a keyword list (poem, weather, joke, …). "Elon Musk's net worth" matched nothing, so the stand-in called it a stock question (a question with no data area defaults to `stock`). SQL generation then had no known answer and the offline "demo mode" message came back. The real guard model does not behave like that, and the code backstop (`signals.OFF_TOPIC`) was the same short keyword list, so it would not have caught a model miss either.
+- **Not a security issue:** nothing was queried and no data was shown. It was a wrong message, and a gap in how faithfully the offline stand-in copied the real guard.
+- **Fix, in two layers:**
+  1. **Offline stand-in:** a message with no data area, no item mention and no business word (`fake.DOMAIN`: item, inventory, quantity, overdue, warehouse, "how are we doing", …) is now `out_of_scope`. Domain questions the demo can't answer still get the honest "offline demo mode" message.
+  2. **Code backstop (online too):** `signals.OFF_TOPIC` also covers net worth, celebrities, prime minister / president of / capital of, cricket, football, IPL, movies, crypto and elections, plus Hindi cricket, film and संपत्ति. The out-of-scope sentence is added whatever the model said, as for the poem.
+- **Regression tests:** 6 off-topic questions × 3 roles all get the one scope sentence (English and Hindi), a domain question the demo can't answer still says so, and a model that misclassifies off-topic text still gets the scope sentence.
+- **Limit:** keyword lists can't know every off-topic subject. The model is the real judge, and C7.1's out-of-scope cases (threshold ≥ 95%) are where that is measured.
+- **Status:** Accepted

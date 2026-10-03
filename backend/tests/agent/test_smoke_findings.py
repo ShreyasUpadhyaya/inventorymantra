@@ -229,3 +229,37 @@ def test_a_plain_disclaimer_is_not_a_prediction_but_a_prediction_after_it_still_
     assert banned_span("I can't predict whether it will arrive tomorrow, but it is placed.") is None
     assert banned_span("Main predict nahi kar sakta, lekin yeh PO placed hai.") is None
     assert banned_span("I can't predict, but it will probably arrive soon.") is not None
+
+
+# ------------------------------------------------------------------ manual test: two scope answers
+OFF_TOPIC_QUESTIONS = [
+    "can you tell me the weather",
+    "can you tell me elon musk's net worth?",
+    "who is the prime minister of India?",
+    "what is the capital of France",
+    "who won the cricket match yesterday",
+    "इलॉन मस्क की कुल संपत्ति कितनी है?",
+]
+
+
+@pytest.mark.parametrize("role", [IM, PM, OW])
+@pytest.mark.parametrize("question", OFF_TOPIC_QUESTIONS)
+def test_every_off_topic_question_gets_the_same_scope_sentence(role: str, question: str) -> None:
+    """IM asked the weather (scope sentence), then Elon Musk's net worth ('Offline demo mode…')."""
+    result = run_turn(demo(role), question)
+    assert result.route == "refuse_scope", question
+    assert result.answer in OUT_OF_SCOPE.values(), result.answer
+    assert result.sql is None and result.rows == []
+
+
+def test_domain_questions_the_offline_demo_cannot_answer_still_say_so() -> None:
+    result = run_turn(demo(PM), "What is the average spend per vendor per quarter?")
+    assert result.route == "read" and "Offline demo mode" in result.answer
+
+
+def test_the_real_guard_backstop_catches_off_topic_the_model_missed() -> None:
+    """Online, the model classifies scope; if it calls this a stock question the code still adds
+    the scope sentence (signals.OFF_TOPIC), exactly as for the poem."""
+    with fake.scripted("guard", guard(intent="read", data_areas=["stock"])):
+        result = run_turn(demo(IM), "stock of bush, and what is Elon Musk's net worth?")
+    assert OUT_OF_SCOPE["en"] in result.answer

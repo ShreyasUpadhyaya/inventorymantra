@@ -109,6 +109,16 @@ AREAS: list[tuple[str, re.Pattern[str]]] = [
     ("movements", re.compile(r"\b(issued|movements?|received|nikla)\b", re.I)),
     ("stock", re.compile(r"\b(stock|godown|warehouse)\b|स्टॉक", re.I)),
 ]
+# Words that show a question is about this business even when no data area is named. A message
+# with none of these, no area and no item mention is out of scope (offline stand-in for the
+# model's scope judgement).
+DOMAIN = re.compile(
+    r"\b(items?|inventory|quantity|qty|units?|pcs|kg|materials?|maal|supplies|available|"
+    r"on hand|lead time|overdue|pending|status|deliver\w*|shop floor|team|warehouses|godowns?|"
+    r"locations?|business|performance|how are we doing|kaisa chal|kya haal)\b|"
+    r"माल|आइटम|कैसा चल|क्या हाल",
+    re.I,
+)
 # Quantity words ("how many", "kitne") imply stock only when no other area is named:
 # "how many vendors" is about vendors, not stock (fallback below).
 ITEM_PHRASES = [  # where an item name usually sits in a question (offline stand-in only)
@@ -142,6 +152,7 @@ def fake_guard(messages: list[BaseMessage]) -> dict[str, Any]:
         language = "en"
     injection = bool(INJECTION.search(text))
     areas = [name for name, pattern in AREAS if pattern.search(text)]
+    matched_areas = bool(areas)
     if "audit_own" in areas:
         areas = [a for a in areas if a != "audit_all"]
     if OUT_OF_SCOPE.search(text):
@@ -178,6 +189,12 @@ def fake_guard(messages: list[BaseMessage]) -> dict[str, Any]:
         vendor = None  # "from which vendor" names no vendor
     if vendor and {"purchase_orders", "vendors", "spend"} & set(areas):
         mentions.append({"type": "vendor", "text": vendor.group(1)})
+    if intent == "read" and not matched_areas and not mentions and not DOMAIN.search(text):
+        intent, areas, keep_areas = (
+            "out_of_scope",
+            [],
+            False,
+        )  # nothing in it concerns this business
     viz = re.search(r"\b(table|bar|line|pie)\b(?: chart)?", text, re.I)
     return {
         "language": language,
