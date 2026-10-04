@@ -436,3 +436,12 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **API:** `GET /notifications` (your own only, newest 30, unread count), `POST /notifications/{id}/read` (someone else's → 404, same as missing), `POST /notifications/read-all`.
 - **UI:** a bell in the top bar with the unread count, polled every 60 s; the panel lists title, text and time; click to mark read, or mark all.
 - **Status:** Accepted
+
+### D-048 · Ask and reply on a PO waiting for approval; prompt v0.8 (C6.6)
+- **Why:** the user asked whether the Owner could question the requester before deciding. Approvals were a yes/no decision and notifications are one-way, so the only option was "reject with a note", which kills the PO.
+- **`ask_about_approval`** (Owner) and **`reply_to_approval`** (Procurement Manager, only on their own requests, checked in the service) write to a new `approval_messages` table (migration 0006). The PO stays `pending_approval` throughout; the Owner can approve or reject at any time, and once decided, no more questions can be asked.
+- **Notifications:** the question goes to the requester ("About PO-2026-0058: …"), the reply to the Owner. The Inventory Manager never receives either.
+- **Approvals page** now serves both roles: the Owner sees each waiting PO with its question/answer thread and Approve / Reject / Ask; the Procurement Manager sees "My approval requests" (waiting first, then recent decisions) with the thread and Reply. API: `POST /approvals/{po}/ask`, `GET /approvals/mine`, `POST /approvals/{po}/reply`, all through the write framework.
+- **Prompt v0.8 (approved):** five lines in the §7 action list: decide, ask, reply, add user, deactivate user. In the chat: "approve PO-2026-0058", "ask about PO-2026-0058: why not Shakti?", "reply on PO-2026-0058: …".
+- **Status:** Accepted
+

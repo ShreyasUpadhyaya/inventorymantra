@@ -78,6 +78,8 @@ On an exception: `ROLLBACK`, then a separate short transaction writes the audit 
 | `clear_payment_tranche` | PM, Owner | `proc_po_payment_tranches.cleared_at/by` | — |
 | `set_reorder_policy` | PM, Owner | upsert `reorder_policy` | — |
 | `decide_approval` | Owner | `approvals` → PO status `placed` or `rejected` | PM: result + optional note; IM: date only, if linked to their request |
+| `ask_about_approval` | Owner | `approval_messages` (question); the PO keeps waiting (C6.6) | PM who asked: the question |
+| `reply_to_approval` | PM (own requests only) | `approval_messages` (reply) | Owner: the answer |
 | `create_user` / `deactivate_user` | Owner | `users` (bcrypt, `created_by`), deactivation bumps `token_version` (forces logout) | — |
 | `reset_password` | Owner | new temporary password, `must_change_password`, all sessions ended (C5.1b) | — |
 | `create_vendor` | PM, Owner | `proc_vendors` | — |

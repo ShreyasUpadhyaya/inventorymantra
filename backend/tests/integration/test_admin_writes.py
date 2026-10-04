@@ -170,3 +170,63 @@ def test_approvals_api(
     again = owner.post(f"/approvals/{number}/decide", json={"decision": "reject"})
     assert again.status_code == 409 and "isn't waiting" in again.json()["detail"]
     assert owner.post(f"/approvals/{number}/decide", json={"decision": "maybe"}).status_code == 422
+
+
+# ------------------------------------------------------------------ ask / reply (C6.6)
+def messages(world: World, po_id: str) -> list[tuple]:
+    return world.db.execute(
+        """SELECT m.kind, m.body, m.author_id FROM approval_messages m
+           JOIN approvals a ON a.id = m.approval_id WHERE a.entity_id = %s
+           ORDER BY m.created_at""",
+        (po_id,),
+    ).fetchall()
+
+
+def test_owner_asks_the_requester_replies_and_the_po_keeps_waiting(world: World) -> None:
+    po_id, number, _ = waiting(world, with_request=False)
+    p, asked = as_owner(world, "ask_about_approval", po=number,
+                        message="Why Zeta and not Shakti?")  # fmt: skip
+    assert p.summary == f"Ask Demo Procurement Manager about {number}."
+    assert asked.events[0]["to"] == {"users": [str(world.users[PM].id)]}
+    reply = preview(world.users[PM], "reply_to_approval",
+                    {"po": number, "message": "Shakti can't deliver before November"})  # fmt: skip
+    done = apply(world.users[PM], reply, reply.preview_hash, f"test-{uuid.uuid4()}")
+    assert done.message == f"Done: your reply about {number} was sent to the Owner."
+    assert [(k, b) for k, b, _ in messages(world, po_id)] == [
+        ("question", "Why Zeta and not Shakti?"),
+        ("reply", "Shakti can't deliver before November"),
+    ]
+    assert po_row(world, po_id)[1] == "pending_approval"  # still the Owner's decision
+    as_owner(world, "decide_approval", po=number, decision="approve")
+    with pytest.raises(WriteError, match="isn't waiting for approval"):
+        as_owner(world, "ask_about_approval", po=number, message="too late")
+
+
+def test_only_the_requester_may_reply_and_only_the_owner_may_ask(
+    world: World, make_user: Any
+) -> None:
+    _, number, _ = waiting(world, with_request=False)
+    other_pm = make_user(PM, "zpm2")
+    from app.auth.service import load_user
+
+    stranger = load_user(world.db, other_pm)
+    with pytest.raises(WriteError, match="only reply about your own"):
+        preview(stranger, "reply_to_approval", {"po": number, "message": "hi"})
+    for role in (PM, IM):
+        with pytest.raises(NotPermitted):
+            preview(world.users[role], "ask_about_approval", {"po": number, "message": "?"})
+    with pytest.raises(NotPermitted):
+        preview(world.users[IM], "reply_to_approval", {"po": number, "message": "?"})
+
+
+def test_ask_and_reply_through_the_api(owner: TestClient, make_user: Any, world: World) -> None:
+    po_id, number, _ = waiting(world, with_request=False)
+    assert (
+        owner.post(f"/approvals/{number}/ask", json={"message": "Any cheaper vendor?"}).status_code
+        == 200
+    )
+    [row] = [r for r in owner.get("/approvals").json() if r["po_number"] == number]
+    assert [m["kind"] for m in row["messages"]] == ["question"]
+    make_user(IM, "zim3")
+    assert session("zim3").get("/approvals/mine").status_code == 403
+    assert owner.post(f"/approvals/{number}/ask", json={"message": ""}).status_code == 422

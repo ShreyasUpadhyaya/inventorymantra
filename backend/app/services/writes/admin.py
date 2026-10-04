@@ -2,6 +2,7 @@
 deactivate a user. Same framework as every other write: preview, confirm, one transaction,
 audit. The Approvals page and the chat both call these."""
 
+import uuid
 from typing import Any, Literal
 from uuid import UUID
 
@@ -167,6 +168,107 @@ class DecideApproval(Action):
         )  # fmt: skip
 
 
+# ------------------------------------------------------------------ ask / reply (C6.6)
+class MessageArgs(_Args):
+    po: str = Field(min_length=1, max_length=40)
+    message: str = Field(min_length=1, max_length=500)
+
+
+def _waiting(conn: psycopg.Connection, role: str, text: str) -> tuple[Any, ...]:
+    """(approval id, PO id, PO number, requester id, requester name) of a PO that waits."""
+    po = resolve.purchase_order(conn, role, text)
+    row = conn.execute(
+        """SELECT a.id::text, a.requested_by, u.full_name FROM approvals a
+           JOIN users u ON u.id = a.requested_by
+           WHERE a.entity_type = 'purchase_order' AND a.entity_id = %s AND a.status = 'pending'""",
+        (po.id,),
+    ).fetchone()
+    if row is None or po.status != "pending_approval":
+        raise WriteError(f"{po.number} isn't waiting for approval.")
+    return row[0], po.id, po.number, row[1], row[2]
+
+
+class _MessageAction(Action):
+    entity_type = "approval"
+    args_model = MessageArgs
+    kind = "question"
+
+    def read_state(
+        self, conn: psycopg.Connection, payload: dict[str, Any], lock: bool
+    ) -> dict[str, Any]:
+        row = conn.execute(APPROVAL_LOCKED if lock else APPROVAL_STATE,
+                           (payload["approval_id"],)).fetchone()  # fmt: skip
+        return {"approval": list(row) if row else None}
+
+    def _save(self, conn: psycopg.Connection, user: AuthUser, payload: dict[str, Any]) -> str:
+        message_id = str(uuid.uuid4())
+        conn.execute(
+            """INSERT INTO approval_messages (id, approval_id, author_id, kind, body)
+               VALUES (%s, %s, %s, %s, %s)""",
+            (message_id, payload["approval_id"], user.id, self.kind, payload["message"]),
+        )
+        return message_id
+
+
+class AskAboutApproval(_MessageAction):
+    """The Owner asks the requester a question; the PO keeps waiting for a decision."""
+
+    name = "ask_about_approval"
+    kind = "question"
+
+    def plan(self, conn: psycopg.Connection, user: AuthUser, args: MessageArgs) -> Plan:
+        approval_id, po_id, number, requester_id, requester = _waiting(conn, user.role, args.po)
+        payload = {"approval_id": approval_id, "po_id": po_id, "po_number": number,
+                   "requested_by": str(requester_id), "requester_name": requester,
+                   "message": args.message}  # fmt: skip
+        return Plan(payload=payload, summary=f"Ask {requester} about {number}.",
+                    fields=[("PO", number), ("To", requester), ("Question", args.message)],
+                    effects=[f"{number} keeps waiting for your decision.",
+                             f"{requester} is told and can reply."])  # fmt: skip
+
+    def apply(
+        self, conn: psycopg.Connection, user: AuthUser, payload: dict[str, Any],
+        state: dict[str, Any],
+    ) -> Outcome:  # fmt: skip
+        message_id = self._save(conn, user, payload)
+        data = {"po_number": payload["po_number"], "question": payload["message"]}
+        event = {"event": "approval_question", "to": {"users": [payload["requested_by"]]},
+                 "data": data}  # fmt: skip
+        return Outcome(message=f"Done: your question about {payload['po_number']} was sent to "
+                       f"{payload['requester_name']}.", entity_id=message_id,
+                       after={"question": payload["message"]}, events=[event])  # fmt: skip
+
+
+class ReplyToApproval(_MessageAction):
+    """The person who asked for the PO answers the Owner's question."""
+
+    name = "reply_to_approval"
+    kind = "reply"
+
+    def plan(self, conn: psycopg.Connection, user: AuthUser, args: MessageArgs) -> Plan:
+        approval_id, po_id, number, requester_id, _ = _waiting(conn, user.role, args.po)
+        if requester_id != user.id:
+            raise WriteError(f"You can only reply about your own approval requests; "
+                             f"{number} isn't one of them.")  # fmt: skip
+        payload = {"approval_id": approval_id, "po_id": po_id, "po_number": number,
+                   "message": args.message, "replier_name": user.full_name}  # fmt: skip
+        return Plan(payload=payload, summary=f"Reply to the Owner about {number}.",
+                    fields=[("PO", number), ("Reply", args.message)],
+                    effects=["The Owner is told."])  # fmt: skip
+
+    def apply(
+        self, conn: psycopg.Connection, user: AuthUser, payload: dict[str, Any],
+        state: dict[str, Any],
+    ) -> Outcome:  # fmt: skip
+        message_id = self._save(conn, user, payload)
+        event = {"event": "approval_reply", "data": {
+            "po_number": payload["po_number"], "reply": payload["message"],
+            "replied_by_name": payload["replier_name"]}}  # fmt: skip
+        return Outcome(message=f"Done: your reply about {payload['po_number']} was sent to the "
+                       "Owner.", entity_id=message_id, after={"reply": payload["message"]},
+                       events=[event])  # fmt: skip
+
+
 # ------------------------------------------------------------------ users
 class CreateUserArgs(_Args):
     full_name: str = Field(min_length=1, max_length=120)
@@ -282,5 +384,6 @@ class DeactivateUser(Action):
                        entity_id=payload["user_id"], after={"is_active": False})  # fmt: skip
 
 
-for _action in (DecideApproval(), CreateUser(), DeactivateUser()):
+for _action in (DecideApproval(), AskAboutApproval(), ReplyToApproval(), CreateUser(),
+                DeactivateUser()):  # fmt: skip
     register(_action)

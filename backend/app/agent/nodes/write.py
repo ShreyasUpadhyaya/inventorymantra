@@ -31,6 +31,7 @@ from app.agent.prompts.write import ACTION_LINES, WRITE_TASK
 from app.agent.state import AgentState
 from app.agent.write_text import (
     CANCELLED,
+    CHOICES,
     CONFIRM_OPTIONS,
     CONFIRM_QUESTION,
     CONFIRM_WORDS,
@@ -38,7 +39,6 @@ from app.agent.write_text import (
     FIELD_QUESTIONS,
     GAVE_UP,
     GENERIC_QUESTION,
-    KIND_OPTIONS,
     NOT_A_CHANGE,
     OFFLINE_WRITE,
     field_name,
@@ -54,7 +54,8 @@ ActionName = Literal[
     "record_stock_movement", "transfer_stock", "receive_against_po",
     "record_unexpected_receipt", "raise_stock_request", "create_purchase_order",
     "update_po_expected_date", "cancel_po", "clear_payment_tranche", "set_reorder_policy",
-    "create_vendor",
+    "create_vendor", "decide_approval", "ask_about_approval", "reply_to_approval",
+    "create_user", "deactivate_user",
 ]  # fmt: skip
 MAX_ASKS = 2  # an unusable answer is asked once more, then the change is dropped
 HISTORY_TURNS = 6
@@ -101,6 +102,12 @@ class WriteCallOut(BaseModel):
     name: str | None
     city: str | None
     payment_terms: str | None
+    decision: Literal["approve", "reject"] | None
+    message: str | None
+    full_name: str | None
+    email: str | None
+    role: Literal["inventory_manager", "procurement_manager", "owner"] | None
+    user: str | None
     note: str | None
 
 
@@ -124,6 +131,11 @@ REQUIRED: dict[str, list[str]] = {
     "clear_payment_tranche": ["po"],
     "set_reorder_policy": ["item", "min_level", "reorder_qty", "lead_time_days"],
     "create_vendor": ["name"],
+    "decide_approval": ["po", "decision"],
+    "ask_about_approval": ["po", "message"],
+    "reply_to_approval": ["po", "message"],
+    "create_user": ["full_name", "email", "role"],
+    "deactivate_user": ["user"],
 }
 LINE_REQUIRED = ["item", "quantity", "unit_price"]
 NUMBER_FIELDS = {"quantity", "unit_price", "tax_percentage", "min_level", "reorder_qty",
@@ -199,8 +211,8 @@ def _args(call: WriteCallOut) -> dict[str, Any]:
 
 def _options(field: str, lang: Lang) -> tuple[list[str], list[str]]:
     base = field.rsplit(".", 1)[-1]
-    if base == "kind":
-        pairs = KIND_OPTIONS[lang]
+    if base in CHOICES:
+        pairs = CHOICES[base][lang]
         return [label for label, _ in pairs], [value for _, value in pairs]
     if base in LOCATION_FIELDS or base == "issued_to":
         table = "inv_locations" if base != "issued_to" else "inv_issued_to_targets"
@@ -371,7 +383,7 @@ def ask_write(state: AgentState) -> AgentState:
     picked = _pick(q, answer)
     if picked is not None:
         value = picked
-    elif base in ("kind", "stage"):
+    elif base in ("kind", "stage", "decision", "role"):
         value = None  # these must be one of the offered options
     elif base in NUMBER_FIELDS:
         number = parse_number(answer)

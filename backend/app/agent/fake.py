@@ -83,7 +83,7 @@ HELP = re.compile(
 )
 WRITE = re.compile(
     r"^\s*(add|issue|transfer|move|remove|receive|record|request|raise|place|create|mark|"
-    r"cancel|approve|"
+    r"cancel|approve|ask \w* ?(?:about|on) po|reply (?:on|about|to) po|"
     r"reject|deactivate|set)\b|\b(add kar do|kar do|jod do)\b",
     re.I,
 )
@@ -419,6 +419,32 @@ WRITE_PATTERNS: list[tuple[str, re.Pattern[str], tuple[str, ...]]] = [
         ),
         ("stage", "po"),
     ),
+    ("approve", re.compile(rf"^approve\s+{_PO}$", re.I), ("po",)),
+    (
+        "reject",
+        re.compile(rf"^reject\s+{_PO}(?:\s*[,:-]?\s*(?:because|as|note:?)\s+(.+))?$", re.I),
+        ("po", "note"),
+    ),
+    (
+        "ask_about_approval",
+        re.compile(rf"^ask\s+(?:\w+\s+)?(?:about|on)\s+{_PO}\s*[:,-]?\s+(.+)$", re.I),
+        ("po", "message"),
+    ),
+    (
+        "reply_to_approval",
+        re.compile(rf"^reply\s+(?:on|about|to)\s+{_PO}\s*[:,-]?\s+(.+)$", re.I),
+        ("po", "message"),
+    ),
+    (
+        "create_user",
+        re.compile(
+            r"^add a new (inventory manager|procurement manager|owner)\s*[:,-]?\s*(.+?),\s*"
+            r"(\S+@\S+)$",
+            re.I,
+        ),
+        ("role", "full_name", "email"),
+    ),
+    ("deactivate_user", re.compile(r"^deactivate\s+(?:the\s+user\s+)?(.+)$", re.I), ("user",)),
     (
         "inbound",
         re.compile(rf"^(?:add|put)\s+{_N}\s+(?:of\s+)?(.+?)\s+(?:to|in|into)\s+(.+)$", re.I),
@@ -460,8 +486,13 @@ def fake_write(messages: list[BaseMessage]) -> dict[str, Any]:
                 if values.get(key) and POINTER.match(values[key]):
                     values[key] = None
             action = {"inbound": "record_stock_movement", "outbound": "record_stock_movement",
-                      "issue": "record_stock_movement"}.get(name, name)  # fmt: skip
+                      "issue": "record_stock_movement", "approve": "decide_approval",
+                      "reject": "decide_approval"}.get(name, name)  # fmt: skip
             call = {**empty, "action": action}
+            if action == "decide_approval":
+                call["decision"] = name
+            if values.get("role"):
+                values["role"] = str(values["role"]).lower().replace(" ", "_")
             if action == "record_stock_movement":
                 call["kind"] = name
             if action == "create_purchase_order":

@@ -1,4 +1,4 @@
-"""Write extraction task block and action list: verbatim from docs/PROMPTS.md §7 (v0.7)."""
+"""Write extraction task block and action list: verbatim from docs/PROMPTS.md §7 (v0.8)."""
 
 WRITE_TASK = """\
 TASK: The user wants to change data. Choose ONE of the actions in <actions> (or several if the
@@ -50,4 +50,14 @@ ACTION_LINES: dict[str, str] = {
     "of an item. Fields: item, min_level, reorder_qty, lead_time_days, safety_stock, "
     "preferred_vendor",
     "create_vendor": "- create_vendor: add a vendor. Fields: name, city, payment_terms",
+    "decide_approval": "- decide_approval: approve or reject a PO that is waiting for the Owner. "
+    "Fields: po, decision (approve | reject), note",
+    "ask_about_approval": "- ask_about_approval: ask the person who requested a waiting PO a "
+    "question. Fields: po, message",
+    "reply_to_approval": "- reply_to_approval: answer the Owner's question about your waiting "
+    "PO. Fields: po, message",
+    "create_user": "- create_user: add a person who can sign in. Fields: full_name, email, role "
+    "(inventory_manager | procurement_manager | owner)",
+    "deactivate_user": "- deactivate_user: stop a person from signing in. Fields: user (email or "
+    "name)",
 }

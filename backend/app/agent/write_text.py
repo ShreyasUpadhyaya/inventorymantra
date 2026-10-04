@@ -65,6 +65,36 @@ FIELD_QUESTIONS: dict[str, L] = {
         "hi": "डिलीवरी में आमतौर पर कितने दिन लगते हैं?",
         "hinglish": "Delivery mein aam taur par kitne din lagte hain?",
     },
+    "decision": {
+        "en": "Approve or reject?",
+        "hi": "मंज़ूर करें या अस्वीकार?",
+        "hinglish": "Approve karein ya reject?",
+    },
+    "message": {
+        "en": "What would you like to say?",
+        "hi": "आप क्या कहना चाहते हैं?",
+        "hinglish": "Aap kya kehna chahte hain?",
+    },
+    "full_name": {
+        "en": "What is the person's full name?",
+        "hi": "व्यक्ति का पूरा नाम क्या है?",
+        "hinglish": "Unka poora naam kya hai?",
+    },
+    "email": {
+        "en": "What is their email address?",
+        "hi": "उनका ईमेल पता क्या है?",
+        "hinglish": "Unka email address kya hai?",
+    },
+    "role": {
+        "en": "Which role should they have?",
+        "hi": "उन्हें कौन सी भूमिका देनी है?",
+        "hinglish": "Unhe kaun sa role dena hai?",
+    },
+    "user": {
+        "en": "Which person (email or name)?",
+        "hi": "कौन सा व्यक्ति (ईमेल या नाम)?",
+        "hinglish": "Kaun sa vyakti (email ya naam)?",
+    },
     "name": {
         "en": "What is the vendor's name?",
         "hi": "वेंडर का नाम क्या है?",
@@ -82,6 +112,17 @@ KIND_OPTIONS: dict[Lang, list[tuple[str, str]]] = {
     "hinglish": [("Stock aaya", "inbound"), ("Stock gaya", "outbound"),
                  ("Team ko diya", "issue")],
 }  # fmt: skip
+DECISION_OPTIONS: dict[Lang, list[tuple[str, str]]] = {
+    "en": [("Approve", "approve"), ("Reject", "reject")],
+    "hi": [("मंज़ूर करें", "approve"), ("अस्वीकार करें", "reject")],
+    "hinglish": [("Approve", "approve"), ("Reject", "reject")],
+}
+ROLE_OPTIONS: dict[Lang, list[tuple[str, str]]] = {
+    lang: [("Inventory Manager", "inventory_manager"),
+           ("Procurement Manager", "procurement_manager"), ("Owner", "owner")]
+    for lang in ("en", "hi", "hinglish")
+}  # fmt: skip
+CHOICES = {"kind": KIND_OPTIONS, "decision": DECISION_OPTIONS, "role": ROLE_OPTIONS}
 DIDNT_CATCH: dict[str, L] = {
     "number": {
         "en": "I didn't catch a number.",

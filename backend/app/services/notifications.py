@@ -142,6 +142,17 @@ EVENTS: dict[str, EventSpec] = {
         "Purchase order decision",
         _decided_body,
     ),
+    "approval_question": EventSpec(
+        {PM: ("po_number", "question"), OW: ("po_number", "question")},
+        "The Owner asks about your purchase order",
+        lambda d: f"About {d['po_number']}: {d['question']}",
+    ),
+    "approval_reply": EventSpec(
+        {OW: ("po_number", "reply", "replied_by_name")},
+        "Reply about a purchase order",
+        lambda d: f"{d.get('replied_by_name') or 'Procurement'} on {d['po_number']}: {d['reply']}",
+        (OW,),
+    ),
     "low_stock": EventSpec(
         {IM: LOW_IM, PM: LOW_BUYER, OW: LOW_BUYER}, "Low stock", _low_body, (PM, OW)
     ),  # fmt: skip

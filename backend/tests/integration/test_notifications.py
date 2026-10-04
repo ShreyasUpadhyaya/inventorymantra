@@ -129,3 +129,15 @@ def test_api_shows_only_your_own(world: World, make_user: Any) -> None:
     assert client.get("/notifications").json()["unread"] == 0
     assert client.post("/notifications/read-all").status_code == 204
     assert TestClient(client.app).get("/notifications").status_code == 401
+
+
+def test_question_goes_to_the_requester_and_the_reply_to_the_owner(world: World) -> None:
+    _, po = place(world, role=PM, price=2500)
+    number = number_of(world, po.entity_id)
+    run(world, "ask_about_approval", OW, po=number, message="Can Zeta do 45 days credit?")
+    [question] = inbox(world, PM, "approval_question")
+    assert question["body"] == f"About {number}: Can Zeta do 45 days credit?"
+    run(world, "reply_to_approval", PM, po=number, message="Yes, Zeta agreed to 45 days")
+    [reply] = inbox(world, OW, "approval_reply")
+    assert reply["body"] == f"Demo Procurement Manager on {number}: Yes, Zeta agreed to 45 days"
+    assert inbox(world, IM) == []

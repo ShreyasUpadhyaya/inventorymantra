@@ -163,6 +163,7 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 - [x] **C6.3** `feat(agent): bind role-filtered write tools with confirmation interrupt and multi-action previews`
 - [x] **C6.4** `feat: owner approvals workflow and user management actions`
 - [x] **C6.5** `feat: role-scoped notifications and lead-time reorder scan`
+- [x] **C6.6** `feat: Owner asks / requester replies on a waiting PO; prompt v0.8 (Owner and PM approval actions in the chat)`
 
 ### Phase 7 — Evals, hardening, deploy (Day 3 PM)
 - [ ] **C7.0** `test: separate test database, seeded fresh, so demo writes can't break tests` (user, 2026-10-04: manual write tests changed the frozen demo data)

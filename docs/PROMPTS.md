@@ -1,6 +1,6 @@
 # Prompts — InventoryMantra agent
 
-Status: **v0.7, APPROVED by the user on 2026-10-04** (gate G1 passed; earlier: v0.6 2026-10-03, v0.5 2026-10-03, v0.4 2026-10-02, v0.3 2026-10-01, v0.2 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.7"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
+Status: **v0.8, APPROVED by the user on 2026-10-04** (gate G1 passed; earlier: v0.7 2026-10-04, v0.6 2026-10-03, v0.5 2026-10-03, v0.4 2026-10-02, v0.3 2026-10-01, v0.2 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.8"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
 
 ---
 
@@ -222,7 +222,7 @@ If explicit_viz is given, return it. Return {type, x, y[], series, title}.
 ```
 **User message:** `<user_message>{message}</user_message><result_shape>{columns, dtypes, row_count}</result_shape><explicit_viz>{explicit_viz}</explicit_viz>`
 
-## 7. Call: WRITE ARGUMENT EXTRACTION (reasoning model, structured output; v0.7)
+## 7. Call: WRITE ARGUMENT EXTRACTION (reasoning model, structured output; v0.8)
 
 **System message** = CORE + task block + `<actions>` with only the lines of the role's permitted actions (from the list below):
 ```text
@@ -263,6 +263,11 @@ Return {actions: [{action, ...fields}], none_applicable}.
 - clear_payment_tranche: mark a PO instalment as paid. Fields: po, stage
 - set_reorder_policy: set the reorder level, quantity and lead time of an item. Fields: item, min_level, reorder_qty, lead_time_days, safety_stock, preferred_vendor
 - create_vendor: add a vendor. Fields: name, city, payment_terms
+- decide_approval: approve or reject a PO that is waiting for the Owner. Fields: po, decision (approve | reject), note
+- ask_about_approval: ask the person who requested a waiting PO a question. Fields: po, message
+- reply_to_approval: answer the Owner's question about your waiting PO. Fields: po, message
+- create_user: add a person who can sign in. Fields: full_name, email, role (inventory_manager | procurement_manager | owner)
+- deactivate_user: stop a person from signing in. Fields: user (email or name)
 ```
 **User message:** `<history>{last turns}</history><user_message>{message}</user_message>`
 **After the call (code, DECISION D-045):** fields the model left empty are asked for one at a time; names are matched by the server; every action is previewed and the user confirms one card before anything is saved.
@@ -334,6 +339,7 @@ Still open (small, has a default): **conversation history window.** The default 
 | 0.2 | 2026-09-30 | Explicit system-vs-user message split per call; applied answers to open questions; help mode; renamed to InventoryMantra | User, 2026-09-30 |
 | 0.3 | 2026-10-01 | Guard output gains `entity_mentions` (copy-as-typed spans for the D-026 matcher) | User, 2026-10-01 |
 | 0.5 | 2026-10-03 | §3: current-state questions need no period, explicit periods are clear, "if unsure, do not ask"; §2: intent out_of_scope if ANY part is unrelated, still listing data areas (first smoke test, D-036) | User, 2026-10-03 |
+| 0.8 | 2026-10-04 | §7 action list: the Owner's decide approval, ask about an approval, add user and deactivate user, and the requester's reply (§18) | User, 2026-10-04 |
 | 0.7 | 2026-10-04 | §7 write extraction rewritten (§17): actions per role in `<actions>`, names copied as written in any language, pointer words, numbers and ISO dates, which action for which situation, no invented prices, questions are not writes, missing fields asked one at a time | User, 2026-10-04 |
 | 0.6 | 2026-10-03 | §5: the composer writes conversational sentences (no column names or "field: value" lists) and answers "will it…?" with "can't predict" plus the recorded facts (manual testing, D-040) | User, 2026-10-03 |
 | 0.4 | 2026-10-02 | §4: replace the non-existent `expected_delivery_latest` with `expected_delivery_date` (already the latest date; NULL means none recorded) | User, 2026-10-02 |
@@ -421,11 +427,13 @@ arguments from the message. Only the actions you are given exist for this user.
 
 **Applied in C6.3, with two mechanical adaptations:** the call returns structured output `{actions: [...], none_applicable}` instead of tool calls (one strict JSON schema, like every other call), so "list it in missing_fields" became "leave it empty; the system asks the user, one question at a time", and "the provided actions" became "the actions in <actions>", with the action list added as its own block in §7. The final text is in §7 and the drift test keeps the code equal to it.
 
-## 18. Change for v0.8 (PROPOSED 2026-10-04, after C6.4; not yet applied)
-C6.4 added three Owner actions as services: `decide_approval`, `create_user`, `deactivate_user`. They work today from the Approvals and Users pages. To use them from the chat ("approve PO-2026-0058", "add Priya Sharma, priya@…, as inventory manager"), the §7 action list needs three more lines (the Owner is the only role that sees them):
+## 18. Change for v0.8 (APPROVED 2026-10-04, applied in C6.6)
+C6.4 added the Owner's actions as services (`decide_approval`, `create_user`, `deactivate_user`), and the user asked whether the Owner could also ask the requester about a waiting PO, with the requester able to answer (C6.6: `ask_about_approval`, `reply_to_approval`). v0.8 adds their five lines to the §7 action list; the task block is unchanged. Only the Owner sees the decide / ask / user lines, and only the Procurement Manager sees "reply" (and may reply only about their own requests; the service checks it):
 ```text
 - decide_approval: approve or reject a PO that is waiting for the Owner. Fields: po, decision (approve | reject), note
+- ask_about_approval: ask the person who requested a waiting PO a question. Fields: po, message
+- reply_to_approval: answer the Owner's question about your waiting PO. Fields: po, message
 - create_user: add a person who can sign in. Fields: full_name, email, role (inventory_manager | procurement_manager | owner)
 - deactivate_user: stop a person from signing in. Fields: user (email or name)
 ```
-The task block itself is unchanged. The chat never shows or creates a temporary password: after `create_user`, the Owner issues one on the Users page, so no password passes through the chat history, the graph checkpoint or a trace.
+The chat never shows or creates a temporary password: after `create_user`, the Owner issues one on the Users page, so no password passes through the chat history, the graph checkpoint or a trace.

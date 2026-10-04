@@ -198,3 +198,28 @@ def test_dates() -> None:
     assert parse_date("Oct 15", today).isoformat() == "2026-10-15"
     assert parse_date("kal", today) is not None and parse_date("someday", today) is None
     assert parse_date("31/02/2026", today) is None
+
+
+# ------------------------------------------------------------------ Owner and PM in chat (v0.8)
+def test_owner_asks_pm_replies_owner_approves_all_in_chat(world: World) -> None:
+    turn = ask(world, PM, "Place a PO for 60 Zeta Test Widget Alpha from Zeta Test Supplies "
+                          "at ₹2,500 each")  # fmt: skip
+    answer(world, PM, turn, "Confirm")
+    number = world.db.execute(
+        "SELECT po_number FROM proc_purchase_orders WHERE vendor_id = %s", (world.vendor,)
+    ).fetchone()[0]
+    turn = ask(world, OW, f"ask about {number}: why not Shakti?")
+    assert (
+        turn.interrupt["previews"][0]["summary"] == f"Ask Demo Procurement Manager about {number}."
+    )
+    assert answer(world, OW, turn, "Confirm").answer.startswith("Done: your question")
+    turn = ask(world, PM, f"reply on {number}: Shakti is out of stock")
+    assert answer(world, PM, turn, "Confirm").answer.startswith("Done: your reply")
+    turn = ask(world, OW, f"approve {number}")
+    assert turn.interrupt["previews"][0]["summary"].startswith(f"Approve {number}")
+    assert "approved and placed" in answer(world, OW, turn, "Confirm").answer
+
+
+def test_procurement_manager_cannot_approve_in_chat(world: World) -> None:
+    turn = ask(world, PM, "approve PO-2026-0003")
+    assert turn.answer == DENIAL["en"] and turn.interrupt is None

@@ -45,6 +45,8 @@ WRITE_MATRIX = {
     "set_reorder_policy": {PM, OW},
     "create_vendor": {PM, OW},
     "decide_approval": {OW},
+    "ask_about_approval": {OW},
+    "reply_to_approval": {PM},
     "create_user": {OW},
     "deactivate_user": {OW},
     "reset_password": {OW},

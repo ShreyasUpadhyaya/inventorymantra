@@ -47,6 +47,8 @@ ACTIONS: dict[str, frozenset[str]] = {
     "set_reorder_policy": MANAGERS,
     "create_vendor": MANAGERS,
     "decide_approval": OWNER_ONLY,
+    "ask_about_approval": OWNER_ONLY,
+    "reply_to_approval": frozenset({PM}),  # only the requester; checked in the service
     "create_user": OWNER_ONLY,
     "deactivate_user": OWNER_ONLY,
     "reset_password": OWNER_ONLY,
