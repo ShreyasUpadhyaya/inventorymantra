@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     openai_model_fast: str = ""
     openai_daily_token_budget: int = 200_000
 
+    # Voice (C8.1): no key -> the browser's own speech recognition is used instead
+    deepgram_api_key: SecretStr | None = None
+    deepgram_model: str = "nova-3"
+    deepgram_language: str = "multi"  # English / Hindi code-switching
+    voice_requests_per_minute: int = 10
+
     agent_checkpointer: Literal["postgres", "memory"] = "postgres"
     chat_messages_per_minute: int = 20
 

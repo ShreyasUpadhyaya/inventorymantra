@@ -173,7 +173,7 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 - [x] **C7.4** `docs: README demo script, technical guide` (screenshots skipped)
 
 ### Phase 8 — Post-scope: voice (after the DoD is met)
-- [ ] **C8.1** `feat(voice): push-to-talk with SpeechToText interface (Deepgram free tier; faster-whisper / Web Speech fallback)`. The transcript is editable before sending and reuses `/chat` unchanged.
+- [x] **C8.1** `feat(voice): push-to-talk with SpeechToText interface (Deepgram free tier; faster-whisper / Web Speech fallback)`. The transcript is editable before sending and reuses `/chat` unchanged.
 
 ### Build-assistant model per phase (Claude models used to **build**; the app's runtime LLM stays OpenAI)
 Rule of thumb: use **Opus** where a mistake is expensive (security, agent logic, answer keys, writes), **Sonnet** for standard feature work, and **Haiku** for mechanical or boilerplate tasks.

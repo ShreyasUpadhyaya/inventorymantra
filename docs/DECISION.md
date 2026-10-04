@@ -505,3 +505,31 @@ Each found by the user in the app with `LLM_MODE=openai`, root-caused from the L
 - **Decision:** no deployment config is added. `docs/TECHNICAL_GUIDE.md` is the single technical reference (LangGraph / LangChain / LangSmith with file names, prompt layers including the core system prompt, the golden set and its decisions, tests, eval results, limitations); the README links to it and carries a 10-minute demo script.
 - **Consequence:** what a deployment would need is listed under limitations (shared rate-limit store, forwarded client IP, platform secrets).
 - **Status:** Accepted
+
+### D-055 · Voice input: push-to-talk, transcript edited before sending (C8.1)
+- **Context:** Phase 8, after the Definition of Done. Users on the shop floor may prefer to speak, in Hindi or English. A misheard word must never trigger a change on its own.
+- **Decision:**
+  - A mic button next to Send. Click to talk, click again to stop (auto-stop after 60 s). The transcript is **added to the message box**, where the user checks or edits it and presses Send. From there it is an ordinary typed message, so RBAC, clarification, charts and the write confirmation are unchanged.
+  - **Server provider behind `SpeechToText`** (`backend/app/services/speech.py`): Deepgram, model and language from settings (default `nova-3`, `multi` for English / Hindi code-switching), called with httpx off the event loop.
+  - **Endpoints:** `GET /voice/status` and `POST /voice/transcribe`. Signed-in users only; audio types webm / ogg / mp4 / mpeg / wav; at most 5 MB, read in chunks and refused as soon as it's bigger; 10 recordings per user per minute.
+  - **Errors** become short safe messages. Audio, transcripts and the key are never stored or logged.
+  - **Browser fallback:** without `DEEPGRAM_API_KEY` the server says so, and the browser uses its own Web Speech recognition (Chrome / Edge), in Hindi (`hi-IN`) when the user has been writing Devanagari, otherwise Indian English (`en-IN`). Without either, the mic button isn't shown.
+- **First real use (user, 2026-10-05):** recognition was poor; "how are we doing" was understood on the third try.
+  - Deepgram's request log shows all 7 recordings reached the server provider (nova-3, `multi`), each 2.4–6.7 s long.
+  - The same settings transcribe clear synthetic speech correctly. The likely causes are the first words being lost while the microphone starts, and accent or code-switching.
+  - **Fixes:**
+    - The button shows "Starting the microphone…" and turns red only once recording has really started.
+    - Nova-3 keyterm prompting is now sent with domain words (PO, overdue, 132-1, AC Contactor, MS Bush, vendor names, "kaun se"…). In a test, "132-1" was heard as "one three two dash one" without it.
+  - `DEEPGRAM_LANGUAGE=en-IN` is the setting to try if English questions are still misheard.
+- **Second round (user, 2026-10-05):**
+  - "kaunse PO late hai" came back as "Concepio late hand": automatic mode doesn't cope with Hinglish spoken in an Indian accent.
+  - "one thirty two dash one" wasn't found as a warehouse.
+  - **Fixes:**
+    - A language button next to the mic (Auto / EN / हिं, remembered in the browser) sends `lang=auto|en|hi`. The server maps it to Deepgram `multi`, `en-IN` or `hi`, and the browser fallback to `en-IN` or `hi-IN`. Hindi and Hinglish speakers pick हिं: the words come back in Devanagari, which the app answers in Hindi.
+    - Spoken codes are written as codes (`tidy_transcript`): "one thirty two dash one" → "132-1" and "forty two" → "42", while a lone "one" in "which one do you mean" stays a word.
+- **Why not faster-whisper:** a local model adds a large download and CPU load to a 3-day demo. The `SpeechToText` interface keeps it a one-class change later.
+- **Consequences:**
+  - Deepgram costs nothing until the free credit is used.
+  - Recognition quality depends on the provider. Hinglish is transcribed as spoken (Roman or Devanagari), which the language detection already handles.
+  - Not verified against the live Deepgram API in this repo, since tests use a stand-in provider and a mocked HTTP response; the first real recording is the check.
+- **Status:** Accepted
