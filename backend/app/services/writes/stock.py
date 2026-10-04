@@ -32,7 +32,7 @@ class _Args(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
 
-def _qty(value: float, unit: str) -> str:
+def fmt_qty(value: float, unit: str) -> str:
     return f"{number(value)} {unit}"
 
 
@@ -41,7 +41,7 @@ STOCK = """SELECT location_id, quantity FROM inv_current_stock
 STOCK_LOCKED = STOCK + " FOR UPDATE"
 
 
-def _stock_rows(
+def stock_rows(
     conn: psycopg.Connection, item_id: str, location_ids: list[str], lock: bool
 ) -> dict[str, float | None]:
     """Quantity per location (None = no row yet), locked in row-id order."""
@@ -52,7 +52,7 @@ def _stock_rows(
     return found
 
 
-def _change_stock(
+def change_stock(
     conn: psycopg.Connection,
     user: AuthUser,
     *,
@@ -65,6 +65,7 @@ def _change_stock(
     transfer_location_id: str | None = None,
     issued_to_id: str | None = None,
     notes: str | None = None,
+    unit_cost: float | None = None,
 ) -> tuple[str, float]:
     """One signed transaction plus the stock row. Returns (transaction id, new quantity)."""
     tx_id = str(uuid.uuid4())
@@ -72,10 +73,11 @@ def _change_stock(
     conn.execute(
         """INSERT INTO inv_transactions (id, item_id, location_id, transaction_type, quantity,
                reference_type, reference_id, transfer_location_id, issued_to_id, notes,
-               created_by, created_at)
-           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+               unit_cost, currency, created_by, created_at)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
         (tx_id, item_id, location_id, transaction_type, quantity, reference_type, reference_id,
-         transfer_location_id, issued_to_id, notes, str(user.id), stamp),
+         transfer_location_id, issued_to_id, notes, unit_cost,
+         "INR" if unit_cost is not None else None, str(user.id), stamp),
     )  # fmt: skip
     row = conn.execute(
         """INSERT INTO inv_current_stock (id, item_id, location_id, quantity,
@@ -94,7 +96,7 @@ def _change_stock(
     return tx_id, float(row[0])
 
 
-def _low_stock_event(
+def low_stock_event(
     conn: psycopg.Connection, item_id: str, item_name: str, location_name: str, at_location: float
 ) -> list[dict[str, Any]]:
     """After stock goes out: tell the buyers if the item is now at or below its reorder level."""
@@ -145,19 +147,19 @@ class RecordStockMovement(Action):
             raise WriteError(
                 "Only an issue goes to a shop floor or team. Did you mean to issue it?"
             )
-        current = _stock_rows(conn, item.id, [loc.id], lock=False)[loc.id] or 0.0
+        current = stock_rows(conn, item.id, [loc.id], lock=False)[loc.id] or 0.0
         signed = quantity if args.kind == "inbound" else -quantity
         if current + signed < 0:
             raise WriteError(
-                f"{loc.name} has only {_qty(current, item.unit)} of {item.name}, "
-                f"so {_qty(quantity, item.unit)} can't go out."
+                f"{loc.name} has only {fmt_qty(current, item.unit)} of {item.name}, "
+                f"so {fmt_qty(quantity, item.unit)} can't go out."
             )
         verb, prep, _ = KIND_WORDS[args.kind]
-        summary = f"{verb} {_qty(quantity, item.unit)} of {item.name} {prep} {loc.name}"
+        summary = f"{verb} {fmt_qty(quantity, item.unit)} of {item.name} {prep} {loc.name}"
         if target:
             summary += f" to {target.name}"
         fields = [("Item", f"{item.name} ({item.code})"), ("Warehouse", loc.name),
-                  ("Quantity", _qty(quantity, item.unit))]  # fmt: skip
+                  ("Quantity", fmt_qty(quantity, item.unit))]  # fmt: skip
         if target:
             fields.append(("Issued to", target.name))
         if args.note:
@@ -168,13 +170,15 @@ class RecordStockMovement(Action):
             "issued_to_id": target.id if target else None,
             "issued_to_name": target.name if target else None, "note": args.note,
         }  # fmt: skip
-        effects = [f"{loc.name}: {_qty(current, item.unit)} → {_qty(current + signed, item.unit)}"]
+        effects = [
+            f"{loc.name}: {fmt_qty(current, item.unit)} → {fmt_qty(current + signed, item.unit)}"
+        ]
         return Plan(payload=payload, summary=summary + ".", fields=fields, effects=effects)
 
     def read_state(
         self, conn: psycopg.Connection, payload: dict[str, Any], lock: bool
     ) -> dict[str, Any]:
-        rows = _stock_rows(conn, payload["item_id"], [payload["location_id"]], lock)
+        rows = stock_rows(conn, payload["item_id"], [payload["location_id"]], lock)
         return {"stock": rows}
 
     def apply(
@@ -183,7 +187,7 @@ class RecordStockMovement(Action):
     ) -> Outcome:  # fmt: skip
         kind = payload["kind"]
         quantity = float(payload["quantity"])
-        tx_id, after = _change_stock(
+        tx_id, after = change_stock(
             conn, user,
             item_id=payload["item_id"], location_id=payload["location_id"],
             transaction_type="inbound" if kind == "inbound" else "outbound",
@@ -193,11 +197,11 @@ class RecordStockMovement(Action):
         )  # fmt: skip
         unit, loc = payload["unit"], payload["location_name"]
         _, _, done = KIND_WORDS[kind]
-        message = (f"Done: {_qty(quantity, unit)} of {payload['item_name']} {done} {loc}. "
-                   f"{loc} now has {_qty(after, unit)}.")  # fmt: skip
+        message = (f"Done: {fmt_qty(quantity, unit)} of {payload['item_name']} {done} {loc}. "
+                   f"{loc} now has {fmt_qty(after, unit)}.")  # fmt: skip
         events = []
         if kind != "inbound":
-            events = _low_stock_event(conn, payload["item_id"], payload["item_name"], loc, after)
+            events = low_stock_event(conn, payload["item_id"], payload["item_name"], loc, after)
         return Outcome(message=message, entity_id=tx_id,
                        after={"stock": {payload["location_id"]: after}}, events=events)  # fmt: skip
 
@@ -223,12 +227,12 @@ class TransferStock(Action):
         if source.id == dest.id:
             raise WriteError("The two warehouses are the same; choose a different destination.")
         quantity = check_quantity(args.quantity)
-        rows = _stock_rows(conn, item.id, [source.id, dest.id], lock=False)
+        rows = stock_rows(conn, item.id, [source.id, dest.id], lock=False)
         have, there = rows[source.id] or 0.0, rows[dest.id] or 0.0
         if quantity > have:
             raise WriteError(
-                f"{source.name} has only {_qty(have, item.unit)} of {item.name}, "
-                f"so {_qty(quantity, item.unit)} can't be moved."
+                f"{source.name} has only {fmt_qty(have, item.unit)} of {item.name}, "
+                f"so {fmt_qty(quantity, item.unit)} can't be moved."
             )
         payload = {
             "item_id": item.id, "item_name": item.name, "unit": item.unit,
@@ -238,18 +242,19 @@ class TransferStock(Action):
         u = item.unit
         return Plan(
             payload=payload,
-            summary=f"Move {_qty(quantity, u)} of {item.name} from {source.name} to {dest.name}.",
+            summary=f"Move {fmt_qty(quantity, u)} of {item.name} "
+            f"from {source.name} to {dest.name}.",
             fields=[("Item", f"{item.name} ({item.code})"), ("From", source.name),
-                    ("To", dest.name), ("Quantity", _qty(quantity, u))]
+                    ("To", dest.name), ("Quantity", fmt_qty(quantity, u))]
             + ([("Note", args.note)] if args.note else []),
-            effects=[f"{source.name}: {_qty(have, u)} → {_qty(have - quantity, u)}",
-                     f"{dest.name}: {_qty(there, u)} → {_qty(there + quantity, u)}"],
+            effects=[f"{source.name}: {fmt_qty(have, u)} → {fmt_qty(have - quantity, u)}",
+                     f"{dest.name}: {fmt_qty(there, u)} → {fmt_qty(there + quantity, u)}"],
         )  # fmt: skip
 
     def read_state(
         self, conn: psycopg.Connection, payload: dict[str, Any], lock: bool
     ) -> dict[str, Any]:
-        return {"stock": _stock_rows(conn, payload["item_id"],
+        return {"stock": stock_rows(conn, payload["item_id"],
                                      [payload["from_id"], payload["to_id"]], lock)}  # fmt: skip
 
     def apply(
@@ -257,21 +262,23 @@ class TransferStock(Action):
         state: dict[str, Any],
     ) -> Outcome:  # fmt: skip
         q = float(payload["quantity"])
-        out_id, left = _change_stock(
+        out_id, left = change_stock(
             conn, user, item_id=payload["item_id"], location_id=payload["from_id"],
             transaction_type="transfer_out", quantity=-q, reference_type="transfer",
             transfer_location_id=payload["to_id"], notes=payload["note"],
         )  # fmt: skip
-        _, arrived = _change_stock(
+        _, arrived = change_stock(
             conn, user, item_id=payload["item_id"], location_id=payload["to_id"],
             transaction_type="transfer_in", quantity=q, reference_type="transfer",
             reference_id=out_id, transfer_location_id=payload["from_id"], notes=payload["note"],
         )  # fmt: skip
         u = payload["unit"]
         src, dst = payload["from_name"], payload["to_name"]
-        message = (f"Done: moved {_qty(q, u)} of {payload['item_name']} from {src} to {dst}. "
-                   f"{src} now has {_qty(left, u)}, {dst} has {_qty(arrived, u)}.")  # fmt: skip
-        events = _low_stock_event(conn, payload["item_id"], payload["item_name"],
+        message = (
+            f"Done: moved {fmt_qty(q, u)} of {payload['item_name']} from {src} to {dst}. "
+            f"{src} now has {fmt_qty(left, u)}, {dst} has {fmt_qty(arrived, u)}."
+        )
+        events = low_stock_event(conn, payload["item_id"], payload["item_name"],
                                   payload["from_name"], left)  # fmt: skip
         return Outcome(message=message, entity_id=out_id,
                        after={"stock": {payload["from_id"]: left, payload["to_id"]: arrived}},
@@ -302,9 +309,12 @@ class RaiseStockRequest(Action):
             "needed_by": args.needed_by.isoformat() if args.needed_by else None,
             "note": args.note,
         }  # fmt: skip
-        summary = f"Ask procurement for {_qty(quantity, item.unit)} of {item.name}"
+        summary = f"Ask procurement for {fmt_qty(quantity, item.unit)} of {item.name}"
         summary += f", needed by {needed}." if needed else "."
-        fields = [("Item", f"{item.name} ({item.code})"), ("Quantity", _qty(quantity, item.unit))]
+        fields = [
+            ("Item", f"{item.name} ({item.code})"),
+            ("Quantity", fmt_qty(quantity, item.unit)),
+        ]
         if needed:
             fields.append(("Needed by", needed))
         if args.note:
@@ -328,7 +338,7 @@ class RaiseStockRequest(Action):
             (request_id, payload["item_id"], payload["quantity"], payload["needed_by"],
              payload["note"], user.id),
         )  # fmt: skip
-        q = _qty(float(payload["quantity"]), payload["unit"])
+        q = fmt_qty(float(payload["quantity"]), payload["unit"])
         event = {"event": "stock_request_raised", "data": {
             "item_name": payload["item_name"], "quantity": payload["quantity"],
             "unit": payload["unit"], "needed_by": payload["needed_by"],

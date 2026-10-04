@@ -389,3 +389,22 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Tests use throwaway items (`TS-…`) on the seeded DB** and remove everything they create, so the real catalogue and the answer keys are untouched. 32 tests: preview writes nothing, exact rows written, audit contents, replay, tampered hash/payload, another user's preview, expiry, stale state, two parallel confirms (one succeeds, stock never below zero), cancel, rollback after an error mid-transaction, policy at preview and after deactivation or demotion, bad arguments, limits, inactive records, ambiguity, transfers, requests.
 - **Timestamps of new stock records** use the business date with the current time of day (`core.config.business_now`). With `APP_TODAY` frozen for the demo, a stock movement recorded now still shows up in "movements this week" and in daily-use figures, instead of landing days after "today".
 - **Status:** Accepted
+
+### D-044 · Procurement writes (C6.2)
+- **Eight more actions on the C6.1 framework** (`app/services/writes/procurement.py`): `create_purchase_order`, `receive_against_po`, `record_unexpected_receipt`, `update_po_expected_date`, `cancel_po`, `clear_payment_tranche`, `set_reorder_policy`, `create_vendor`. Roles come from the policy module (WRITE_PATH §4).
+- **Purchase orders:**
+  - The server computes line totals, tax (0–28%), subtotal and total with decimal rounding; the request only names the vendor, items, quantities and unit prices. At most 20 lines, one line per item.
+  - The PO number comes from `po_number_seq` at confirm time (`PO-<year>-<nnnn>`, after PO-2026-0057); the preview says so.
+  - A Procurement Manager's order over ₹1,00,000 is saved as `pending_approval` with a pending `approvals` row, and the audit row says `awaiting_approval`. The Owner's decision is C6.4. The Owner's own orders are placed directly.
+  - **Payment instalments** come from the vendor's terms, following the patterns in the data ("50% Advance & 50% Against Dispatch", "20% Adv & Balance 45 Days Credit", "10 Days PDC", "100% Advance", …). Unknown terms give one "As per terms" instalment. Amounts are the server's share of the total.
+  - **Open stock requests** for an item on the PO, with a quantity within the ordered quantity, are linked and shown in the preview ("Covers the open stock request for 40 pcs … from Demo Inventory Manager"). They become `ordered` when the PO is placed; for a PO awaiting approval they stay `open` (linked) until it is approved.
+- **Receiving against a PO** (any role): the preview shows the PO number, item, quantity and warehouse only, never a price or vendor. The stock transaction gets the line's unit price as its cost (set by the server). Over-receipt is refused with a pointer to "unplanned delivery". With several items still due and none named, the user is asked which one. The PO becomes `partial` or `received`; when it is fully received, its `ordered` requests become `fulfilled`. A PO that isn't `placed`/`partial` can't be received.
+- **Unplanned deliveries:** header (vendor name as typed, invoice note) → stock transaction (`unexpected_receipt`, pointing at the header) → receipt row linked to that transaction.
+- **Expected date:** the new date replaces the PO's date list and the open lines' dates. (The views take the latest date in the list, so appending an earlier date would change nothing.) The old date stays in the audit row. Past dates and closed POs are refused.
+- **Cancel:** only `placed` or `pending_approval` POs with nothing received. The PO keeps its record with status `cancelled`, a pending approval is closed as rejected ("PO cancelled before a decision"), and linked requests go back to `open`.
+- **Instalments:** clearing one records who and when; with several unpaid and none named, the user picks one (stage and amount shown).
+- **Reorder settings:** upsert with old → new values in the preview; safety stock and preferred vendor are kept unless given.
+- **Vendors:** refused if an existing vendor has the same or a very similar name (trigram ≥ 0.8).
+- **New events** for C6.5: `approval_requested`, `stock_request_ordered`, `po_receipt`, `unexpected_receipt`, `po_date_changed`.
+- **Tests:** 37 more (`tests/integration/test_procurement_writes.py`) with a throwaway vendor "Zeta Test Supplies". Cleanup removes their POs and resets `po_number_seq` exactly as it was, so the fabricate test and the demo's next PO number are unchanged.
+- **Status:** Accepted

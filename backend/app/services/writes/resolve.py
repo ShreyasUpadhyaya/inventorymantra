@@ -119,3 +119,41 @@ def issue_target(conn: psycopg.Connection, text: str) -> Target:
         )
     raise NotFound(f"I couldn't find a shop floor or team matching “{text}”.",
                    [t.name for t in rows][:4])  # fmt: skip
+
+
+@dataclass(frozen=True)
+class Vendor:
+    id: str
+    name: str
+    payment_terms: str | None
+
+
+@dataclass(frozen=True)
+class PurchaseOrder:
+    id: str
+    number: str
+    status: str
+    vendor_id: str | None
+    total: float
+
+
+def vendor(conn: psycopg.Connection, role: str, text: str) -> Vendor:
+    name = _match(conn, role, "vendor", text)  # active vendors only; denied for the IM
+    row = conn.execute(
+        "SELECT id, name, payment_terms FROM proc_vendors WHERE name = %s AND is_active", (name,)
+    ).fetchone()
+    if row is None:
+        raise NotFound(f"I couldn't find an active vendor matching “{text}”.")
+    return Vendor(*row)
+
+
+def purchase_order(conn: psycopg.Connection, role: str, text: str) -> PurchaseOrder:
+    number = _match(conn, role, "po", text)
+    row = conn.execute(
+        """SELECT id, po_number, status, vendor_id, coalesce(total_amount, 0)::float
+           FROM proc_purchase_orders WHERE po_number = %s""",
+        (number,),
+    ).fetchone()
+    if row is None:
+        raise NotFound(f"I couldn't find a PO matching “{text}”.")
+    return PurchaseOrder(*row)

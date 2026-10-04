@@ -21,6 +21,7 @@ class World:
     inactive: str  # item id: status inactive
     loc: dict[str, str]  # location name -> id
     users: dict[str, AuthUser]  # role -> demo user
+    vendor: str  # vendor id: "Zeta Test Supplies", 30% advance, balance against dispatch
 
     def stock(self, item_id: str, location: str) -> float | None:
         row = self.db.execute(
@@ -52,12 +53,37 @@ ITEMS = [
 ]
 
 
+TEST_POS = """SELECT id FROM proc_purchase_orders WHERE vendor_id IN
+                (SELECT id FROM proc_vendors WHERE name LIKE 'Zeta Test%%')"""
+
+
 def _cleanup(db: psycopg.Connection, ids: list[str]) -> None:
     db.execute("DELETE FROM agent_audit_log WHERE operation_id LIKE 'test-%'")
     db.execute("DELETE FROM notifications WHERE payload->>'item_id' = ANY(%s)", (ids,))
-    for table in ("inv_transactions", "inv_current_stock", "stock_requests", "reorder_policy"):
+    db.execute(f"DELETE FROM approvals WHERE entity_id IN ({TEST_POS})")  # noqa: S608
+    db.execute("DELETE FROM stock_requests WHERE item_id = ANY(%s)", (ids,))
+    db.execute(
+        "DELETE FROM proc_po_receipts WHERE po_line_id IN (SELECT id FROM proc_po_lines "  # noqa: S608
+        f"WHERE po_id IN ({TEST_POS}))"
+    )
+    for table in ("proc_po_payment_tranches", "proc_po_lines"):
+        db.execute(f"DELETE FROM {table} WHERE po_id IN ({TEST_POS})")  # noqa: S608
+    db.execute(f"DELETE FROM proc_purchase_orders WHERE id IN ({TEST_POS})")  # noqa: S608
+    headers = db.execute(
+        "DELETE FROM proc_unexpected_receipts WHERE inv_item_id = ANY(%s) RETURNING header_id",
+        (ids,),
+    ).fetchall()
+    db.execute("DELETE FROM proc_unexpected_receipt_headers WHERE id = ANY(%s)",
+               ([h[0] for h in headers],))  # fmt: skip
+    for table in ("inv_transactions", "inv_current_stock", "reorder_policy"):
         db.execute(f"DELETE FROM {table} WHERE item_id = ANY(%s)", (ids,))  # noqa: S608
     db.execute("DELETE FROM inv_items WHERE id = ANY(%s)", (ids,))
+    db.execute("DELETE FROM proc_vendors WHERE name LIKE 'Zeta Test%'")
+    # PO numbers used by tests are handed out again: next number = highest existing + 1
+    db.execute(
+        "SELECT setval('po_number_seq', (SELECT coalesce(max(split_part(po_number, '-', 3)::int),"
+        " 57) + 1 FROM proc_purchase_orders), false)"
+    )
 
 
 @pytest.fixture
@@ -78,10 +104,16 @@ def world(db: psycopg.Connection) -> Iterator[World]:
            VALUES (%s, %s, %s, 10, localtimestamp)""",
         (str(uuid.uuid4()), ids[0], loc["132-1"]),
     )
+    vendor_id = str(uuid.uuid4())
+    db.execute(
+        """INSERT INTO proc_vendors (id, name, city, payment_terms, is_active)
+           VALUES (%s, 'Zeta Test Supplies', 'Pune', %s, true)""",
+        (vendor_id, "30% Advance, Bal Against Dispatch"),
+    )
     users = {}
     for email, _, role in DEMO_USERS:
         user = load_user(db, demo_id("user", email))
         assert user is not None, "run make seed first"
         users[role] = user
-    yield World(db, ids[0], ids[1], ids[2], loc, users)
+    yield World(db, ids[0], ids[1], ids[2], loc, users, vendor_id)
     _cleanup(db, ids)
