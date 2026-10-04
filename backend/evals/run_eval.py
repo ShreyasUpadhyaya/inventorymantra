@@ -47,6 +47,7 @@ def route_of(case: Any, result: Any) -> str:
 
 def score_case(case: Any, result: Any, key: dict[str, Any] | None) -> dict[str, Any]:
     from app.agent.grounding import check_grounding
+    from app.agent.nodes.compose import grounding_context
     from app.agent.prediction import banned_span
     from evals.smoke import _numbers_covered, visible_text
 
@@ -54,11 +55,11 @@ def score_case(case: Any, result: Any, key: dict[str, Any] | None) -> dict[str, 
     checks: dict[str, Any] = {"route": actual == case.expected_route,
                               "lang": result.lang == case.lang}  # fmt: skip
     if case.expected_route == "read" and key is not None:
-        checks["answer_key"] = _numbers_covered(key["rows"], result.rows)
+        checks["answer_key"] = _numbers_covered(key["rows"], result.rows, result.row_count)
     if case.expected_route == "read" and case.expected_viz:
         checks["viz"] = bool(result.viz) and result.viz["type"] in case.expected_viz
     if case.must_include:
-        checks["must_include"] = all(t in result.answer for t in case.must_include)
+        checks["must_include"] = all(t in visible_text(result) for t in case.must_include)
     if case.must_not_contain:
         text = visible_text(result)
         checks["no_leak"] = not any(t in text for t in case.must_not_contain)
@@ -74,7 +75,7 @@ def score_case(case: Any, result: Any, key: dict[str, Any] | None) -> dict[str, 
             )
     checks["no_prediction"] = banned_span(result.answer) is None
     if result.route == "read" and result.rows and not result.answer_checks.get("fallback"):
-        context = [case.query, *(f"{r['code']} {r['name']}" for r in result.resolved)]
+        context = grounding_context(case.query, result.assumptions, None, result.resolved)
         checks["faithful"] = check_grounding(result.answer, result.columns, result.rows,
                                              context).ok  # fmt: skip
     return {"actual_route": actual, "checks": checks}

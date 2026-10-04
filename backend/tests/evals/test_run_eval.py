@@ -57,3 +57,12 @@ def test_metrics_and_gates() -> None:
     g = gates(m)
     assert g["rbac_leaks"] is False and g["route_accuracy"] is False
     assert g["execution_accuracy"] is True and g["scope_refusal"] is True
+
+
+def test_a_count_matches_the_number_of_rows_and_buttons_count_as_shown_text() -> None:
+    from evals.smoke import _numbers_covered
+
+    assert _numbers_covered([[74]], [["a", 1]] * 74, row_count=74)
+    assert not _numbers_covered([[74]], [["a", 1]] * 70, row_count=70)
+    shown = result(answer="Did you mean one of these?", suggestions=["Hexalobular Screw"])
+    assert "Hexalobular Screw" in visible_text(shown)
