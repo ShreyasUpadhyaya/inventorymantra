@@ -169,8 +169,8 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 - [x] **C7.0** `test: separate test database, seeded fresh, so demo writes can't break tests` (user, 2026-10-04: manual write tests changed the frozen demo data)
 - [x] **C7.1** `test(evals): LangSmith eval run and results report`
 - [x] **C7.2** `fix: …` (one commit per failure class found by evals)
-- [ ] **C7.3** `chore(deploy): Vercel web + Railway/Render API and Postgres with platform secrets`
-- [ ] **C7.4** `docs: README demo script and screenshots`
+- [~] **C7.3** ~~`chore(deploy): Vercel web + Railway/Render API and Postgres with platform secrets`~~ **Out of scope** (user, 2026-10-04: the brief allows localhost; D-054)
+- [x] **C7.4** `docs: README demo script, technical guide` (screenshots skipped)
 
 ### Phase 8 — Post-scope: voice (after the DoD is met)
 - [ ] **C8.1** `feat(voice): push-to-talk with SpeechToText interface (Deepgram free tier; faster-whisper / Web Speech fallback)`. The transcript is editable before sending and reuses `/chat` unchanged.

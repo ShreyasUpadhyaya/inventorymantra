@@ -499,3 +499,9 @@ Each found by the user in the app with `LLM_MODE=openai`, root-caused from the L
 - **Second probe run: 4 flagged, all expected:** "what is our stock value?" is honestly not recorded; two forecast phrasings were caught by the prediction check and replaced by the safe template; one false flag (the deliberately Hindi help chip in English mode) is no longer flagged.
 - **Still open:** "what should I reorder this week" filters by order-by date (1 item instead of 15); answers sometimes name internal status values ("reorder_now"). Both are prompt-level and listed as limitations.
 - **Status:** Accepted
+
+### D-054 · Deployment out of scope; one technical guide (C7.4)
+- **Context:** the brief allows running on localhost; the user chose to skip C7.3 (2026-10-04) and asked for one document with the technical explanations, limitations, tests and eval set.
+- **Decision:** no deployment config is added. `docs/TECHNICAL_GUIDE.md` is the single technical reference (LangGraph / LangChain / LangSmith with file names, prompt layers including the core system prompt, the golden set and its decisions, tests, eval results, limitations); the README links to it and carries a 10-minute demo script.
+- **Consequence:** what a deployment would need is listed under limitations (shared rate-limit store, forwarded client IP, platform secrets).
+- **Status:** Accepted
