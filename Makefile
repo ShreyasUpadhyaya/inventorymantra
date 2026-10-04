@@ -43,5 +43,5 @@ scan:          ## lead-time reorder scan: "reorder now" notifications for the bu
 answer-keys:   ## recompute frozen answer keys for evals/corpus (review the diff!)
 	cd backend && uv run python -m evals.build_answer_keys
 
-eval:          ## implemented in C7.1; costs OpenAI tokens, so announce before running
-	@echo "eval: not implemented yet (arrives in C7.1)"
+eval:          ## full golden-corpus eval; dry run offline, real OpenAI only with CONFIRM=yes (~$0.30)
+	cd backend && uv run python -m evals.run_eval $(if $(filter yes,$(CONFIRM)),--confirm,) $(if $(ONLY),--only $(ONLY),)

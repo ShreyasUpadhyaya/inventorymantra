@@ -67,6 +67,15 @@ def _numbers_covered(key_rows: list[list[Any]], result_rows: list[list[Any]]) ->
     return True
 
 
+def visible_text(result: Any) -> str:
+    """What the user can see: the answer, buttons, table and any confirm card. (Internal
+    fields such as ids or the names of denied areas are not shown, so they can't leak.)"""
+    shown = {"answer": result.answer, "suggestions": result.suggestions,
+             "columns": result.columns, "rows": result.rows,
+             "previews": (result.interrupt or {}).get("previews")}  # fmt: skip
+    return json.dumps(shown, ensure_ascii=False, default=str)
+
+
 def score(case: Any, result: Any, key: dict[str, Any] | None) -> dict[str, Any]:
     expected = case.expected_route
     if expected == "not_found":
@@ -81,7 +90,7 @@ def score(case: Any, result: Any, key: dict[str, Any] | None) -> dict[str, Any]:
     if case.must_include:
         checks["must_include"] = all(t in result.answer for t in case.must_include)
     if case.must_not_contain:
-        text = json.dumps(result.model_dump(exclude={"sql", "assumptions"}), ensure_ascii=False)
+        text = visible_text(result)
         checks["no_leak"] = not any(t in text for t in case.must_not_contain)
     if case.clarify_expect and result.interrupt:
         checks["clarify_options"] = len(result.suggestions) >= case.clarify_expect.min_options

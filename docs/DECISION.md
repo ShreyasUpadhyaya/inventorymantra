@@ -445,3 +445,9 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Prompt v0.8 (approved):** five lines in the §7 action list: decide, ask, reply, add user, deactivate user. In the chat: "approve PO-2026-0058", "ask about PO-2026-0058: why not Shakti?", "reply on PO-2026-0058: …".
 - **Status:** Accepted
 
+### D-049 · Full eval runner (C7.1)
+- `make eval` (dry run, offline) / `make eval CONFIRM=yes` (real model) runs all 107 golden cases as their roles through the real agent (`evals/run_eval.py`). Write cases stop at the confirm card, so an eval never changes data. Each metric follows QUALITY_AND_EVALS.md §3 and is checked against the §4 gates; the JSON report (every case: route, checks, answer, SQL, tokens, seconds) goes to `evals/results/`. With LangSmith on, traces go to a separate `<project>-eval` project.
+- **Leaks are judged on what the user can see** (answer, buttons, table, confirm card), not on internal fields: an id that happens to contain "34" or the name of a denied area is not a leak. The smoke runner uses the same rule.
+- **Budget:** the run sets its own token cap (default 900k) for that process only, because the 200k daily app budget is smaller than a full run (~5k tokens per case in the smoke runs).
+- **Offline dry run (2026-10-04):** all 107 cases run, 0 errors, 0 leaks; the 6 failures are offline-only limits (templated answers missing words the real model would write, and the keyword stand-ins for the guard).
+- **Status:** Accepted
