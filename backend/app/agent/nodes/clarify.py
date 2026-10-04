@@ -17,7 +17,9 @@ from pydantic import BaseModel, ConfigDict
 from app.agent.entity_match import normalise, resolve
 from app.agent.llm import LLMBudgetExceededError, LLMConfigError, structured_call
 from app.agent.nodes.guard import neutralise, system_prompt
+from app.agent.prompts import render
 from app.agent.prompts.clarify import CLARIFY_TASK
+from app.agent.prompts.languages import LANGUAGE_NAMES
 from app.agent.prompts.replies import DIDNT_RECOGNISE, WHICH_ONE
 from app.agent.signals import VAGUE_MEASURE, VAGUE_TIME
 from app.agent.state import AgentState
@@ -114,7 +116,8 @@ def clarify_messages(role: str, state: AgentState) -> list[Any]:
 
     data = json.dumps(state.get("resolved", []), ensure_ascii=False)
     user = f"<user_message>{neutralise(state['message'])}</user_message><data>{data}</data>"
-    return [SystemMessage(system_prompt(role, CLARIFY_TASK)), HumanMessage(user)]
+    task = render(CLARIFY_TASK, language=LANGUAGE_NAMES[state["lang"]])  # not guessed (v0.10)
+    return [SystemMessage(system_prompt(role, task)), HumanMessage(user)]
 
 
 _PUNCT = "?.!,।'\"“”‘’"

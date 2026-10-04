@@ -22,6 +22,7 @@ from app.agent.nodes.read import effective_message
 from app.agent.prediction import check_prediction
 from app.agent.prompts import DENIAL, Lang, render
 from app.agent.prompts.compose import COMPOSE_TASK
+from app.agent.prompts.languages import LANGUAGE_NAMES
 from app.agent.state import AgentState
 from app.agent.templates import template_answer as build_template
 from app.agent.viz import choose_viz
@@ -29,11 +30,6 @@ from app.core.config import app_today, get_settings
 
 logger = logging.getLogger("inventorymantra.agent")
 
-LANGUAGE_NAMES = {
-    "en": "English",
-    "hi": "Hindi (Devanagari script)",
-    "hinglish": "Hinglish (Hindi written in Roman script)",
-}
 ROWS_FOR_MODEL = 50  # bigger results: the first 50 rows plus whole-result totals
 FOR_RECORD: dict[Lang, str] = {
     "en": "For {name}: ",

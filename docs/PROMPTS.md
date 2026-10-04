@@ -1,6 +1,6 @@
 # Prompts — InventoryMantra agent
 
-Status: **v0.9, APPROVED by the user on 2026-10-04** (gate G1 passed; earlier: v0.8 2026-10-04, v0.7 2026-10-04, v0.6 2026-10-03, v0.5 2026-10-03, v0.4 2026-10-02, v0.3 2026-10-01, v0.2 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.9"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
+Status: **v0.10, APPROVED by the user on 2026-10-04** (gate G1 passed; earlier: v0.9 2026-10-04, v0.8 2026-10-04, v0.7 2026-10-04, v0.6 2026-10-03, v0.5 2026-10-03, v0.4 2026-10-02, v0.3 2026-10-01, v0.2 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.10"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
 
 ---
 
@@ -152,7 +152,8 @@ TASK: Decide if the request can be answered precisely. Do not answer it.
 Ask only when one of these is unclear AND no conventional default fits:
 - time window ("a few days back", "recently", "earlier")
 - entity (no match, or several plausible matches, in <data>)
-- measure ("how are we doing": spend? stock value? overdue orders?)
+- measure ("how are we doing": spend? overdue orders? low stock?). Offer only measures the
+  data holds: stock value is not one (purchase prices exist for few items).
 Conventional defaults (do not ask): "this month" = current calendar month; "last month" =
 previous calendar month; "last week" = previous Monday–Sunday; "last N POs" = most recent by
 date; stock questions = current stock, all warehouses.
@@ -160,7 +161,7 @@ Questions about the current state (current stock, overdue, open or pending items
 splits, totals with no period mentioned) need no period: use all current records. Explicit
 periods ("last 3 quarters", "August", a date such as "tomorrow") are already clear.
 If unsure, do not ask.
-Write the question and 2–4 options in the user's language, using real values from <data>
+Write the question and 2–4 options in {language}, using real values from <data>
 (actual item names, actual ranges such as "23–30 Sep 2026").
 Return {needs_clarification, dimension, question, options, default_applied}.
 ```
@@ -184,6 +185,7 @@ TASK: Write ONE PostgreSQL query that answers the request.
 - "Last month / last quarter / last year" mean the last COMPLETED one before today; "this
   month / quarter / year" mean the current one so far.
 - "What should I reorder / what needs reordering" = items whose status is reorder_now.
+- "Low stock" / "kam stock" / "कम स्टॉक" = items whose status is below_min or reorder_now.
 - "Coming in", "arriving", "on order", "aa rahi", "aane wala" = open purchase-order lines
   (inbound), not current stock.
 - A question about one PO also returns its status, expected_delivery_date and days_overdue.
@@ -352,6 +354,7 @@ Still open (small, has a default): **conversation history window.** The default 
 | 0.2 | 2026-09-30 | Explicit system-vs-user message split per call; applied answers to open questions; help mode; renamed to InventoryMantra | User, 2026-09-30 |
 | 0.3 | 2026-10-01 | Guard output gains `entity_mentions` (copy-as-typed spans for the D-026 matcher) | User, 2026-10-01 |
 | 0.5 | 2026-10-03 | §3: current-state questions need no period, explicit periods are clear, "if unsure, do not ask"; §2: intent out_of_scope if ANY part is unrelated, still listing data areas (first smoke test, D-036) | User, 2026-10-03 |
+| 0.10 | 2026-10-04 | §3 clarify: the measure options are spend, overdue orders, low stock, never stock value, which the data cannot give; the question is written in the detected language ({language}), not guessed; §4 SQL: "low stock" = below_min or reorder_now (user tests 2026-10-04, §20) | User, 2026-10-04 |
 | 0.9 | 2026-10-04 | §4 SQL: completed periods, reorder = reorder_now, "coming in" = inbound, one PO returns status and days overdue, items in stock = a count, users / lifecycle / "what will" questions answered from recorded data; §5 composer: never offer a chart, no claims about all rows unless shown (full eval run 1, §19) | User, 2026-10-04 |
 | 0.8 | 2026-10-04 | §7 action list: the Owner's decide approval, ask about an approval, add user and deactivate user, and the requester's reply (§18) | User, 2026-10-04 |
 | 0.7 | 2026-10-04 | §7 write extraction rewritten (§17): actions per role in `<actions>`, names copied as written in any language, pointer words, numbers and ISO dates, which action for which situation, no invented prices, questions are not writes, missing fields asked one at a time | User, 2026-10-04 |
@@ -473,3 +476,17 @@ Added to the §5 composer task, after the "supporting points" line:
 - Do not say something holds for all rows ("all the same item") unless every row shows it.
 ```
 
+## 20. Change for v0.10 (APPROVED 2026-10-04)
+From the user's real-model test: the Owner asked "How are we doing?", the clarify step offered "Stock value" (taken from the example in §3), and picking it returned "That isn't recorded in the data available to you." Purchase prices exist for only 40 of the 362 items in stock, so a stock value can't honestly be given. The §3 measure line becomes:
+```text
+- measure ("how are we doing": spend? overdue orders? low stock?). Offer only measures the
+  data holds: stock value is not one (purchase prices exist for few items).
+```
+The clarifying question was also written in Hindi for an English question: the clarify task said "the user's language" but, unlike the composer, was never told which language the guard detected. The last-but-one line of §3 becomes:
+```text
+Write the question and 2–4 options in {language}, using real values from <data>
+```
+Picking the Hindi option "कम स्टॉक" then came back "not recorded": the SQL task had no meaning for "low stock". Added to §4 after the reorder line:
+```text
+- "Low stock" / "kam stock" / "कम स्टॉक" = items whose status is below_min or reorder_now.
+```

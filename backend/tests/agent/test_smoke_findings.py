@@ -322,6 +322,17 @@ def test_a_real_off_topic_part_next_to_hidden_data_keeps_the_scope_sentence() ->
     assert DENIAL["en"] in result.answer and OUT_OF_SCOPE["en"] in result.answer
 
 
+@pytest.mark.parametrize(
+    ("lang", "name"), [("en", "English"), ("hi", "Hindi"), ("hinglish", "Hinglish")]
+)
+def test_the_clarifying_question_is_asked_in_the_detected_language(lang: str, name: str) -> None:
+    """'How are we doing?' was asked back in Hindi: the clarify task was never told the
+    language the guard detected (user test 2026-10-04, prompt v0.10)."""
+    from app.agent.nodes.clarify import clarify_messages
+
+    system = clarify_messages(OW, {"message": "How are we doing?", "lang": lang})[0].content
+    assert f"2–4 options in {name}" in system and "{language}" not in system
+
 
 @pytest.mark.parametrize(
     "question",
