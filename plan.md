@@ -161,7 +161,7 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 - [x] **C6.1** `feat(services): write framework (preview hash, state version, idempotent audit, txn wrapper) + stock movement, transfer and stock request services`
 - [x] **C6.2** `feat(services): PO receipt, unexpected receipt, create/update/cancel PO, payment tranche and reorder policy services`
 - [x] **C6.3** `feat(agent): bind role-filtered write tools with confirmation interrupt and multi-action previews`
-- [ ] **C6.4** `feat: owner approvals workflow and user management actions`
+- [x] **C6.4** `feat: owner approvals workflow and user management actions`
 - [ ] **C6.5** `feat: role-scoped notifications and lead-time reorder scan`
 
 ### Phase 7 — Evals, hardening, deploy (Day 3 PM)

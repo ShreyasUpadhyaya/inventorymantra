@@ -97,8 +97,13 @@ def test_write_task_and_action_list_are_verbatim() -> None:
     assert blocks == [WRITE_TASK, "\n".join(ACTION_LINES.values())]
 
 
-def test_every_write_action_has_a_line() -> None:
+def test_chat_offers_only_registered_actions() -> None:
+    """Owner actions (decide_approval, create_user, deactivate_user; C6.4) exist as services
+    for the Approvals and Users pages; the chat offers them once their lines are approved
+    (proposed v0.8, PROMPTS.md §18)."""
     from app.agent.prompts.write import ACTION_LINES
     from app.services.writes import REGISTRY
 
-    assert set(ACTION_LINES) == set(REGISTRY)
+    assert set(ACTION_LINES) <= set(REGISTRY)
+    assert set(REGISTRY) - set(ACTION_LINES) == {"decide_approval", "create_user",
+                                                 "deactivate_user"}  # fmt: skip

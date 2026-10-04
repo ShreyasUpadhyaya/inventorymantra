@@ -420,3 +420,11 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **UI:** the confirm card shows each preview with Confirm (primary) and Cancel; typing an answer also works. The Inventory Manager's receipt card has no price or vendor.
 - **Not in this commit:** mixed read + write in one message (the write is handled, the question is not), and Owner approvals of waiting POs (C6.4).
 - **Status:** Accepted
+
+### D-046 · Owner approvals and user actions (C6.4)
+- **`decide_approval`** (Owner only) on the write framework (`app/services/writes/admin.py`). The preview shows the PO, vendor, total, requester and every line. Approve → PO `placed`, linked stock requests `ordered`. Reject → PO `rejected`, linked requests back to `open` and unlinked; the note is kept. Two decisions prepared on the same PO: the first wins, the second is refused as stale. Events: `approval_decided` addressed to the requester, plus one per linked stock request addressed to its requester (C6.5 builds role-scoped notifications from them).
+- **Approvals page** (Owner nav; `GET /approvals`, `POST /approvals/{po_number}/decide`): each waiting PO with its lines and Approve / Reject. A second click with an optional note is the confirmation, then preview and apply run back to back, so the page and the chat share one code path, one transaction and the same audit row.
+- **User management in one place:** `app/services/users.py` now holds create / (de)activate / reset; the Users page API and the new `create_user` / `deactivate_user` actions both call it. A user created through an action gets no usable password: the Owner issues a temporary one with Reset password on the Users page, so a secret never passes through the chat history, the graph checkpoint or a trace (WRITE_PATH §2 "Secrets in traces").
+- **In the chat:** these three actions are registered but not offered yet; offering them needs three new lines in the §7 action list (proposed v0.8, PROMPTS.md §18).
+- **Status:** Accepted
+

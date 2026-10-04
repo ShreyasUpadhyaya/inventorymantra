@@ -420,3 +420,12 @@ arguments from the message. Only the actions you are given exist for this user.
 **Approved with one addition** (user, 2026-10-04): a line for words that point instead of naming ("the other", "it", "same item"): use earlier turns only if they name it clearly, otherwise leave the field empty. Missing fields are asked **one question at a time**.
 
 **Applied in C6.3, with two mechanical adaptations:** the call returns structured output `{actions: [...], none_applicable}` instead of tool calls (one strict JSON schema, like every other call), so "list it in missing_fields" became "leave it empty; the system asks the user, one question at a time", and "the provided actions" became "the actions in <actions>", with the action list added as its own block in §7. The final text is in §7 and the drift test keeps the code equal to it.
+
+## 18. Change for v0.8 (PROPOSED 2026-10-04, after C6.4; not yet applied)
+C6.4 added three Owner actions as services: `decide_approval`, `create_user`, `deactivate_user`. They work today from the Approvals and Users pages. To use them from the chat ("approve PO-2026-0058", "add Priya Sharma, priya@…, as inventory manager"), the §7 action list needs three more lines (the Owner is the only role that sees them):
+```text
+- decide_approval: approve or reject a PO that is waiting for the Owner. Fields: po, decision (approve | reject), note
+- create_user: add a person who can sign in. Fields: full_name, email, role (inventory_manager | procurement_manager | owner)
+- deactivate_user: stop a person from signing in. Fields: user (email or name)
+```
+The task block itself is unchanged. The chat never shows or creates a temporary password: after `create_user`, the Owner issues one on the Users page, so no password passes through the chat history, the graph checkpoint or a trace.

@@ -4,7 +4,8 @@ import { HOME, canVisit, isProtected, navFor, safeNext } from "./roles";
 
 describe("route guards (UX only; the API is the authority)", () => {
   it("only the Owner sees and opens Users", () => {
-    expect(navFor("owner").map((n) => n.href)).toEqual(["/dashboard", "/chat", "/users"]);
+    expect(navFor("owner").map((n) => n.href)).toEqual(["/dashboard", "/chat", "/approvals", "/users"]);
+    expect(canVisit("procurement_manager", "/approvals")).toBe(false);
     expect(navFor("procurement_manager").map((n) => n.href)).toEqual(["/dashboard", "/chat"]);
     expect(canVisit("inventory_manager", "/users")).toBe(false);
     expect(canVisit("procurement_manager", "/users/new")).toBe(false);
