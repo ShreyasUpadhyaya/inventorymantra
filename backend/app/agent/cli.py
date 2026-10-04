@@ -6,8 +6,8 @@
 
 When the assistant asks back, answer at the prompt (or pass --answer for each question).
 
-Uses LLM_MODE from .env (fake by default: no OpenAI calls). Runs as a synthetic demo user of
-the given role; nothing is written to the database.
+Uses LLM_MODE from .env (fake by default: no OpenAI calls). Runs as the seeded demo user of
+the given role (`make seed`), so a confirmed write really changes the demo database.
 
 Windows note: GNU make passes arguments through the ANSI code page, which turns Devanagari
 into '?'. Run this module directly from PowerShell, or put the question in a UTF-8 file.
@@ -17,13 +17,13 @@ import argparse
 import json
 import re
 import sys
-import uuid
 from pathlib import Path
 
 from app.agent.run import TurnResult, resume_turn, run_turn
 from app.agent.tracing import configure_tracing
 from app.auth.service import AuthUser
 from app.core.config import get_settings
+from scripts.fabricate import DEMO_USERS, demo_id
 
 MANGLED_HELP = (
     "The question arrived as question marks: your terminal or `make` dropped non-English\n"
@@ -64,8 +64,9 @@ def main() -> None:
     if looks_mangled(message):
         sys.exit(MANGLED_HELP)
     traced = configure_tracing()
+    email, name, role = next(u for u in DEMO_USERS if u[2] == args.role)
     user = AuthUser(
-        id=uuid.uuid4(), email="cli@local", full_name="CLI", role=args.role,
+        id=demo_id("user", email), email=email, full_name=name, role=role,
         is_active=True, token_version=0,
     )  # fmt: skip
     print(f"[llm_mode={get_settings().llm_mode} tracing={traced}]")
@@ -76,10 +77,11 @@ def main() -> None:
         if answers:
             choice = answers.pop(0)
             print(f"> {choice}")
-        elif sys.stdin.isatty():
-            choice = input("> ").strip()
         else:
-            break  # non-interactive and no --answer left: show the paused turn
+            try:
+                choice = input("> ").strip()
+            except EOFError:
+                break  # non-interactive and no --answer left: show the paused turn
         result = resume_turn(user, result.thread_id, choice)
     print(json.dumps(result.model_dump(), ensure_ascii=False, indent=2))
 
@@ -87,6 +89,10 @@ def main() -> None:
 def show_question(result: TurnResult) -> None:
     print()
     print(result.answer)
+    for card in (result.interrupt or {}).get("previews", []):  # the write's confirm card
+        print(f"  * {card['summary']}")
+        for effect in card.get("effects", []):
+            print(f"      {effect}")
     for number, option in enumerate(result.suggestions, start=1):
         print(f"  {number}. {option}")
     print("(type a number, the option, or your own answer)")
