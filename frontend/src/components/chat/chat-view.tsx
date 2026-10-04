@@ -41,8 +41,12 @@ function lastUserText(items: ChatItem[]): string {
   return item?.kind === "user" ? item.text : "";
 }
 
-let counter = 0;
-const nextId = () => `local-${++counter}`;
+// Unique across hot reloads and remounts: a module counter restarted at 0 on Fast Refresh while
+// the messages stayed, giving two bubbles the key "local-8" (user report, 2026-10-05).
+const nextId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? `local-${crypto.randomUUID()}`
+    : `local-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 
 export function ChatView() {
   const { user } = useSession();
