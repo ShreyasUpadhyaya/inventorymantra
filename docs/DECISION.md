@@ -428,3 +428,11 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **In the chat:** these three actions are registered but not offered yet; offering them needs three new lines in the §7 action list (proposed v0.8, PROMPTS.md §18).
 - **Status:** Accepted
 
+### D-047 · Role-scoped notifications and the reorder scan (C6.5)
+- **Events in, notifications out** (`app/services/notifications.py`). Writes return events with full detail; `render(event, data, recipient_role)` builds each notification from an allow-list of fields per role, and the title and body are written only from those fields. Unknown events raise `ValueError`; a role that must not receive an event raises `PermissionError`. The contract tests written first in Phase 2 (`tests/unit/test_notification_visibility.py`) now run for real: the Inventory Manager never gets a vendor, price, total, the Owner's note or the Owner's name.
+- **Who gets what:** a stock request → buyers (PM, Owner); PO waiting for approval → Owner; the decision → the PM who asked (with the Owner's note), and each Inventory Manager whose request was on that PO (item, PO and date only); request ordered / delivery date changed → the person who asked; low stock after stock goes out → buyers; goods received against a PO and unplanned deliveries → PM; "reorder now" → PM.
+- **Same transaction as the change:** the framework writes the notifications inside the write's transaction, so a failed or rolled-back write sends nothing. One row per recipient (so "read" is per person), never to the person who made the change.
+- **Reorder scan (lead time, D-011):** items with status `reorder_now` in the PM's `reorder_status` view (same formula as the dashboard) become "Reorder now: order 65 by 17 Aug 2026 …" notifications, de-duplicated per item, person and day (`dedupe_key`). It runs when a PM or Owner opens their notifications, and from `make scan` (for a daily scheduler in deployment).
+- **API:** `GET /notifications` (your own only, newest 30, unread count), `POST /notifications/{id}/read` (someone else's → 404, same as missing), `POST /notifications/read-all`.
+- **UI:** a bell in the top bar with the unread count, polled every 60 s; the panel lists title, text and time; click to mark read, or mark all.
+- **Status:** Accepted

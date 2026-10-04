@@ -1,7 +1,7 @@
 """Notification contract: payloads carry only what the recipient's role may see
 (CLAUDE.md §5; WRITE_PATH.md §4). Implementation: app/services/notifications.py in C6.5.
 
-render(event, data, recipient_role) -> object with `title: str`, `body: str`,
+render(event, data, recipient_role) -> Notification with `title: str`, `body: str`,
 `payload: dict`. It builds each notification per recipient role from an allow-list of
 fields, never by forwarding the raw event data.
 """
@@ -10,10 +10,6 @@ import json
 from typing import Any
 
 import pytest
-
-from tests.pending import pending
-
-pytestmark = pending("C6.5")
 
 IM, PM, OW = "inventory_manager", "procurement_manager", "owner"
 

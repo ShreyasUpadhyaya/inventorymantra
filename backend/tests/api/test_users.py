@@ -45,6 +45,10 @@ def make_user(db: psycopg.Connection) -> Iterator[Callable[[str, str], uuid.UUID
     like = f"%{DOMAIN}"
     db.execute(f"DELETE FROM agent_audit_log WHERE user_id IN ({test_users})", (like,))  # noqa: S608
     db.execute(f"DELETE FROM refresh_tokens WHERE user_id IN ({test_users})", (like,))  # noqa: S608
+    db.execute(
+        f"DELETE FROM notifications WHERE recipient_user_id IN ({test_users})",  # noqa: S608
+        (like,),
+    )
     db.execute("DELETE FROM users WHERE email LIKE %s", (like,))
 
 

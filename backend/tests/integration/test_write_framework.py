@@ -209,6 +209,7 @@ def temp_pm(world: World) -> Any:
     yield AuthUser(id=user_id, email="t", full_name="Temp PM", role=PM, is_active=True,
                    token_version=0)  # fmt: skip
     world.db.execute("DELETE FROM agent_audit_log WHERE user_id = %s", (user_id,))
+    world.db.execute("DELETE FROM notifications WHERE recipient_user_id = %s", (user_id,))
     world.db.execute("DELETE FROM users WHERE id = %s", (user_id,))
 
 

@@ -162,9 +162,10 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 - [x] **C6.2** `feat(services): PO receipt, unexpected receipt, create/update/cancel PO, payment tranche and reorder policy services`
 - [x] **C6.3** `feat(agent): bind role-filtered write tools with confirmation interrupt and multi-action previews`
 - [x] **C6.4** `feat: owner approvals workflow and user management actions`
-- [ ] **C6.5** `feat: role-scoped notifications and lead-time reorder scan`
+- [x] **C6.5** `feat: role-scoped notifications and lead-time reorder scan`
 
 ### Phase 7 — Evals, hardening, deploy (Day 3 PM)
+- [ ] **C7.0** `test: separate test database, seeded fresh, so demo writes can't break tests` (user, 2026-10-04: manual write tests changed the frozen demo data)
 - [ ] **C7.1** `test(evals): LangSmith eval run and results report`
 - [ ] **C7.2** `fix: …` (one commit per failure class found by evals)
 - [ ] **C7.3** `chore(deploy): Vercel web + Railway/Render API and Postgres with platform secrets`

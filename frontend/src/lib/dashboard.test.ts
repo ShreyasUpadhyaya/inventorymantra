@@ -35,3 +35,13 @@ describe("validateNewUser", () => {
     expect(validateNewUser({ email: "priya@acme.in", full_name: "Priya", role: "inventory_manager" })).toEqual({});
   });
 });
+
+describe("notification times", () => {
+  it("reads like a person would say it", async () => {
+    const { ago } = await import("./notifications");
+    const now = new Date("2026-10-04T12:00:00Z");
+    expect(ago("2026-10-04T11:59:40Z", now)).toBe("just now");
+    expect(ago("2026-10-04T11:55:00Z", now)).toBe("5 min ago");
+    expect(ago("2026-10-04T09:00:00Z", now)).toBe("3 h ago");
+  });
+});

@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from app.agent.tracing import configure_tracing
-from app.api.routes import approvals, auth, chat, dashboard, users
+from app.api.routes import approvals, auth, chat, dashboard, notifications, users
 from app.core.config import app_today, get_settings
 from app.core.logging import configure_logging
 from app.db.pool import close_pool
@@ -47,6 +47,7 @@ for router in (
     dashboard.router,
     chat.router,
     approvals.router,
+    notifications.router,
 ):
     app.include_router(router)
     # The web app proxies /api/* here, so the browser talks to one origin (D-037). Docs list once.

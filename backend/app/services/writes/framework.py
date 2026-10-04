@@ -35,6 +35,7 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 from app.auth.service import AuthUser, load_user
 from app.db.session import psycopg_dsn
 from app.policy import permissions
+from app.services import notifications
 
 logger = logging.getLogger("inventorymantra.writes")
 
@@ -324,6 +325,7 @@ def _apply_in_transaction(
             "Please ask again to see the current figures."
         )
     outcome = action.apply(conn, fresh, preview_.payload, state)
+    notifications.emit(conn, outcome.events, actor_id=fresh.id)  # same transaction (C6.5)
     result = WriteResult(
         status=outcome.status, message=outcome.message, operation_id=operation_id,
         entity_type=action.entity_type, entity_id=outcome.entity_id, events=outcome.events,

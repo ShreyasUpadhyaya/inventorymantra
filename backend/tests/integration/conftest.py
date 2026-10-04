@@ -60,7 +60,8 @@ TEST_POS = """SELECT id FROM proc_purchase_orders WHERE vendor_id IN
 
 def _cleanup(db: psycopg.Connection, ids: list[str], since: datetime | None = None) -> None:
     db.execute("DELETE FROM agent_audit_log WHERE operation_id LIKE 'test-%'")
-    if since is not None:  # chat writes made by this test (operation ids "chat:…")
+    if since is not None:  # notifications and chat writes made by this test
+        db.execute("DELETE FROM notifications WHERE created_at >= %s", (since,))
         db.execute("DELETE FROM agent_audit_log WHERE operation_id LIKE 'chat:%%' "
                    "AND created_at >= %s", (since,))  # fmt: skip
     db.execute("DELETE FROM notifications WHERE payload->>'item_id' = ANY(%s)", (ids,))

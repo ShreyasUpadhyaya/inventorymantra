@@ -304,8 +304,9 @@ def _ordered_events(
 ) -> list[dict[str, Any]]:
     by_item = {ln["item_id"]: ln for ln in payload["lines"]}
     events = []
-    for item_id, qty in conn.execute(
-        "SELECT item_id, quantity::float FROM stock_requests WHERE id = ANY(%s::uuid[])",
+    for item_id, qty, requester in conn.execute(
+        "SELECT item_id, quantity::float, requested_by::text FROM stock_requests "
+        "WHERE id = ANY(%s::uuid[])",
         (payload["request_ids"],),
     ).fetchall():
         ln = by_item[item_id]
@@ -314,7 +315,7 @@ def _ordered_events(
             "po_number": po_number, "expected_delivery_date": payload["expected_delivery_date"],
             "vendor_name": payload["vendor_name"], "unit_price": ln["unit_price"],
             "total_amount": payload["total"],
-        }})  # fmt: skip
+        }, "to": {"users": [requester]}})  # fmt: skip
     return events
 
 
@@ -554,9 +555,12 @@ class POStateMixin:
         return {"po": list(row) if row else None}
 
 
-def _linked_request_items(conn: psycopg.Connection, po_id: str) -> list[tuple[str, float, str]]:
+def _linked_request_items(
+    conn: psycopg.Connection, po_id: str
+) -> list[tuple[str, float, str, str]]:
     return conn.execute(
-        """SELECT i.name, r.quantity::float, coalesce(i.unit, 'pcs') FROM stock_requests r
+        """SELECT i.name, r.quantity::float, coalesce(i.unit, 'pcs'), r.requested_by::text
+           FROM stock_requests r
            JOIN inv_items i ON i.id = r.item_id WHERE r.po_id = %s""",
         (po_id,),
     ).fetchall()
@@ -617,7 +621,9 @@ class UpdatePOExpectedDate(POStateMixin, Action):
         events = [{"event": "po_date_changed", "data": {
             "po_number": payload["po_number"], "item_name": name, "quantity": qty, "unit": unit,
             "expected_delivery_date": payload["expected_delivery_date"],
-        }} for name, qty, unit in _linked_request_items(conn, payload["po_id"])]  # fmt: skip
+        }, "to": {"users": [requester]}}
+            for name, qty, unit, requester in _linked_request_items(
+                conn, payload["po_id"])]  # fmt: skip
         return Outcome(
             message=f"Done: {payload['po_number']} is now expected on "
             f"{_day(payload['expected_delivery_date'])}.",
@@ -652,7 +658,7 @@ class CancelPO(POStateMixin, Action):
         linked = _linked_request_items(conn, po.id)
         effects = ["The PO stays on record with the status cancelled."]
         effects += [f"The stock request for {fmt_qty(q, u)} of {n} goes back to open."
-                    for n, q, u in linked]  # fmt: skip
+                    for n, q, u, _ in linked]  # fmt: skip
         fields = [("PO", po.number), ("Total", inr(po.total))]
         if args.reason:
             fields.append(("Reason", args.reason))
