@@ -1,6 +1,6 @@
 # Prompts — InventoryMantra agent
 
-Status: **v0.8, APPROVED by the user on 2026-10-04** (gate G1 passed; earlier: v0.7 2026-10-04, v0.6 2026-10-03, v0.5 2026-10-03, v0.4 2026-10-02, v0.3 2026-10-01, v0.2 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.8"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
+Status: **v0.9, APPROVED by the user on 2026-10-04** (gate G1 passed; earlier: v0.8 2026-10-04, v0.7 2026-10-04, v0.6 2026-10-03, v0.5 2026-10-03, v0.4 2026-10-02, v0.3 2026-10-01, v0.2 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.9"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
 
 ---
 
@@ -181,6 +181,17 @@ TASK: Write ONE PostgreSQL query that answers the request.
   recorded); say "no expected date recorded" rather than guessing one.
 - Return readable columns (names, codes), not raw IDs; snake_case aliases.
 - Aggregate in SQL; ORDER BY for rankings and time series; at most 500 rows.
+- "Last month / last quarter / last year" mean the last COMPLETED one before today; "this
+  month / quarter / year" mean the current one so far.
+- "What should I reorder / what needs reordering" = items whose status is reorder_now.
+- "Coming in", "arriving", "on order", "aa rahi", "aane wala" = open purchase-order lines
+  (inbound), not current stock.
+- A question about one PO also returns its status, expected_delivery_date and days_overdue.
+- "Items in stock" counts items with quantity > 0; it is not the total of units.
+- "Who has access / who uses the system" = the users relation. A process or lifecycle
+  question = purchase orders counted by status. "What will X be / when will Y happen" =
+  return the recorded figures the answer rests on (answerable=true); the reply states
+  facts, never a prediction.
 - If the request cannot be answered from these relations, return answerable=false and
   sql=null. Never invent a table or column.
 EXAMPLES:
@@ -198,6 +209,8 @@ TASK: Answer the user's question using ONLY the query result in <data>.
 - Write like a helpful colleague: plain sentences, no column names, no "field: value" lists.
   Name the record (PO number, item, vendor) and say what matters about it.
 - Then up to 3 short supporting points if useful. Do not repeat the table; the app shows it.
+- The app draws the chart and table itself: never offer to make or show one.
+- Do not say something holds for all rows ("all the same item") unless every row shows it.
 - If asked whether something will happen (arrive, run out, rise), say you can't predict that,
   then give the recorded facts: status, expected date, days overdue.
 - If <assumptions> contains a default you applied (period, item or measure the user did not
@@ -339,6 +352,7 @@ Still open (small, has a default): **conversation history window.** The default 
 | 0.2 | 2026-09-30 | Explicit system-vs-user message split per call; applied answers to open questions; help mode; renamed to InventoryMantra | User, 2026-09-30 |
 | 0.3 | 2026-10-01 | Guard output gains `entity_mentions` (copy-as-typed spans for the D-026 matcher) | User, 2026-10-01 |
 | 0.5 | 2026-10-03 | §3: current-state questions need no period, explicit periods are clear, "if unsure, do not ask"; §2: intent out_of_scope if ANY part is unrelated, still listing data areas (first smoke test, D-036) | User, 2026-10-03 |
+| 0.9 | 2026-10-04 | §4 SQL: completed periods, reorder = reorder_now, "coming in" = inbound, one PO returns status and days overdue, items in stock = a count, users / lifecycle / "what will" questions answered from recorded data; §5 composer: never offer a chart, no claims about all rows unless shown (full eval run 1, §19) | User, 2026-10-04 |
 | 0.8 | 2026-10-04 | §7 action list: the Owner's decide approval, ask about an approval, add user and deactivate user, and the requester's reply (§18) | User, 2026-10-04 |
 | 0.7 | 2026-10-04 | §7 write extraction rewritten (§17): actions per role in `<actions>`, names copied as written in any language, pointer words, numbers and ISO dates, which action for which situation, no invented prices, questions are not writes, missing fields asked one at a time | User, 2026-10-04 |
 | 0.6 | 2026-10-03 | §5: the composer writes conversational sentences (no column names or "field: value" lists) and answers "will it…?" with "can't predict" plus the recorded facts (manual testing, D-040) | User, 2026-10-03 |
@@ -437,3 +451,25 @@ C6.4 added the Owner's actions as services (`decide_approval`, `create_user`, `d
 - deactivate_user: stop a person from signing in. Fields: user (email or name)
 ```
 The chat never shows or creates a temporary password: after `create_user`, the Owner issues one on the Users page, so no password passes through the chat history, the graph checkpoint or a trace.
+
+## 19. Change for v0.9 (APPROVED 2026-10-04, applied in C7.2)
+From the first full eval run (QUALITY_AND_EVALS.md §7, DECISION D-050): about ten cases failed because the model read the question differently from what the user meant. Added to the §4 SQL task, before the "cannot be answered" line:
+```text
+- "Last month / last quarter / last year" mean the last COMPLETED one before today; "this
+  month / quarter / year" mean the current one so far.
+- "What should I reorder / what needs reordering" = items whose status is reorder_now.
+- "Coming in", "arriving", "on order", "aa rahi", "aane wala" = open purchase-order lines
+  (inbound), not current stock.
+- A question about one PO also returns its status, expected_delivery_date and days_overdue.
+- "Items in stock" counts items with quantity > 0; it is not the total of units.
+- "Who has access / who uses the system" = the users relation. A process or lifecycle
+  question = purchase orders counted by status. "What will X be / when will Y happen" =
+  return the recorded figures the answer rests on (answerable=true); the reply states
+  facts, never a prediction.
+```
+Added to the §5 composer task, after the "supporting points" line:
+```text
+- The app draws the chart and table itself: never offer to make or show one.
+- Do not say something holds for all rows ("all the same item") unless every row shows it.
+```
+

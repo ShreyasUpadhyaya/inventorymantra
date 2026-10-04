@@ -168,7 +168,7 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 ### Phase 7 — Evals, hardening, deploy (Day 3 PM)
 - [ ] **C7.0** `test: separate test database, seeded fresh, so demo writes can't break tests` (user, 2026-10-04: manual write tests changed the frozen demo data)
 - [x] **C7.1** `test(evals): LangSmith eval run and results report`
-- [ ] **C7.2** `fix: …` (one commit per failure class found by evals)
+- [x] **C7.2** `fix: …` (one commit per failure class found by evals)
 - [ ] **C7.3** `chore(deploy): Vercel web + Railway/Render API and Postgres with platform secrets`
 - [ ] **C7.4** `docs: README demo script and screenshots`
 

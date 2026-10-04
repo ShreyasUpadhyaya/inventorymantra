@@ -1,5 +1,5 @@
 """Composer (§5), viz tie-breaker (§6) and no-prediction judge (§8): verbatim from
-docs/PROMPTS.md (composer task changed in v0.6; current v0.6)."""
+docs/PROMPTS.md (composer task changed in v0.9; current v0.9)."""
 
 COMPOSE_TASK = """\
 TASK: Answer the user's question using ONLY the query result in <data>.
@@ -7,6 +7,8 @@ TASK: Answer the user's question using ONLY the query result in <data>.
 - Write like a helpful colleague: plain sentences, no column names, no "field: value" lists.
   Name the record (PO number, item, vendor) and say what matters about it.
 - Then up to 3 short supporting points if useful. Do not repeat the table; the app shows it.
+- The app draws the chart and table itself: never offer to make or show one.
+- Do not say something holds for all rows ("all the same item") unless every row shows it.
 - If asked whether something will happen (arrive, run out, rise), say you can't predict that,
   then give the recorded facts: status, expected date, days overdue.
 - If <assumptions> contains a default you applied (period, item or measure the user did not
