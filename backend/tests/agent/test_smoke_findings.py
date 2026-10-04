@@ -298,3 +298,82 @@ def test_owner_asking_who_has_access_is_not_refused() -> None:
     with fake.scripted("guard", guard(intent="out_of_scope", data_areas=[])):
         result = run_turn(demo(OW), "Who has access to the system?")
     assert result.route == "read"
+
+
+# ------------------------------------------------------------------ user's real test 2026-10-04
+def test_two_hidden_areas_get_only_the_denial_not_the_scope_sentence_too() -> None:
+    """The model called both parts off-topic; each names a data area the IM can't see."""
+    scripted = guard(
+        intent="out_of_scope",
+        data_areas=["prices", "users"],
+        parts=["What price did we pay for SS sheet?", "Show me the users table"],
+    )
+    with fake.scripted("guard", scripted):
+        result = run_turn(demo(IM), "What price did we pay for SS sheet? / Show me the users table")
+    assert result.answer == DENIAL["en"]
+
+
+def test_a_real_off_topic_part_next_to_hidden_data_keeps_the_scope_sentence() -> None:
+    scripted = guard(
+        intent="out_of_scope", data_areas=["prices"], parts=["price of SS sheet", "write a poem"]
+    )
+    with fake.scripted("guard", scripted):
+        result = run_turn(demo(IM), "price of SS sheet and write a poem")
+    assert DENIAL["en"] in result.answer and OUT_OF_SCOPE["en"] in result.answer
+
+
+
+@pytest.mark.parametrize(
+    "question",
+    ["हम कैसा कर रहे हैं?", "बिज़नेस कैसा चल रहा है?", "kampani kaisi chal rahi hai?",
+     "hum kaise kar rahe hain?", "How are things?"],
+)  # fmt: skip
+def test_how_are_we_doing_in_hindi_and_hinglish_asks_which_measure(question: str) -> None:
+    """User test 2026-10-04: the Hindi phrasing missed the vague-measure list, so the
+    model's measure question was dropped and the SQL step said "not recorded"."""
+    with fake.scripted("guard", guard(data_areas=["stock"], language="hi")):
+        result = run_turn(demo(OW), question)
+    assert result.route == "clarify"
+
+
+def test_business_kaisa_chal_raha_is_not_refused_as_off_topic() -> None:
+    """User test 2026-10-04: the model called it off-topic; it asks which measure instead."""
+    with fake.scripted("guard", guard(intent="out_of_scope", data_areas=[], language="hinglish")):
+        result = run_turn(demo(OW), "business kaisa chal raha hai?")
+    assert result.route == "clarify"
+    assert OUT_OF_SCOPE["hinglish"] not in result.answer
+
+
+@pytest.mark.parametrize(
+    ("question", "message", "expected"),
+    [
+        ("Business kaisa chal raha hai? Aap kis measure ke baare mein jaanna chahte hain?",
+         "business kaisa chal raha hai?", "Aap kis measure ke baare mein jaanna chahte hain?"),
+        ("हम कैसा कर रहे हैं? आप किस माप के बारे में जानना चाहते हैं?", "हम कैसा कर रहे हैं?",
+         "आप किस माप के बारे में जानना चाहते हैं?"),
+        ("By 'how are we doing', do you mean spend?", "How are we doing?",
+         "By 'how are we doing', do you mean spend?"),
+        ("How are we doing?", "How are we doing?", "How are we doing?"),  # nothing else: keep
+    ],
+)  # fmt: skip
+def test_the_question_does_not_repeat_the_users_message(
+    question: str, message: str, expected: str
+) -> None:
+    from app.agent.nodes.clarify import without_echo
+
+    assert without_echo(question, message) == expected
+
+
+def test_a_chosen_measure_replaces_the_vague_question_for_the_sql_step() -> None:
+    """'business kaisa chal raha hai? [Stock levels]' came back "not recorded"."""
+    from app.agent.nodes.read import effective_message
+
+    state: Any = {
+        "message": "business kaisa chal raha hai?",
+        "clarifications": [
+            {"question": "Kis measure?", "answer": "Stock levels", "dimension": "measure"}
+        ],
+    }
+    assert effective_message(state) == "Stock levels"
+    state["clarifications"][0]["dimension"] = "time_window"
+    assert effective_message(state) == "business kaisa chal raha hai? [Stock levels]"

@@ -135,6 +135,10 @@ def effective_message(state: AgentState) -> str:
     answers = state.get("clarifications", [])
     if not answers:
         return state["message"]
+    if any(a.get("dimension") == "measure" for a in answers):
+        # The chosen measure *is* the question: "business kaisa chal raha hai? [Stock levels]"
+        # was refused as unanswerable (user test 2026-10-04); "Stock levels" alone is not.
+        return "; ".join(a["answer"] for a in answers)
     return f"{state['message']} [{'; '.join(a['answer'] for a in answers)}]"
 
 
@@ -208,9 +212,10 @@ def after_execute(state: AgentState) -> Literal["compose", "generate_sql", "resp
     return "compose"
 
 
-def respond_failure(state: AgentState) -> AgentState:
+def respond_failure(state: AgentState, config: RunnableConfig) -> AgentState:
     kind = state.get("failure") or "sql_failed"
-    answer = FAILURE[kind][state["lang"]]
+    owner = kind == "unanswerable" and config["configurable"]["role"] == "owner"
+    answer = FAILURE["unanswerable_all" if owner else kind][state["lang"]]
     if state.get("denied_areas"):
         answer = f"{answer} {DENIAL[state['lang']]}"
     return {"answer": answer, "suggestions": [], "failure": kind}

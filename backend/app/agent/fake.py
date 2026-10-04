@@ -15,6 +15,8 @@ from typing import Any
 from langchain_core.messages import BaseMessage, HumanMessage
 from pydantic import BaseModel
 
+from app.agent.signals import VAGUE_MEASURE
+
 Handler = Callable[[list[BaseMessage]], Any]
 
 _overrides: dict[str, Handler] = {}
@@ -301,7 +303,6 @@ EXPLICIT_PERIOD = re.compile(
     r"may|jun\w*|jul\w*|aug\w*|sep\w*|oct\w*|nov\w*|dec\w*|20\d\d)\b",
     re.I,
 )
-VAGUE_MEASURE = re.compile(r"how are we doing|how is business|kaisa chal raha|कैसा चल रहा", re.I)
 MEASURE_OPTIONS = {
     "inventory_manager": ["Stock levels", "Items to reorder", "Recent stock movements"],
     "procurement_manager": ["Procurement spend", "Overdue purchase orders", "Items to reorder"],

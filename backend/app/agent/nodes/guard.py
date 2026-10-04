@@ -100,8 +100,14 @@ def guard_node(state: AgentState, config: RunnableConfig) -> AgentState:
         if route == "refuse_scope" and named:  # "show me the users table": a data question
             denied = sorted(permissions.denied_areas(role, named))
             route = "refuse_rbac" if len(denied) == len(set(named)) else "read"
-        if route == "help" and VAGUE_MEASURE.search(message):
-            route = "read"  # "how are we doing?" -> ask which measure, not the help menu
+        if route in ("help", "refuse_scope") and VAGUE_MEASURE.search(message):
+            # "how are we doing?" / "business kaisa chal raha hai?" (called off-topic in a
+            # user test, 2026-10-04) -> ask which measure, not the help menu or a refusal
+            route, off_topic = "read", False
+        if off_topic and guard.parts and all(areas_named(part) for part in guard.parts):
+            # "price of SS sheet / show me the users table": the model called hidden data
+            # off-topic; every part names a data area, so only the denial applies (2026-10-04)
+            off_topic = False
     if route not in ("refuse_scope", "help") and OFF_TOPIC.search(state["message"]):
         off_topic = True  # the model may miss an off-topic part next to a data question
     if guard.injection_suspected:

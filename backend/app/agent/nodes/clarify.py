@@ -117,6 +117,20 @@ def clarify_messages(role: str, state: AgentState) -> list[Any]:
     return [SystemMessage(system_prompt(role, CLARIFY_TASK)), HumanMessage(user)]
 
 
+_PUNCT = "?.!,।'\"“”‘’"
+_GAP = rf"[\s{re.escape(_PUNCT)}]"
+
+
+def without_echo(question: str, message: str) -> str:
+    """Drop the user's own words when the model repeats them before its question
+    ("Business kaisa chal raha hai? Aap kis measure…", user test 2026-10-04)."""
+    words = [w.strip(_PUNCT) for w in message.split() if w.strip(_PUNCT)]
+    pattern = rf"{_GAP}*" + rf"{_GAP}+".join(map(re.escape, words)) + rf"{_GAP}*"
+    start = re.match(pattern, question, re.I) if words else None
+    rest = question[start.end() :].strip() if start else ""
+    return rest[:1].upper() + rest[1:] if rest else question
+
+
 def clarify_check(state: AgentState, config: RunnableConfig) -> AgentState:
     """One model call: is the period or measure too vague, with no conventional default?"""
     if state.get("clarifications"):  # already asked once this turn
@@ -145,7 +159,8 @@ def clarify_check(state: AgentState, config: RunnableConfig) -> AgentState:
     if ask and out.dimension == "measure" and not VAGUE_MEASURE.search(state["message"]):
         # Smoke run 2: asked "gross, operating or net margin?" when only gross margin exists.
         ask = False
-    payload = {"kind": "clarify", "dimension": out.dimension, "question": out.question,
+    question = without_echo(out.question or "", state["message"])
+    payload = {"kind": "clarify", "dimension": out.dimension, "question": question,
                "options": out.options} if ask else None  # fmt: skip
     return {"clarify": payload, "assumptions": assumptions}
 
@@ -194,7 +209,8 @@ def ask_clarify(state: AgentState) -> AgentState:
             return {"clarify": None, "failure": "no_choice"}
         return {"clarify": {**payload, "unrecognised": raw[:60]}}
     clarifications = [*state.get("clarifications", []),
-                      {"question": payload.get("question", ""), "answer": answer}]  # fmt: skip
+                      {"question": payload.get("question", ""), "answer": answer,
+                       "dimension": payload.get("dimension") or ""}]  # fmt: skip
     return {"clarifications": clarifications, "clarify": None}
 
 

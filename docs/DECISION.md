@@ -226,7 +226,7 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Offline SQL:** `fake` mode answers **only golden-corpus questions**, with their reviewed SQL, and says "can't answer offline" otherwise. All 61 corpus read questions return the frozen answers value for value through the full offline pipeline. That validates routing, matching, the guard, role execution and serialisation, **not** model quality.
 - **Off-topic plus data in one message** (a case the user found while testing): "price of PO 3 and then write a poem" used to get only the out-of-scope sentence. Now `decide()` routes the data part normally, and a final `finalize` node **adds** the out-of-scope sentence. So that example gets the fixed DENIAL and then OUT_OF_SCOPE, and an allowed data part gets its rows plus OUT_OF_SCOPE. A purely off-topic message is unchanged. Added to the corpus as `RB-IM-17`.
 - **Prompt v0.4** (approved 2026-10-02): §4 now points at the real column `expected_delivery_date` instead of the non-existent `expected_delivery_latest`.
-- **Failure replies** (`prompts/replies.py`, en/hi/Hinglish, formal "aap"): sql_failed, timeout, unanswerable (with "in the data available to you", which reveals nothing about other roles) and unavailable (budget or config).
+- **Failure replies** (`prompts/replies.py`, en/hi/Hinglish, formal "aap"): sql_failed, timeout, unanswerable (with "in the data available to you", which reveals nothing about other roles; the Owner, who sees everything, gets "That isn't recorded in our data." so it never reads like a denial, 2026-10-04) and unavailable (budget or config).
 - **Status:** Accepted
 
 ### D-032 · Clarification as a LangGraph interrupt (C4.3)
@@ -469,4 +469,16 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Context:** trying a write in the app (2026-10-04) changed the frozen demo data and broke 16 tests that compare against seeded numbers. Tests and the demo shared one database.
 - **Decision:** pytest, the smoke run, the full eval and the answer-key builder switch to a separate database before their first query: `TEST_DATABASE_URL`, or by default `DATABASE_URL` with `_test` added to the name (`inventorymantra_test`). The switch refuses any name that doesn't end in `_test`. `make test-db` drops, recreates and seeds it (about 5 seconds), and `make test` runs it first, so every test run starts from the frozen seed. The app (`make api`, `make ask`) keeps using the demo database. If Postgres is up but the test database is missing, the database tests fail with "run `make test-db`" instead of quietly skipping. CI seeds its test database the same way.
 - **Consequence:** writes made while trying the app no longer affect tests or evals; the read-only roles are cluster-wide, so they work in both databases.
+- **Status:** Accepted
+
+### D-052 · Fixes from the user's real-model tests (2026-10-04)
+Each found by the user in the app with `LLM_MODE=openai`, root-caused from the LangSmith trace, and covered by a test:
+- **Write path, unknown account:** `check_write` let the "not a known user" error escape and the turn crashed (seen with `make ask`, which ran as a made-up user). It now answers with the denial; `make ask` runs as the seeded demo user of the role.
+- **Denial plus out-of-scope sentence:** "price of SS sheet / show me the users table" (Inventory Manager) got both. When every part of the request names a data area, only the denial is given; a real off-topic part ("… and write a poem") still gets the scope sentence.
+- **Owner "not recorded" read like a denial:** the Owner now gets "That isn't recorded in our data."; other roles keep "…available to you", which hides whether the data exists elsewhere.
+- **"How are we doing?" in Hindi / Hinglish:** "हम कैसा कर रहे हैं?" missed the vague-measure phrases, so the measure question was dropped; "business kaisa chal raha hai?" was called off-topic by the model. The phrases now cover कैसा/कैसे/कैसी + चल रहा/कर रहे (and Roman forms), and a match always leads to the measure question.
+- **Echoed question:** the model began its clarifying question with the user's own words; a leading echo is removed.
+- **Chosen measure:** "business kaisa chal raha hai? [Stock levels]" came back unanswerable. After a measure question, the chosen measure alone goes to the SQL step.
+- **Line charts** over periods are drawn oldest to newest (the margin chart ran Q3 → Q1).
+- **Prompt v0.10** (PROMPTS.md §20): the clarifying question is written in the detected language (it came back in Hindi for an English question), offers only measures the data holds (no stock value), and "low stock" means `below_min` or `reorder_now`.
 - **Status:** Accepted

@@ -149,6 +149,15 @@ def test_unanswerable_and_unavailable(sql_script: Any) -> None:
     assert result.answer == FAILURE["unanswerable"]["hinglish"]
 
 
+def test_the_owner_is_told_not_recorded_without_a_hint_of_a_denial(sql_script: Any) -> None:
+    """Owner: "How are we doing?" -> "Stock value" read like a denial (user test 2026-10-04)."""
+    sql_script(None)
+    with fake.scripted("guard", guard_answer(["stock"])):
+        result = run_turn(demo(OW), "what is our stock value?")
+    assert result.failure == "unanswerable"
+    assert result.answer == "That isn't recorded in our data."
+
+
 def test_model_budget_exhaustion_is_a_polite_failure(sql_script: Any) -> None:
     sql_script(LLMBudgetExceededError("spent"))
     with fake.scripted("guard", guard_answer(["stock"])):

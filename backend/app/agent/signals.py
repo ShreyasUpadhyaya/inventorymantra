@@ -22,8 +22,10 @@ VAGUE_TIME = re.compile(
 
 # Vague measures: only then may the bot ask "what would you like to see?"
 VAGUE_MEASURE = re.compile(
-    r"how are we doing|how(?:'s| is) (?:business|it going|everything)|overall (?:status|picture)|"
-    r"performance overview|kaisa chal raha|kya haal|कैसा चल रहा|क्या हाल",
+    r"how are we doing|how(?:'s| is) (?:business|it going|everything)|how are things|"
+    r"overall (?:status|picture)|performance overview|kya haal|"
+    r"kais[aei] (?:chal rah[aei]|kar rah[ei])|"  # Hinglish: kaisa chal raha, kaise kar rahe
+    r"कैस[ाेी] (?:चल रह[ाेी]|कर रह[ेी])|क्या हाल",  # user test 2026-10-04: हम कैसा कर रहे हैं?
     re.I,
 )
 
