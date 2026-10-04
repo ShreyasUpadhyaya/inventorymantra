@@ -1,5 +1,5 @@
 # InventoryMantra developer commands (see CLAUDE.md §3). Run from the repo root.
-.PHONY: up down db-shell api web install test test-backend test-frontend lint seed scan ask smoke answer-keys eval
+.PHONY: up down db-shell api web install test test-backend test-frontend test-db lint seed scan ask smoke answer-keys eval
 
 up:            ## start Postgres and wait until healthy
 	docker compose up -d --wait db
@@ -22,11 +22,14 @@ web:           ## Next.js on http://localhost:3000
 
 test: test-backend test-frontend   ## all offline checks (no LLM calls)
 
-test-backend:
+test-backend: test-db
 	cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy app scripts evals && uv run pytest -q
 
 test-frontend:
 	cd frontend && npm run lint && npm run typecheck && npm test
+
+test-db:       ## drop, recreate and seed the test database (<name>_test); tests and evals use it
+	cd backend && uv run python -m scripts.test_db
 
 seed:          ## migrate + load data/seed + deterministic demo data (idempotent)
 	cd backend && uv run python -m scripts.seed

@@ -109,6 +109,9 @@ def main() -> None:
     args = parser.parse_args()
     os.environ["LLM_MODE"] = "openai" if args.confirm else "fake"
     os.environ.setdefault("APP_TODAY", "2026-09-30")
+    from app.db.session import use_test_database
+
+    use_test_database()  # frozen seed data, not the demo database (D-051)
     sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
 
     from app.agent import llm

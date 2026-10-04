@@ -29,6 +29,7 @@ cp .env.example .env        # fill in your keys; never commit .env
 make install                # backend (uv) + frontend (npm) deps
 make up                     # start Postgres (localhost:5433)
 make seed                   # migrate + load data/seed + fabricate demo data
+make test-db                # separate test database (tests and evals never touch the demo data)
 make api                    # FastAPI on http://localhost:8000
 make web                    # Next.js on http://localhost:3000
 make test                   # lint, types, unit + RBAC tests (no LLM calls)

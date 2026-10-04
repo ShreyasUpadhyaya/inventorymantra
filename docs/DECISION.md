@@ -464,3 +464,9 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Prompt v0.9 (PROMPTS.md §19):** SQL meanings (completed periods, reorder = reorder_now, "coming in" = inbound, one PO returns status and days overdue, items in stock = a count, users / lifecycle / "what will" from recorded data); composer never offers a chart and makes no claims about all rows unless shown.
 - **Still open (10 cases, logged in §7):** 6 give the right answer in a different SQL shape (the checker compares numbers, not meaning). 4 real misses, to revisit only if the demo needs them: "what should I reorder this week" still filters by the order-by date; the Owner's "explain our PO lifecycle" and "what will our margin be next quarter" still come back "not recorded"; "received this month" counted only `receipt`, not `inbound`.
 - **Status:** Accepted
+
+### D-051 · Tests and evals run on their own database (C7.0)
+- **Context:** trying a write in the app (2026-10-04) changed the frozen demo data and broke 16 tests that compare against seeded numbers. Tests and the demo shared one database.
+- **Decision:** pytest, the smoke run, the full eval and the answer-key builder switch to a separate database before their first query: `TEST_DATABASE_URL`, or by default `DATABASE_URL` with `_test` added to the name (`inventorymantra_test`). The switch refuses any name that doesn't end in `_test`. `make test-db` drops, recreates and seeds it (about 5 seconds), and `make test` runs it first, so every test run starts from the frozen seed. The app (`make api`, `make ask`) keeps using the demo database. If Postgres is up but the test database is missing, the database tests fail with "run `make test-db`" instead of quietly skipping. CI seeds its test database the same way.
+- **Consequence:** writes made while trying the app no longer affect tests or evals; the read-only roles are cluster-wide, so they work in both databases.
+- **Status:** Accepted
