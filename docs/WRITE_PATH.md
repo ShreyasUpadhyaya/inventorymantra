@@ -1,6 +1,6 @@
 # Write path — how InventoryMantra changes the database
 
-Status: **Draft for review** (built in Phase 6, commits C6.1–C6.4).
+Status: **APPROVED by the user on 2026-10-04** (gate G2 passed; built in Phase 6, commits C6.1–C6.4).
 This document describes how chatbot writes are built: which tables each action touches, in what order, and what guards them. It follows the conventions already in the data. Every stock change is an `inv_transactions` row with a **signed** quantity, plus an update of the matching `inv_current_stock` row (unique per item × location). PO receipts and unplanned receipts link to their stock transaction through `inv_transaction_id`.
 
 ---

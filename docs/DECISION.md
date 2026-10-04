@@ -370,3 +370,22 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Regression tests:** 6 off-topic questions × 3 roles all get the one scope sentence (English and Hindi), a domain question the demo can't answer still says so, and a model that misclassifies off-topic text still gets the scope sentence.
 - **Limit:** keyword lists can't know every off-topic subject. The model is the real judge, and C7.1's out-of-scope cases (threshold ≥ 95%) are where that is measured.
 - **Status:** Accepted
+
+### D-043 · Write framework and stock writes (C6.1)
+- **WRITE_PATH.md approved by the user on 2026-10-04 (gate G2).**
+- **One framework for every write** (`app/services/writes/framework.py`). An action implements `plan` (resolve the user's words into ids and numbers, validate, describe), `read_state` (the rows it will change, locked at apply time) and `apply`. The framework adds the guards from WRITE_PATH §2:
+  - **Authorisation:** `policy.can` at preview and again at apply. At apply the user is re-read from the database, so a deactivated or re-roled user can't confirm an old preview.
+  - **Previewed = applied:** `preview_hash` = SHA-256 of (action, payload, user). A different payload, hash or user is refused.
+  - **Stale and expired previews:** `state_version` = hash of the rows read at preview. At apply they are re-read under `SELECT … FOR UPDATE`; if they changed, nothing is saved and the user is asked to look again. Previews expire after 10 minutes (wall clock, not the business date).
+  - **Double confirm:** `operation_id` is unique in `agent_audit_log`; a second confirm returns the first result.
+  - **Audit:** one row per attempt: `pending → success`, or `failed` / `cancelled`. Failures are written in their own transaction after the rollback, with a plain message only (internal details stay in the server log).
+- **Each write uses its own autocommit connection,** so `conn.transaction()` is a real transaction and a failure row survives the rollback.
+- **Names → ids on the server** (`writes/resolve.py`) with the read path's matcher (D-026): one clear match is used, several close ones raise `Ambiguous` with options (the chat turns these into a question in C6.3), none raises `NotFound`. Inactive items and warehouses are refused. Issue targets (8 teams) match exactly, then by containment, then by trigram.
+- **Stock services** (`writes/stock.py`), following the data's conventions:
+  - `record_stock_movement`: inbound / outbound / issue; one signed `inv_transactions` row (`manual_adjustment` or `warehouse_issue` + team), stock row upserted; never below zero; no unit cost taken from a manual movement.
+  - `transfer_stock`: a `transfer_out` / `transfer_in` pair (`transfer_in.reference_id` = the out row), both stock rows locked in id order.
+  - `raise_stock_request`: an open `stock_requests` row; "needed by" can't be in the past.
+- **Events, not yet notifications:** results carry `low_stock` (when total on hand reaches the item's reorder level after stock goes out) and `stock_request_raised`. C6.5 turns them into role-scoped notifications (the contract tests already exist).
+- **Tests use throwaway items (`TS-…`) on the seeded DB** and remove everything they create, so the real catalogue and the answer keys are untouched. 32 tests: preview writes nothing, exact rows written, audit contents, replay, tampered hash/payload, another user's preview, expiry, stale state, two parallel confirms (one succeeds, stock never below zero), cancel, rollback after an error mid-transaction, policy at preview and after deactivation or demotion, bad arguments, limits, inactive records, ambiguity, transfers, requests.
+- **Timestamps of new stock records** use the business date with the current time of day (`core.config.business_now`). With `APP_TODAY` frozen for the demo, a stock movement recorded now still shows up in "movements this week" and in daily-use figures, instead of landing days after "today".
+- **Status:** Accepted

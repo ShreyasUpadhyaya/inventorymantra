@@ -65,3 +65,10 @@ def app_today() -> date:
     """'Today' for all business logic: APP_TODAY if set (evals), else the date in IST."""
     frozen = get_settings().app_today
     return frozen if frozen is not None else datetime.now(TIMEZONE).date()
+
+
+def business_now() -> datetime:
+    """Timestamp for new stock records: the business date with the current IST time of day,
+    so a demo with APP_TODAY frozen shows today's writes as today's (D-043). Naive, like the
+    existing inv_* timestamp columns."""
+    return datetime.combine(app_today(), datetime.now(TIMEZONE).time().replace(tzinfo=None))
