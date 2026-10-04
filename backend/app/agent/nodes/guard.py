@@ -78,10 +78,15 @@ def decide(role: str, guard: GuardOutput) -> tuple[Route, list[str], bool]:
         return ("help" if guard.injection_suspected else "refuse_scope"), [], False
     if guard.intent in ("help", "greeting"):
         return "help", [], False
+    if guard.intent == "write":
+        # Writes are authorised per action (only the role's actions are offered, and the
+        # write services check policy again), not by read areas: an Inventory Manager
+        # receiving "against PO-2026-0003" mentions POs but is allowed to receive (C6.3).
+        return "write", [], off_topic
     denied = sorted(permissions.denied_areas(role, guard.data_areas))
     if denied and len(denied) == len(set(guard.data_areas)):
         return "refuse_rbac", denied, off_topic  # everything asked for is outside the role
-    return ("write" if guard.intent == "write" else "read"), denied, off_topic
+    return "read", denied, off_topic
 
 
 def guard_node(state: AgentState, config: RunnableConfig) -> AgentState:

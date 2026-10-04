@@ -8,7 +8,7 @@ in prompt text, such as JSON examples, are safe).
 
 from typing import Literal
 
-PROMPT_VERSION = "0.6"
+PROMPT_VERSION = "0.7"
 Lang = Literal["en", "hi", "hinglish"]
 
 CORE_SYSTEM_PROMPT = """\

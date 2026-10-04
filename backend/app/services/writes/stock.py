@@ -222,8 +222,8 @@ class TransferStock(Action):
 
     def plan(self, conn: psycopg.Connection, user: AuthUser, args: TransferArgs) -> Plan:
         item = resolve.item(conn, user.role, args.item)
-        source = resolve.location(conn, user.role, args.from_location)
-        dest = resolve.location(conn, user.role, args.to_location)
+        source = resolve.location(conn, user.role, args.from_location, "from_location")
+        dest = resolve.location(conn, user.role, args.to_location, "to_location")
         if source.id == dest.id:
             raise WriteError("The two warehouses are the same; choose a different destination.")
         quantity = check_quantity(args.quantity)

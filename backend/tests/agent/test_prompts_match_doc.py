@@ -88,3 +88,17 @@ def test_composer_viz_and_judge_are_verbatim() -> None:
     assert text_blocks(section("## 8. Call: NO-PREDICTION JUDGE", "## 9. Help mode")) == [
         JUDGE_SYSTEM
     ]
+
+
+def test_write_task_and_action_list_are_verbatim() -> None:
+    from app.agent.prompts.write import ACTION_LINES, WRITE_TASK
+
+    blocks = text_blocks(section("## 7. Call: WRITE", "## 8. Call: NO-PREDICTION"))
+    assert blocks == [WRITE_TASK, "\n".join(ACTION_LINES.values())]
+
+
+def test_every_write_action_has_a_line() -> None:
+    from app.agent.prompts.write import ACTION_LINES
+    from app.services.writes import REGISTRY
+
+    assert set(ACTION_LINES) == set(REGISTRY)

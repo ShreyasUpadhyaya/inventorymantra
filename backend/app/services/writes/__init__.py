@@ -7,8 +7,12 @@ from app.services.writes.framework import (
     WriteError,
     WriteResult,
     apply,
+    apply_batch,
     cancel,
     preview,
 )
 
-__all__ = ["REGISTRY", "Preview", "WriteError", "WriteResult", "apply", "cancel", "preview"]
+__all__ = [
+    "REGISTRY", "Preview", "WriteError", "WriteResult", "apply", "apply_batch", "cancel",
+    "preview",
+]  # fmt: skip

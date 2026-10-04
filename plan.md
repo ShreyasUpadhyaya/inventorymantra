@@ -160,7 +160,7 @@ The prompts are drafted in **`docs/PROMPTS.md`**. They must be approved by the u
 *(Built exactly as in `docs/WRITE_PATH.md`: one service per action, preview → confirm → single transaction with row locks, idempotent `operation_id`, audit before/after, role-filtered notifications.)*
 - [x] **C6.1** `feat(services): write framework (preview hash, state version, idempotent audit, txn wrapper) + stock movement, transfer and stock request services`
 - [x] **C6.2** `feat(services): PO receipt, unexpected receipt, create/update/cancel PO, payment tranche and reorder policy services`
-- [ ] **C6.3** `feat(agent): bind role-filtered write tools with confirmation interrupt and multi-action previews`
+- [x] **C6.3** `feat(agent): bind role-filtered write tools with confirmation interrupt and multi-action previews`
 - [ ] **C6.4** `feat: owner approvals workflow and user management actions`
 - [ ] **C6.5** `feat: role-scoped notifications and lead-time reorder scan`
 

@@ -77,3 +77,6 @@ class AgentState(TypedDict, total=False):
     answer_checks: dict[str, Any]  # {fallback, problems} from grounding / prediction
     answer: str
     suggestions: list[str]  # clickable follow-ups (help mode, options)
+    # writes (C6.3): {id, status, pending[{action, args}], previews, index, question, asks}
+    write: dict[str, Any] | None
+    write_events: list[dict[str, Any]]  # from applied writes; notifications in C6.5

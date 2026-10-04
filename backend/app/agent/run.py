@@ -77,7 +77,7 @@ def fresh_turn(user: AuthUser, message: str, history: list[Turn]) -> AgentState:
         "mention_index": 0, "entity_asks": 0, "clarify": None, "clarifications": [],
         "sql": None, "sql_error": None, "sql_attempts": 0, "assumptions": [], "columns": [],
         "rows": [], "row_count": 0, "failure": None, "answer": "", "suggestions": [],
-        "viz": None, "answer_checks": {},
+        "viz": None, "answer_checks": {}, "write": None, "write_events": [],
     }  # fmt: skip
 
 
@@ -129,7 +129,9 @@ def _result(thread_id: str, out: dict[str, Any]) -> TurnResult:
     payload: dict[str, Any] | None = pause[0].value if pause else None
     return TurnResult(
         thread_id=thread_id,
-        route="clarify" if payload else state["route"],
+        route=("confirm" if payload["kind"] == "confirm" else "clarify")
+        if payload
+        else state["route"],
         lang=state["lang"],
         answer=payload["question"] if payload else state.get("answer", ""),
         suggestions=list(payload["options"]) if payload else state.get("suggestions", []),

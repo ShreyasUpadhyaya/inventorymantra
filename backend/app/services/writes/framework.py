@@ -50,10 +50,19 @@ class WriteError(Exception):
 
     code: ClassVar[str] = "invalid"
 
-    def __init__(self, message: str, options: list[str] | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        options: list[str] | None = None,
+        *,
+        field: str | None = None,
+        values: list[str] | None = None,
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.options = options or []
+        self.field = field  # the argument this is about, e.g. "item" or "lines.0.item"
+        self.values = values or list(self.options)  # what to use when an option is picked
 
 
 class NotPermitted(WriteError):
@@ -329,6 +338,57 @@ def _apply_in_transaction(
     return result
 
 
+def operation_ids(operation_id: str, count: int) -> list[str]:
+    """One audit row per action: a single action keeps the id, several get #1, #2, …"""
+    return [operation_id] if count == 1 else [f"{operation_id}#{i}" for i in range(1, count + 1)]
+
+
+def apply_batch(
+    user: AuthUser,
+    confirmed: list[tuple[Preview, str]],
+    operation_id: str,
+    thread_id: str | None = None,
+) -> list[WriteResult]:
+    """Apply confirmed previews in ONE transaction (WRITE_PATH §5: "add 3 here and 5 there" is
+    one confirmation and all-or-nothing). Safe to call twice with the same operation_id: the
+    second call returns the first results and changes nothing."""
+    if not confirmed:
+        return []
+    actions = [_action(p.action) for p, _ in confirmed]
+    ids = operation_ids(operation_id, len(confirmed))
+    with _connect() as conn:
+        existing = [_existing(conn, i) for i in ids]
+        if existing[0]:
+            return [_replay(row) for row in existing if row]
+        failure: str | None = None
+        try:
+            with conn.transaction():
+                return [
+                    _apply_in_transaction(conn, user, action, preview_, hash_, op_id, thread_id)
+                    for action, (preview_, hash_), op_id in zip(
+                        actions, confirmed, ids, strict=True
+                    )
+                ]
+        except psycopg.errors.UniqueViolation:
+            existing = [_existing(conn, i) for i in ids]  # a parallel confirm of the same card
+            if existing[0]:
+                return [_replay(row) for row in existing if row]
+            logger.exception("write failed: %s", [a.name for a in actions])
+            failure = UNEXPECTED
+            raise WriteError(UNEXPECTED) from None
+        except WriteError as exc:
+            failure = exc.message
+            raise
+        except Exception:
+            logger.exception("write failed: %s", [a.name for a in actions])  # stays in the log
+            failure = UNEXPECTED
+            raise WriteError(UNEXPECTED) from None
+        finally:
+            if failure is not None:
+                for (preview_, _), op_id in zip(confirmed, ids, strict=True):
+                    _record(conn, user, preview_, op_id, thread_id, "failed", failure)
+
+
 def apply(
     user: AuthUser,
     preview_: Preview,
@@ -336,37 +396,16 @@ def apply(
     operation_id: str,
     thread_id: str | None = None,
 ) -> WriteResult:
-    """Apply a confirmed preview in one transaction. Safe to call twice with the same
-    operation_id: the second call returns the first result and changes nothing."""
-    action = _action(preview_.action)
-    with _connect() as conn:
-        existing = _existing(conn, operation_id)
-        if existing:
-            return _replay(existing)
-        try:
-            with conn.transaction():
-                return _apply_in_transaction(
-                    conn, user, action, preview_, confirmed_hash, operation_id, thread_id
-                )
-        except psycopg.errors.UniqueViolation:
-            existing = _existing(conn, operation_id)  # a parallel confirm of the same preview
-            if existing:
-                return _replay(existing)
-            logger.exception("write failed: %s", action.name)
-            _record(conn, user, preview_, operation_id, thread_id, "failed", UNEXPECTED)
-            raise WriteError(UNEXPECTED) from None
-        except WriteError as exc:
-            _record(conn, user, preview_, operation_id, thread_id, "failed", exc.message)
-            raise
-        except Exception:
-            logger.exception("write failed: %s", action.name)  # details stay in the server log
-            _record(conn, user, preview_, operation_id, thread_id, "failed", UNEXPECTED)
-            raise WriteError(UNEXPECTED) from None
+    """Apply one confirmed preview (see apply_batch)."""
+    return apply_batch(user, [(preview_, confirmed_hash)], operation_id, thread_id)[0]
 
 
 def cancel(
-    user: AuthUser, preview_: Preview, operation_id: str, thread_id: str | None = None
-) -> None:
-    """The user declined the preview: audited as cancelled, nothing else happens."""
+    user: AuthUser, previews: Preview | list[Preview], operation_id: str,
+    thread_id: str | None = None,
+) -> None:  # fmt: skip
+    """The user declined the preview card: audited as cancelled, nothing else happens."""
+    items = previews if isinstance(previews, list) else [previews]
     with _connect() as conn:
-        _record(conn, user, preview_, operation_id, thread_id, "cancelled")
+        for preview_, op_id in zip(items, operation_ids(operation_id, len(items)), strict=True):
+            _record(conn, user, preview_, op_id, thread_id, "cancelled")

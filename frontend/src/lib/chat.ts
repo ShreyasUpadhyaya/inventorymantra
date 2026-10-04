@@ -16,13 +16,26 @@ export type VizSpec = {
 
 export type Cell = string | number | boolean | null;
 
+/** One action on a confirm card (backend/app/services/writes/framework.py Preview). */
+export type WritePreview = {
+  action: string;
+  summary: string;
+  fields: { label: string; value: string }[];
+  effects: string[];
+};
+
 /** What the UI needs to draw one assistant turn (live or from history). */
 export type AssistantTurn = {
   route: string;
   lang: string;
   answer: string;
   suggestions: string[];
-  interrupt: { kind: string; question: string; options: string[] } | null;
+  interrupt: {
+    kind: string; // "clarify" (a question) or "confirm" (a write preview card)
+    question: string;
+    options: string[];
+    previews?: WritePreview[];
+  } | null;
   viz: VizSpec | null;
   columns: string[];
   rows: Cell[][];

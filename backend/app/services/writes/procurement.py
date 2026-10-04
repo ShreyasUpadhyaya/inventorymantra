@@ -128,15 +128,15 @@ class CreatePurchaseOrder(Action):
         if len(args.lines) > MAX_LINES:
             raise WriteError(f"A purchase order can have at most {MAX_LINES} lines.")
         vendor = resolve.vendor(conn, user.role, args.vendor)
-        loc = resolve.location(conn, user.role, args.delivery_location) \
+        loc = resolve.location(conn, user.role, args.delivery_location, "delivery_location") \
             if args.delivery_location else None  # fmt: skip
         expected = _future(args.expected_delivery_date, "expected delivery date") \
             if args.expected_delivery_date else None  # fmt: skip
         lines: list[dict[str, Any]] = []
         seen: set[str] = set()
         subtotal = tax = Decimal(0)
-        for line in args.lines:
-            item = resolve.item(conn, user.role, line.item)
+        for index, line in enumerate(args.lines):
+            item = resolve.item(conn, user.role, line.item, f"lines.{index}.item")
             if item.id in seen:
                 raise WriteError(f"{item.name} is on two lines; put the total on one line.")
             seen.add(item.id)
@@ -363,7 +363,7 @@ class ReceiveAgainstPO(Action):
             chosen = open_lines
         else:
             raise Ambiguous(f"{po.number} has several items waiting. Which one arrived?",
-                            [ln[2] for ln in open_lines])  # fmt: skip
+                            [ln[2] for ln in open_lines], field="item")  # fmt: skip
         line_id, item_id, item_name, unit, ordered, received = chosen[0]
         pending = ordered - received
         if quantity > pending:
@@ -709,7 +709,8 @@ class ClearPaymentTranche(Action):
                              + (f" matching “{args.stage}”." if args.stage else "."))  # fmt: skip
         if len(rows) > 1:
             raise Ambiguous(f"{po.number} has several unpaid instalments. Which one was paid?",
-                            [f"{r[1]} ({inr(float(r[2]))})" for r in rows])  # fmt: skip
+                            [f"{r[1]} ({inr(float(r[2]))})" for r in rows], field="stage",
+                            values=[str(r[1]) for r in rows])  # fmt: skip
         tranche_id, stage, amount = rows[0]
         return Plan(
             payload={"tranche_id": tranche_id, "po_number": po.number, "stage": stage,
@@ -774,7 +775,7 @@ class SetReorderPolicy(Action):
         reorder_qty = check_quantity(args.reorder_qty)
         if not 1 <= args.lead_time_days <= 365:
             raise WriteError("The lead time must be between 1 and 365 days.")
-        vendor = resolve.vendor(conn, user.role, args.preferred_vendor) \
+        vendor = resolve.vendor(conn, user.role, args.preferred_vendor, "preferred_vendor") \
             if args.preferred_vendor else None  # fmt: skip
         old = conn.execute(
             "SELECT min_level::float, reorder_qty::float, lead_time_days, safety_stock::float "

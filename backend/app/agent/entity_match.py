@@ -199,6 +199,14 @@ def _resolve_location(conn: psycopg.Connection, text: str) -> Resolution:
     exact = [name for (name,) in rows if re.sub(r"[\s\-]", "", name).lower() == compact]
     if len(exact) == 1:
         return Resolution("match", [Candidate(exact[0], exact[0], 1.0)])
+    # "132" is the start of 132-1, 132-2 and 132-3: offer those rather than "not found"
+    prefixed = [
+        n for (n,) in rows if compact and re.sub(r"[\s\-]", "", n).lower().startswith(compact)
+    ]
+    if len(prefixed) == 1:
+        return Resolution("match", [Candidate(prefixed[0], prefixed[0], 1.0)])
+    if len(prefixed) > 1:
+        return Resolution("clarify", [Candidate(n, n, 1.0) for n in prefixed][:MAX_OPTIONS])
     scored = _trigram(
         conn,
         """SELECT name, name, greatest(similarity(lower(name), lower(%(q)s)),

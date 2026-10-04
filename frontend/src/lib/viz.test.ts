@@ -82,3 +82,19 @@ describe("toDrawable", () => {
     expect(d).toEqual({ type: "kpi", items: [{ label: "overdue_pos", column: "overdue_pos", value: 28 }] });
   });
 });
+
+describe("confirm card events", () => {
+  it("keeps the write previews of a confirm pause", () => {
+    const data = JSON.stringify({
+      answer: "Please check and confirm. Nothing is saved until you do.",
+      suggestions: ["Confirm", "Cancel"],
+      interrupt: {
+        kind: "confirm", question: "q", options: ["Confirm", "Cancel"],
+        previews: [{ action: "record_stock_movement", summary: "Add 3 pcs", fields: [], effects: [] }],
+      },
+    });
+    const event = parseEvent("clarify", data);
+    expect(event).toMatchObject({ type: "clarify", turn: { interrupt: { kind: "confirm" } } });
+    if (event?.type === "clarify") expect(event.turn.interrupt?.previews?.[0].summary).toBe("Add 3 pcs");
+  });
+});

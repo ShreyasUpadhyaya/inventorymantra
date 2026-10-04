@@ -4,6 +4,7 @@ real catalogue, stock and answer keys are untouched. Everything they create is r
 import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass
+from datetime import datetime
 
 import psycopg
 import pytest
@@ -57,8 +58,11 @@ TEST_POS = """SELECT id FROM proc_purchase_orders WHERE vendor_id IN
                 (SELECT id FROM proc_vendors WHERE name LIKE 'Zeta Test%%')"""
 
 
-def _cleanup(db: psycopg.Connection, ids: list[str]) -> None:
+def _cleanup(db: psycopg.Connection, ids: list[str], since: datetime | None = None) -> None:
     db.execute("DELETE FROM agent_audit_log WHERE operation_id LIKE 'test-%'")
+    if since is not None:  # chat writes made by this test (operation ids "chat:…")
+        db.execute("DELETE FROM agent_audit_log WHERE operation_id LIKE 'chat:%%' "
+                   "AND created_at >= %s", (since,))  # fmt: skip
     db.execute("DELETE FROM notifications WHERE payload->>'item_id' = ANY(%s)", (ids,))
     db.execute(f"DELETE FROM approvals WHERE entity_id IN ({TEST_POS})")  # noqa: S608
     db.execute("DELETE FROM stock_requests WHERE item_id = ANY(%s)", (ids,))
@@ -92,6 +96,7 @@ def world(db: psycopg.Connection) -> Iterator[World]:
         pytest.skip("READONLY_DB_PASSWORD not set")
     ids = [str(uuid.uuid5(uuid.NAMESPACE_URL, f"test-item/{code}")) for code, _, _ in ITEMS]
     _cleanup(db, ids)  # leftovers from an interrupted run
+    started = db.execute("SELECT now()").fetchone()[0]
     for item_id, (code, name, status) in zip(ids, ITEMS, strict=True):
         db.execute(
             "INSERT INTO inv_items (id, item_code, name, status, unit)"
@@ -116,4 +121,4 @@ def world(db: psycopg.Connection) -> Iterator[World]:
         assert user is not None, "run make seed first"
         users[role] = user
     yield World(db, ids[0], ids[1], ids[2], loc, users, vendor_id)
-    _cleanup(db, ids)
+    _cleanup(db, ids, since=started)
