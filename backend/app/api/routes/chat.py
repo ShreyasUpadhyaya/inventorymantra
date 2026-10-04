@@ -42,6 +42,9 @@ STEP_LABELS = {
     "generate_sql": "Writing the query",
     "execute_sql": "Reading the data",
     "compose": "Preparing the answer",
+    "plan_write": "Understanding the change",
+    "check_write": "Checking the details",
+    "apply_write": "Saving",
 }
 SAFE_ERROR = "Something went wrong while answering. Please try again."
 

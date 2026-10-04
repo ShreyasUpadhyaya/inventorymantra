@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+import { NotificationBell } from "@/components/notification-bell";
 import { useSession } from "@/components/session-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <div className="text-xs text-muted-foreground">{user.email}</div>
             </div>
             <Badge variant="secondary">{ROLE_LABELS[user.role]}</Badge>
+            {!user.must_change_password && <NotificationBell />}
             <Link
               href={CHANGE_PASSWORD}
               className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"

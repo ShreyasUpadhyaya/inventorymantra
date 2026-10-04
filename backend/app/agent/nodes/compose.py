@@ -25,7 +25,7 @@ from app.agent.prompts.compose import COMPOSE_TASK
 from app.agent.state import AgentState
 from app.agent.templates import template_answer as build_template
 from app.agent.viz import choose_viz
-from app.core.config import get_settings
+from app.core.config import app_today, get_settings
 
 logger = logging.getLogger("inventorymantra.agent")
 
@@ -90,12 +90,25 @@ def template_answer(state: AgentState) -> str:
     )
 
 
-def _context(state: AgentState) -> list[str]:
-    """Text whose numbers the answer may repeat: the question, assumptions, chosen records."""
-    texts = [state["message"], *state.get("assumptions", [])]
-    texts += [c["answer"] for c in state.get("clarifications", [])]
-    texts += [f"{r['code']} {r['name']}" for r in state.get("resolved", [])]  # may be repeated
+def grounding_context(
+    message: str,
+    assumptions: list[str] | None = None,
+    answers: list[str] | None = None,
+    resolved: list[dict[str, str]] | None = None,
+) -> list[str]:
+    """Text whose numbers the answer may repeat: the question, assumptions, chosen records,
+    and the business year ("In August 2026, …"; full eval run 1, C7.2)."""
+    texts = [message, *(assumptions or []), *(answers or [])]
+    texts += [f"{r['code']} {r['name']}" for r in resolved or []]  # may be repeated
+    texts.append(str(app_today().year))
     return texts
+
+
+def _context(state: AgentState) -> list[str]:
+    return grounding_context(
+        state["message"], state.get("assumptions", []),
+        [c["answer"] for c in state.get("clarifications", [])], state.get("resolved", []),
+    )  # fmt: skip
 
 
 def _check(answer: str, state: AgentState) -> list[str]:

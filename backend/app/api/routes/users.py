@@ -1,8 +1,6 @@
 """Owner-only user management: list, create and reset (temp password shown once), (de)activate."""
 
 import re
-import secrets
-import uuid
 from datetime import datetime
 from typing import Annotated
 from uuid import UUID
@@ -12,9 +10,9 @@ from fastapi import APIRouter, Body, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.api.deps import Conn, require_action
-from app.auth.passwords import hash_password
-from app.auth.service import AuthUser, Role, normalise_email, revoke_all_sessions, set_password
+from app.auth.service import AuthUser, Role, normalise_email
 from app.services import audit
+from app.services import users as users_service
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -72,28 +70,18 @@ def list_users(_: CanManage, conn: Conn) -> list[UserRow]:
     return [UserRow(**dict(zip(UserRow.model_fields, r, strict=True))) for r in rows]
 
 
+def _fail(exc: users_service.UserError) -> HTTPException:
+    return HTTPException(exc.status, exc.message)
+
+
 @router.post("", response_model=CreatedUser, status_code=status.HTTP_201_CREATED)
 def create_user(body: Annotated[CreateUserIn, Body()], owner: CanManage, conn: Conn) -> CreatedUser:
-    temp_password = secrets.token_urlsafe(12)  # generated server-side, never logged or stored
-    user_id = uuid.uuid4()
     try:
-        conn.execute(
-            """INSERT INTO users (id, email, password_hash, full_name, role, created_by,
-                                  must_change_password)
-               VALUES (%s, %s, %s, %s, %s, %s, true)""",
-            (
-                user_id,
-                body.email,
-                hash_password(temp_password),
-                body.full_name,
-                body.role,
-                owner.id,
-            ),
+        user_id, temp_password = users_service.create(
+            conn, owner, body.email, body.full_name, body.role
         )
-    except psycopg.errors.UniqueViolation:
-        raise HTTPException(
-            status.HTTP_409_CONFLICT, "A user with this email already exists."
-        ) from None
+    except users_service.UserError as exc:
+        raise _fail(exc) from None
     audit.record(
         conn, owner, "create_user", "user", str(user_id), None,
         {"email": body.email, "full_name": body.full_name, "role": body.role},
@@ -104,19 +92,13 @@ def create_user(body: Annotated[CreateUserIn, Body()], owner: CanManage, conn: C
 
 
 def _set_active(conn: psycopg.Connection, owner: AuthUser, user_id: UUID, active: bool) -> UserRow:
-    target = _get(conn, user_id)
-    if target is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found.")
-    if user_id == owner.id and not active:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "You can't deactivate your own account.")
-    conn.execute(
-        "UPDATE users SET is_active = %s, updated_at = now() WHERE id = %s", (active, user_id)
-    )
-    if not active:
-        revoke_all_sessions(conn, user_id)  # logged out everywhere, immediately
+    try:
+        before = users_service.set_active(conn, owner, user_id, active)
+    except users_service.UserError as exc:
+        raise _fail(exc) from None
     audit.record(
         conn, owner, "deactivate_user" if not active else "activate_user", "user", str(user_id),
-        {"is_active": target.is_active}, {"is_active": active},
+        {"is_active": before}, {"is_active": active},
     )  # fmt: skip
     updated = _get(conn, user_id)
     assert updated is not None
@@ -142,14 +124,11 @@ class ResetPassword(BaseModel):
 def reset_password(user_id: UUID, owner: CanReset, conn: Conn) -> ResetPassword:
     """A forgotten password: new temporary password, signed out everywhere (C5.1b)."""
     target = _get(conn, user_id)
-    if target is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found.")
-    if user_id == owner.id:
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST, "Change your own password from your account page."
-        )
-    temp_password = secrets.token_urlsafe(12)  # generated server-side, never logged or stored
-    set_password(conn, user_id, temp_password, must_change=True)
+    try:
+        temp_password = users_service.reset_password(conn, owner, user_id)
+    except users_service.UserError as exc:
+        raise _fail(exc) from None
+    assert target is not None
     audit.record(conn, owner, "reset_password", "user", str(user_id), None,
                  {"must_change_password": True})  # fmt: skip
     return ResetPassword(user=target, temp_password=temp_password)

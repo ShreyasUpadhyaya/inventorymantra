@@ -175,7 +175,9 @@ def check_grounding(
     unsupported = [
         f.text
         for f in _find(answer)
-        if not _supported(f, allowed | date_parts if f.in_date else allowed)
+        # a number written as part of a date (day, year) must match exactly: the rounding
+        # tolerance for amounts would let 2031 pass for 2026
+        if not (f.value in allowed | date_parts if f.in_date else _supported(f, allowed))
     ]
     counts = _counts(columns, rows, context)
     for claim in COUNT_NOUNS.finditer(answer.translate(DEVANAGARI_DIGITS)):

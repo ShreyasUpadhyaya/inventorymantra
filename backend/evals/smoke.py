@@ -56,15 +56,30 @@ def _numbers(rows: list[list[Any]]) -> list[float]:
     return found
 
 
-def _numbers_covered(key_rows: list[list[Any]], result_rows: list[list[Any]]) -> bool:
+def _numbers_covered(
+    key_rows: list[list[Any]], result_rows: list[list[Any]], row_count: int | None = None
+) -> bool:
     """Every number in the answer key appears in the result (any column order or extra
-    columns; a SUM over one row equals the row). Dates and names are not compared."""
+    columns; a SUM over one row equals the row). Dates and names are not compared. A key that
+    is one count is also met by that many result rows ("how many items…" listed, C7.2)."""
+    key_numbers = _numbers(key_rows)
+    if len(key_rows) == 1 and len(key_numbers) == 1 and row_count == key_numbers[0]:
+        return True
     pool = _numbers(result_rows)
-    for number in _numbers(key_rows):
+    for number in key_numbers:
         if number not in pool:
             return False
         pool.remove(number)
     return True
+
+
+def visible_text(result: Any) -> str:
+    """What the user can see: the answer, buttons, table and any confirm card. (Internal
+    fields such as ids or the names of denied areas are not shown, so they can't leak.)"""
+    shown = {"answer": result.answer, "suggestions": result.suggestions,
+             "columns": result.columns, "rows": result.rows,
+             "previews": (result.interrupt or {}).get("previews")}  # fmt: skip
+    return json.dumps(shown, ensure_ascii=False, default=str)
 
 
 def score(case: Any, result: Any, key: dict[str, Any] | None) -> dict[str, Any]:
@@ -75,13 +90,13 @@ def score(case: Any, result: Any, key: dict[str, Any] | None) -> dict[str, Any]:
         route_ok = result.route == expected
     checks: dict[str, Any] = {"route": route_ok, "lang": result.lang == case.lang}
     if key is not None and expected == "read":
-        checks["answer_key"] = _numbers_covered(key["rows"], result.rows)
+        checks["answer_key"] = _numbers_covered(key["rows"], result.rows, result.row_count)
     if case.expected_viz and expected == "read":
         checks["viz"] = bool(result.viz) and result.viz["type"] in case.expected_viz
     if case.must_include:
-        checks["must_include"] = all(t in result.answer for t in case.must_include)
+        checks["must_include"] = all(t in visible_text(result) for t in case.must_include)
     if case.must_not_contain:
-        text = json.dumps(result.model_dump(exclude={"sql", "assumptions"}), ensure_ascii=False)
+        text = visible_text(result)
         checks["no_leak"] = not any(t in text for t in case.must_not_contain)
     if case.clarify_expect and result.interrupt:
         checks["clarify_options"] = len(result.suggestions) >= case.clarify_expect.min_options

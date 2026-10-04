@@ -1,7 +1,8 @@
 """The LangGraph agent (docs/Architecture.md §2).
 
 START -> guard -> refuse_scope | refuse_rbac | help --------------------> respond_fixed
-               -> write ----------------------------------------------> pending_capability
+               -> write -> plan_write -> check_write <-> ask_write (one question at a time)
+                                         -> confirm_write (one card) -> apply_write
                -> read -> resolve_entities -> clarify/not_found -----> respond_entity
                                            -> denied (nothing left) --> respond_fixed
                                            -> generate_sql -> execute_sql -> compose
@@ -38,16 +39,26 @@ from app.agent.nodes.read import (
     respond_entity,
     respond_failure,
 )
-from app.agent.nodes.respond import finalize, pending_capability, respond_fixed
+from app.agent.nodes.respond import finalize, respond_fixed
+from app.agent.nodes.write import (
+    after_ask,
+    after_check,
+    after_plan,
+    apply_write,
+    ask_write,
+    check_write,
+    confirm_write,
+    plan_write,
+)
 from app.agent.state import AgentState
 
 
 def after_guard(
     state: AgentState,
-) -> Literal["respond_fixed", "pending_capability", "resolve_entities"]:
+) -> Literal["respond_fixed", "plan_write", "resolve_entities"]:
     if state["route"] == "read":
         return "resolve_entities"
-    return "pending_capability" if state["route"] == "write" else "respond_fixed"
+    return "plan_write" if state["route"] == "write" else "respond_fixed"
 
 
 @lru_cache
@@ -56,7 +67,11 @@ def build_graph() -> CompiledStateGraph:  # type: ignore[type-arg]
     for name, node in [
         ("guard", guard_node),
         ("respond_fixed", respond_fixed),
-        ("pending_capability", pending_capability),
+        ("plan_write", plan_write),
+        ("check_write", check_write),
+        ("ask_write", ask_write),
+        ("confirm_write", confirm_write),
+        ("apply_write", apply_write),
         ("resolve_entities", resolve_entities),
         ("respond_entity", respond_entity),
         ("ask_entity", ask_entity),
@@ -77,8 +92,12 @@ def build_graph() -> CompiledStateGraph:  # type: ignore[type-arg]
     graph.add_conditional_edges("ask_clarify", after_ask_clarify)
     graph.add_conditional_edges("generate_sql", after_sql)
     graph.add_conditional_edges("execute_sql", after_execute)
-    for terminal in ("respond_fixed", "pending_capability", "respond_entity", "compose",
-                     "respond_failure"):  # fmt: skip
+    graph.add_conditional_edges("plan_write", after_plan)
+    graph.add_conditional_edges("check_write", after_check)
+    graph.add_conditional_edges("ask_write", after_ask)
+    graph.add_edge("confirm_write", "apply_write")
+    for terminal in ("respond_fixed", "respond_entity", "compose", "respond_failure",
+                     "apply_write"):  # fmt: skip
         graph.add_edge(terminal, "finalize")
     graph.add_edge("finalize", END)
     return graph.compile(checkpointer=get_checkpointer())

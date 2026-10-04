@@ -15,6 +15,7 @@ const ALL: readonly Role[] = ["inventory_manager", "procurement_manager", "owner
 export const NAV: readonly NavItem[] = [
   { href: "/dashboard", label: "Dashboard", roles: ALL },
   { href: "/chat", label: "Ask", roles: ALL },
+  { href: "/approvals", label: "Approvals", roles: ["procurement_manager", "owner"] },
   { href: "/users", label: "Users", roles: ["owner"] },
 ];
 

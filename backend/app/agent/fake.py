@@ -82,7 +82,8 @@ HELP = re.compile(
     r"what can (i|you)|help me|how do i use|system prompt|what tables|क्या पूछ|kya pooch", re.I
 )
 WRITE = re.compile(
-    r"^\s*(add|issue|transfer|receive|record|request|raise|place|create|mark|cancel|approve|"
+    r"^\s*(add|issue|transfer|move|remove|receive|record|request|raise|place|create|mark|"
+    r"cancel|approve|ask \w* ?(?:about|on) po|reply (?:on|about|to) po|"
     r"reject|deactivate|set)\b|\b(add kar do|kar do|jod do)\b",
     re.I,
 )
@@ -364,9 +365,156 @@ def fake_judge(messages: list[BaseMessage]) -> dict[str, Any]:
     return {"predictive": False, "span": None}
 
 
+# ------------------------------------------------------------------ write extraction (§7)
+_N = r"(\d[\d,]*(?:\.\d+)?)\s*(?:pcs|pieces|nos|units|kg)?"
+_PO = r"(po[\s-]*[\w-]+)"
+WRITE_PATTERNS: list[tuple[str, re.Pattern[str], tuple[str, ...]]] = [
+    (
+        "receive_against_po",
+        re.compile(
+            rf"^receive\s+{_N}\s+(?:of\s+)?(.+?)\s+against\s+{_PO}(?:\s+(?:into|in|to|at)\s+(.+))?$",
+            re.I,
+        ),
+        ("quantity", "item", "po", "location"),
+    ),
+    (
+        "issue",
+        re.compile(rf"^issue\s+{_N}\s+(?:of\s+)?(.+?)\s+from\s+(.+?)\s+to\s+(.+)$", re.I),
+        ("quantity", "item", "location", "issued_to"),
+    ),
+    (
+        "transfer_stock",
+        re.compile(
+            rf"^(?:move|transfer)\s+{_N}\s+(?:of\s+)?(.+?)\s+from\s+(.+?)\s+to\s+(.+)$", re.I
+        ),
+        ("quantity", "item", "from_location", "to_location"),
+    ),
+    (
+        "outbound",
+        re.compile(rf"^(?:remove|take out)\s+{_N}\s+(?:of\s+)?(.+?)\s+from\s+(.+)$", re.I),
+        ("quantity", "item", "location"),
+    ),
+    (
+        "raise_stock_request",
+        re.compile(
+            rf"^(?:request|raise a request for)\s+{_N}\s+(?:of\s+)?(.+?)(?:\s+from procurement)?"
+            r"(?:\s+by\s+(\S+))?$",
+            re.I,
+        ),
+        ("quantity", "item", "needed_by"),
+    ),
+    (
+        "create_purchase_order",
+        re.compile(
+            rf"^place a po for\s+{_N}\s+(.+?)\s+from\s+(.+?)\s+at\s+₹?\s*([\d,.]+)(?:\s+each)?$",
+            re.I,
+        ),
+        ("quantity", "item", "vendor", "unit_price"),
+    ),
+    (
+        "clear_payment_tranche",
+        re.compile(
+            rf"^mark the\s+(\w+)\s+(?:payment|instal+ment)\s+on\s+{_PO}\s+as\s+(?:cleared|paid)$",
+            re.I,
+        ),
+        ("stage", "po"),
+    ),
+    ("approve", re.compile(rf"^approve\s+{_PO}$", re.I), ("po",)),
+    (
+        "reject",
+        re.compile(rf"^reject\s+{_PO}(?:\s*[,:-]?\s*(?:because|as|note:?)\s+(.+))?$", re.I),
+        ("po", "note"),
+    ),
+    (
+        "ask_about_approval",
+        re.compile(rf"^ask\s+(?:\w+\s+)?(?:about|on)\s+{_PO}\s*[:,-]?\s+(.+)$", re.I),
+        ("po", "message"),
+    ),
+    (
+        "reply_to_approval",
+        re.compile(rf"^reply\s+(?:on|about|to)\s+{_PO}\s*[:,-]?\s+(.+)$", re.I),
+        ("po", "message"),
+    ),
+    (
+        "create_user",
+        re.compile(
+            r"^add a new (inventory manager|procurement manager|owner)\s*[:,-]?\s*(.+?),\s*"
+            r"(\S+@\S+)$",
+            re.I,
+        ),
+        ("role", "full_name", "email"),
+    ),
+    ("deactivate_user", re.compile(r"^deactivate\s+(?:the\s+user\s+)?(.+)$", re.I), ("user",)),
+    (
+        "inbound",
+        re.compile(rf"^(?:add|put)\s+{_N}\s+(?:of\s+)?(.+?)\s+(?:to|in|into)\s+(.+)$", re.I),
+        ("quantity", "item", "location"),
+    ),
+    (
+        "inbound",
+        re.compile(rf"^(?:(?:add|put)\s+)?{_N}\s+(?:more\s+)?(?:to|in|into)\s+(.+)$", re.I),
+        ("quantity", "location"),
+    ),
+    (
+        "inbound",
+        re.compile(rf"^([\w-]+)\s+mein\s+{_N}\s+(.+?)\s+(?:add|daal|jod)\s*(?:kar\s*)?do$", re.I),
+        ("location", "quantity", "item"),
+    ),
+]
+POINTER = re.compile(r"^(the other|other|it|that|same|dusre|doosre|wahi)\b", re.I)
+
+
+def fake_write(messages: list[BaseMessage]) -> dict[str, Any]:
+    """Offline stand-in for the write call: simple stock phrases and the corpus examples.
+    Words that point instead of naming ("the other") stay empty, as PROMPTS.md §7 says."""
+    from app.agent.nodes.write import WriteCallOut
+
+    text = re.sub(r"\s+", " ", latest_user_text(messages)).strip().rstrip(".!")
+    empty = dict.fromkeys(WriteCallOut.model_fields)
+    actions: list[dict[str, Any]] = []
+    previous: dict[str, Any] | None = None
+    for part in re.split(r"\s+(?:and|aur)\s+", text, flags=re.I):
+        for name, pattern, keys in WRITE_PATTERNS:
+            found = pattern.match(part.strip())
+            if not found:
+                continue
+            values = dict(zip(keys, found.groups(), strict=True))
+            for key in ("quantity", "unit_price"):
+                if values.get(key):
+                    values[key] = float(str(values[key]).replace(",", ""))
+            for key in ("location", "from_location", "to_location", "item"):
+                if values.get(key) and POINTER.match(values[key]):
+                    values[key] = None
+            action = {"inbound": "record_stock_movement", "outbound": "record_stock_movement",
+                      "issue": "record_stock_movement", "approve": "decide_approval",
+                      "reject": "decide_approval"}.get(name, name)  # fmt: skip
+            call = {**empty, "action": action}
+            if action == "decide_approval":
+                call["decision"] = name
+            if values.get("role"):
+                values["role"] = str(values["role"]).lower().replace(" ", "_")
+            if action == "record_stock_movement":
+                call["kind"] = name
+            if action == "create_purchase_order":
+                call["vendor"] = values.pop("vendor")
+                call["lines"] = [{"item": values.pop("item"), "quantity": values.pop("quantity"),
+                                  "unit_price": values.pop("unit_price"),
+                                  "tax_percentage": None}]  # fmt: skip
+            call.update({k: v for k, v in values.items() if v is not None})
+            if previous and "item" in keys and not call.get("item") and previous.get("item"):
+                call["item"] = previous["item"]  # "… and 5 to 132-1" keeps the item
+            if previous and action == previous["action"] and "item" not in keys:
+                call["item"] = previous.get("item")
+            actions.append(call)
+            previous = call
+            break
+    return {"actions": actions, "none_applicable": not actions}
+
+
 _DEFAULTS: dict[str, Handler] = {
     "guard": fake_guard,
     "sql": fake_sql,
     "clarify": fake_clarify,
     "judge": fake_judge,
+    "write": fake_write,
 }

@@ -370,3 +370,97 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Regression tests:** 6 off-topic questions × 3 roles all get the one scope sentence (English and Hindi), a domain question the demo can't answer still says so, and a model that misclassifies off-topic text still gets the scope sentence.
 - **Limit:** keyword lists can't know every off-topic subject. The model is the real judge, and C7.1's out-of-scope cases (threshold ≥ 95%) are where that is measured.
 - **Status:** Accepted
+
+### D-043 · Write framework and stock writes (C6.1)
+- **WRITE_PATH.md approved by the user on 2026-10-04 (gate G2).**
+- **One framework for every write** (`app/services/writes/framework.py`). An action implements `plan` (resolve the user's words into ids and numbers, validate, describe), `read_state` (the rows it will change, locked at apply time) and `apply`. The framework adds the guards from WRITE_PATH §2:
+  - **Authorisation:** `policy.can` at preview and again at apply. At apply the user is re-read from the database, so a deactivated or re-roled user can't confirm an old preview.
+  - **Previewed = applied:** `preview_hash` = SHA-256 of (action, payload, user). A different payload, hash or user is refused.
+  - **Stale and expired previews:** `state_version` = hash of the rows read at preview. At apply they are re-read under `SELECT … FOR UPDATE`; if they changed, nothing is saved and the user is asked to look again. Previews expire after 10 minutes (wall clock, not the business date).
+  - **Double confirm:** `operation_id` is unique in `agent_audit_log`; a second confirm returns the first result.
+  - **Audit:** one row per attempt: `pending → success`, or `failed` / `cancelled`. Failures are written in their own transaction after the rollback, with a plain message only (internal details stay in the server log).
+- **Each write uses its own autocommit connection,** so `conn.transaction()` is a real transaction and a failure row survives the rollback.
+- **Names → ids on the server** (`writes/resolve.py`) with the read path's matcher (D-026): one clear match is used, several close ones raise `Ambiguous` with options (the chat turns these into a question in C6.3), none raises `NotFound`. Inactive items and warehouses are refused. Issue targets (8 teams) match exactly, then by containment, then by trigram.
+- **Stock services** (`writes/stock.py`), following the data's conventions:
+  - `record_stock_movement`: inbound / outbound / issue; one signed `inv_transactions` row (`manual_adjustment` or `warehouse_issue` + team), stock row upserted; never below zero; no unit cost taken from a manual movement.
+  - `transfer_stock`: a `transfer_out` / `transfer_in` pair (`transfer_in.reference_id` = the out row), both stock rows locked in id order.
+  - `raise_stock_request`: an open `stock_requests` row; "needed by" can't be in the past.
+- **Events, not yet notifications:** results carry `low_stock` (when total on hand reaches the item's reorder level after stock goes out) and `stock_request_raised`. C6.5 turns them into role-scoped notifications (the contract tests already exist).
+- **Tests use throwaway items (`TS-…`) on the seeded DB** and remove everything they create, so the real catalogue and the answer keys are untouched. 32 tests: preview writes nothing, exact rows written, audit contents, replay, tampered hash/payload, another user's preview, expiry, stale state, two parallel confirms (one succeeds, stock never below zero), cancel, rollback after an error mid-transaction, policy at preview and after deactivation or demotion, bad arguments, limits, inactive records, ambiguity, transfers, requests.
+- **Timestamps of new stock records** use the business date with the current time of day (`core.config.business_now`). With `APP_TODAY` frozen for the demo, a stock movement recorded now still shows up in "movements this week" and in daily-use figures, instead of landing days after "today".
+- **Status:** Accepted
+
+### D-044 · Procurement writes (C6.2)
+- **Eight more actions on the C6.1 framework** (`app/services/writes/procurement.py`): `create_purchase_order`, `receive_against_po`, `record_unexpected_receipt`, `update_po_expected_date`, `cancel_po`, `clear_payment_tranche`, `set_reorder_policy`, `create_vendor`. Roles come from the policy module (WRITE_PATH §4).
+- **Purchase orders:**
+  - The server computes line totals, tax (0–28%), subtotal and total with decimal rounding; the request only names the vendor, items, quantities and unit prices. At most 20 lines, one line per item.
+  - The PO number comes from `po_number_seq` at confirm time (`PO-<year>-<nnnn>`, after PO-2026-0057); the preview says so.
+  - A Procurement Manager's order over ₹1,00,000 is saved as `pending_approval` with a pending `approvals` row, and the audit row says `awaiting_approval`. The Owner's decision is C6.4. The Owner's own orders are placed directly.
+  - **Payment instalments** come from the vendor's terms, following the patterns in the data ("50% Advance & 50% Against Dispatch", "20% Adv & Balance 45 Days Credit", "10 Days PDC", "100% Advance", …). Unknown terms give one "As per terms" instalment. Amounts are the server's share of the total.
+  - **Open stock requests** for an item on the PO, with a quantity within the ordered quantity, are linked and shown in the preview ("Covers the open stock request for 40 pcs … from Demo Inventory Manager"). They become `ordered` when the PO is placed; for a PO awaiting approval they stay `open` (linked) until it is approved.
+- **Receiving against a PO** (any role): the preview shows the PO number, item, quantity and warehouse only, never a price or vendor. The stock transaction gets the line's unit price as its cost (set by the server). Over-receipt is refused with a pointer to "unplanned delivery". With several items still due and none named, the user is asked which one. The PO becomes `partial` or `received`; when it is fully received, its `ordered` requests become `fulfilled`. A PO that isn't `placed`/`partial` can't be received.
+- **Unplanned deliveries:** header (vendor name as typed, invoice note) → stock transaction (`unexpected_receipt`, pointing at the header) → receipt row linked to that transaction.
+- **Expected date:** the new date replaces the PO's date list and the open lines' dates. (The views take the latest date in the list, so appending an earlier date would change nothing.) The old date stays in the audit row. Past dates and closed POs are refused.
+- **Cancel:** only `placed` or `pending_approval` POs with nothing received. The PO keeps its record with status `cancelled`, a pending approval is closed as rejected ("PO cancelled before a decision"), and linked requests go back to `open`.
+- **Instalments:** clearing one records who and when; with several unpaid and none named, the user picks one (stage and amount shown).
+- **Reorder settings:** upsert with old → new values in the preview; safety stock and preferred vendor are kept unless given.
+- **Vendors:** refused if an existing vendor has the same or a very similar name (trigram ≥ 0.8).
+- **New events** for C6.5: `approval_requested`, `stock_request_ordered`, `po_receipt`, `unexpected_receipt`, `po_date_changed`.
+- **Tests:** 37 more (`tests/integration/test_procurement_writes.py`) with a throwaway vendor "Zeta Test Supplies". Cleanup removes their POs and resets `po_number_seq` exactly as it was, so the fabricate test and the demo's next PO number are unchanged.
+- **Status:** Accepted
+
+### D-045 · Writes in the chat (C6.3; prompt v0.7)
+- **Graph:** `guard (write) → plan_write → check_write ⇄ ask_write → confirm_write → apply_write → finalize` (`app/agent/nodes/write.py`). Nodes that pause only pause; model and database work happens in the nodes before them, because LangGraph re-runs a paused node on resume.
+- **plan_write (model, PROMPTS.md §7 v0.7):** structured output `{actions: [{action, …fields}], none_applicable}`. The system message lists only the role's permitted actions. Fields the user didn't give are left empty, never guessed. An action outside the role (or a write touching only areas the role can't read, e.g. an Inventory Manager's "create a PO") gets the fixed denial.
+- **Routing change:** a write is no longer refused by read areas in the guard. An Inventory Manager receiving "against PO-2026-0003" mentions POs but may receive; authorisation is per action (the offered list, then `policy.can` at preview and at apply).
+- **One question at a time** (user's choice, 2026-10-04): missing details are asked in a fixed order per action (e.g. kind → item → quantity → warehouse), with buttons where the choices are known (warehouses, teams, in/out/issue) and free text otherwise. Unclear names come back from the services as `Ambiguous`/`NotFound` with the field they belong to, and become the same kind of question; picking an option uses the record's exact code. An unusable answer ("lots" for a quantity) is asked once more ("I didn't catch a number. …"), then the change is dropped with nothing saved.
+- **"…and 5 to the other":** the second part of the same kind keeps the item given for the first part. "The other" names no warehouse, so it is asked, not guessed. Warehouse prefixes ("132") offer 132-1 / 132-2 / 132-3 (matcher change shared with reads).
+- **One confirm card** lists every action's preview (summary, fields, effects). Confirm applies them all in ONE transaction (`apply_batch`; audit ids `chat:<thread>:<write>#1, #2`). Only a clear yes confirms (Confirm, yes, ok, haan, ji, हाँ, …); anything else cancels and is audited as `cancelled`.
+- **Offline:** `fake_write` understands the simple phrasings (add / remove / issue / move / request / receive against PO / place a PO for … at ₹… / mark … paid / Hinglish "… mein N … add kar do"); anything else gets an honest "offline demo mode" message.
+- **UI:** the confirm card shows each preview with Confirm (primary) and Cancel; typing an answer also works. The Inventory Manager's receipt card has no price or vendor.
+- **Not in this commit:** mixed read + write in one message (the write is handled, the question is not), and Owner approvals of waiting POs (C6.4).
+- **Status:** Accepted
+
+### D-046 · Owner approvals and user actions (C6.4)
+- **`decide_approval`** (Owner only) on the write framework (`app/services/writes/admin.py`). The preview shows the PO, vendor, total, requester and every line. Approve → PO `placed`, linked stock requests `ordered`. Reject → PO `rejected`, linked requests back to `open` and unlinked; the note is kept. Two decisions prepared on the same PO: the first wins, the second is refused as stale. Events: `approval_decided` addressed to the requester, plus one per linked stock request addressed to its requester (C6.5 builds role-scoped notifications from them).
+- **Approvals page** (Owner nav; `GET /approvals`, `POST /approvals/{po_number}/decide`): each waiting PO with its lines and Approve / Reject. A second click with an optional note is the confirmation, then preview and apply run back to back, so the page and the chat share one code path, one transaction and the same audit row.
+- **User management in one place:** `app/services/users.py` now holds create / (de)activate / reset; the Users page API and the new `create_user` / `deactivate_user` actions both call it. A user created through an action gets no usable password: the Owner issues a temporary one with Reset password on the Users page, so a secret never passes through the chat history, the graph checkpoint or a trace (WRITE_PATH §2 "Secrets in traces").
+- **In the chat:** these three actions are registered but not offered yet; offering them needs three new lines in the §7 action list (proposed v0.8, PROMPTS.md §18).
+- **Status:** Accepted
+
+### D-047 · Role-scoped notifications and the reorder scan (C6.5)
+- **Events in, notifications out** (`app/services/notifications.py`). Writes return events with full detail; `render(event, data, recipient_role)` builds each notification from an allow-list of fields per role, and the title and body are written only from those fields. Unknown events raise `ValueError`; a role that must not receive an event raises `PermissionError`. The contract tests written first in Phase 2 (`tests/unit/test_notification_visibility.py`) now run for real: the Inventory Manager never gets a vendor, price, total, the Owner's note or the Owner's name.
+- **Who gets what:** a stock request → buyers (PM, Owner); PO waiting for approval → Owner; the decision → the PM who asked (with the Owner's note), and each Inventory Manager whose request was on that PO (item, PO and date only); request ordered / delivery date changed → the person who asked; low stock after stock goes out → buyers; goods received against a PO and unplanned deliveries → PM; "reorder now" → PM.
+- **Same transaction as the change:** the framework writes the notifications inside the write's transaction, so a failed or rolled-back write sends nothing. One row per recipient (so "read" is per person), never to the person who made the change.
+- **Reorder scan (lead time, D-011):** items with status `reorder_now` in the PM's `reorder_status` view (same formula as the dashboard) become "Reorder now: order 65 by 17 Aug 2026 …" notifications, de-duplicated per item, person and day (`dedupe_key`). It runs when a PM or Owner opens their notifications, and from `make scan` (for a daily scheduler in deployment).
+- **API:** `GET /notifications` (your own only, newest 30, unread count), `POST /notifications/{id}/read` (someone else's → 404, same as missing), `POST /notifications/read-all`.
+- **UI:** a bell in the top bar with the unread count, polled every 60 s; the panel lists title, text and time; click to mark read, or mark all.
+- **Status:** Accepted
+
+### D-048 · Ask and reply on a PO waiting for approval; prompt v0.8 (C6.6)
+- **Why:** the user asked whether the Owner could question the requester before deciding. Approvals were a yes/no decision and notifications are one-way, so the only option was "reject with a note", which kills the PO.
+- **`ask_about_approval`** (Owner) and **`reply_to_approval`** (Procurement Manager, only on their own requests, checked in the service) write to a new `approval_messages` table (migration 0006). The PO stays `pending_approval` throughout; the Owner can approve or reject at any time, and once decided, no more questions can be asked.
+- **Notifications:** the question goes to the requester ("About PO-2026-0058: …"), the reply to the Owner. The Inventory Manager never receives either.
+- **Approvals page** now serves both roles: the Owner sees each waiting PO with its question/answer thread and Approve / Reject / Ask; the Procurement Manager sees "My approval requests" (waiting first, then recent decisions) with the thread and Reply. API: `POST /approvals/{po}/ask`, `GET /approvals/mine`, `POST /approvals/{po}/reply`, all through the write framework.
+- **Prompt v0.8 (approved):** five lines in the §7 action list: decide, ask, reply, add user, deactivate user. In the chat: "approve PO-2026-0058", "ask about PO-2026-0058: why not Shakti?", "reply on PO-2026-0058: …".
+- **Status:** Accepted
+
+### D-049 · Full eval runner (C7.1)
+- `make eval` (dry run, offline) / `make eval CONFIRM=yes` (real model) runs all 107 golden cases as their roles through the real agent (`evals/run_eval.py`). Write cases stop at the confirm card, so an eval never changes data. Each metric follows QUALITY_AND_EVALS.md §3 and is checked against the §4 gates; the JSON report (every case: route, checks, answer, SQL, tokens, seconds) goes to `evals/results/`. With LangSmith on, traces go to a separate `<project>-eval` project.
+- **Leaks are judged on what the user can see** (answer, buttons, table, confirm card), not on internal fields: an id that happens to contain "34" or the name of a denied area is not a leak. The smoke runner uses the same rule.
+- **Budget:** the run sets its own token cap (default 900k) for that process only, because the 200k daily app budget is smaller than a full run (~5k tokens per case in the smoke runs).
+- **Offline dry run (2026-10-04):** all 107 cases run, 0 errors, 0 leaks; the 6 failures are offline-only limits (templated answers missing words the real model would write, and the keyword stand-ins for the guard).
+- **Status:** Accepted
+
+### D-050 · Fixes from the first full eval run; prompt v0.9 (C7.2)
+- **Run 1 → run 2 (both full corpus, gpt-4.1-mini, ~$0.37 each):** execution accuracy 0.71 → **0.855**, faithfulness 0.911 → **1.00**, route accuracy 0.981 → **1.00**, clarification recall 0.917 → **1.00**, chart accuracy 0.871 → 0.903; leaks 0, predictions 0 and scope refusals 100% in both. **Every QUALITY_AND_EVALS §4 gate now passes.**
+- **Code fixes:**
+  - Grounding: the business year may be named ("In August 2026"), and a number written as part of a date must match exactly. The rounding allowance for amounts had let 2031 pass for 2026.
+  - A "location" mention that is really a team ("issued to C84 FM assembly") resolves to the team instead of "couldn't find a warehouse".
+  - "How are we doing?" goes to the measure question even if the model calls it help.
+  - A request that names a data area outright ("show me the users table") but that the model calls off-topic is decided by role: the fixed denial where the role can't see it, an answer where it can.
+- **Checker fixes:** expected text may be in the buttons; a one-number count key is met by that many result rows.
+- **Answer keys narrowed to what was asked:** RD-PM-09 (value only), RD-OW-06 (revenue and cost), RD-OW-09 (one count).
+- **Prompt v0.9 (PROMPTS.md §19):** SQL meanings (completed periods, reorder = reorder_now, "coming in" = inbound, one PO returns status and days overdue, items in stock = a count, users / lifecycle / "what will" from recorded data); composer never offers a chart and makes no claims about all rows unless shown.
+- **Still open (10 cases, logged in §7):** 6 give the right answer in a different SQL shape (the checker compares numbers, not meaning). 4 real misses, to revisit only if the demo needs them: "what should I reorder this week" still filters by the order-by date; the Owner's "explain our PO lifecycle" and "what will our margin be next quarter" still come back "not recorded"; "received this month" counted only `receipt`, not `inbound`.
+- **Status:** Accepted

@@ -37,6 +37,22 @@ OFF_TOPIC = re.compile(
 )
 
 
+# Words that name a data area outright. When the model calls such a request off-topic, the
+# role decides: allowed -> answer it, not allowed -> the fixed denial (full eval run 1).
+AREA_WORDS: list[tuple[str, re.Pattern[str]]] = [
+    ("users", re.compile(r"\b(users?|user accounts?|logins?|who has access)\b", re.I)),
+    ("vendors", re.compile(r"\b(vendors?|suppliers?)\b", re.I)),
+    ("prices", re.compile(r"\b(prices?|unit costs?|rates)\b", re.I)),
+    ("margins", re.compile(r"\b(margins?|profits?)\b", re.I)),
+    ("sales", re.compile(r"\b(sales|revenue|customers?)\b", re.I)),
+    ("audit_all", re.compile(r"\baudit\b", re.I)),
+]
+
+
+def areas_named(message: str) -> list[str]:
+    return [area for area, pattern in AREA_WORDS if pattern.search(message)]
+
+
 def script_language(declared: str, message: str) -> Lang:
     """Hindi is Devanagari; Hindi words in Roman letters are Hinglish (D-036)."""
     has_devanagari = bool(DEVANAGARI.search(message))

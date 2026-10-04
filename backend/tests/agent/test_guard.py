@@ -36,7 +36,8 @@ def guard_out(**overrides: Any) -> GuardOutput:
         (IM, ["prices"], "read", "refuse_rbac", ["prices"], False),
         (IM, ["vendors", "prices"], "read", "refuse_rbac", ["prices", "vendors"], False),
         (IM, ["stock", "prices"], "read", "read", ["prices"], False),  # mixed: answer the rest
-        (IM, ["purchase_orders"], "write", "refuse_rbac", ["purchase_orders"], False),
+        # writes are authorised per action in the write path (C6.3), not by read areas
+        (IM, ["purchase_orders"], "write", "write", [], False),
         (IM, ["stock"], "write", "write", [], False),
         (PM, ["margins"], "read", "refuse_rbac", ["margins"], False),
         (PM, ["audit_own"], "read", "read", [], False),

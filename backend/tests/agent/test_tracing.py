@@ -44,7 +44,7 @@ def test_turn_is_traced_with_role_lang_route_tags(monkeypatch: pytest.MonkeyPatc
     assert recorded["run"].tags == ["role:inventory_manager", "lang:en", "route:refuse_rbac",
                                     "rbac_denied"]  # fmt: skip
     metadata = recorded["metadata"]
-    assert metadata["prompt_version"] == "0.6" and metadata["llm_mode"] == "fake"
+    assert metadata["prompt_version"] == "0.9" and metadata["llm_mode"] == "fake"
     assert str(user.id) not in str(metadata) and user.email not in str(metadata)
     assert recorded["run"].outputs["route"] == "refuse_rbac"
 

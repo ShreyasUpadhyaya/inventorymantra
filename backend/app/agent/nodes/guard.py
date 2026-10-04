@@ -18,7 +18,7 @@ from app.agent.prompts import (
     ROLE_LABELS,
     render,
 )
-from app.agent.signals import OFF_TOPIC, script_language
+from app.agent.signals import OFF_TOPIC, VAGUE_MEASURE, areas_named, script_language
 from app.agent.state import AgentState, GuardOutput, Route
 from app.core.config import TIMEZONE, app_today, get_settings
 from app.policy import permissions
@@ -78,10 +78,15 @@ def decide(role: str, guard: GuardOutput) -> tuple[Route, list[str], bool]:
         return ("help" if guard.injection_suspected else "refuse_scope"), [], False
     if guard.intent in ("help", "greeting"):
         return "help", [], False
+    if guard.intent == "write":
+        # Writes are authorised per action (only the role's actions are offered, and the
+        # write services check policy again), not by read areas: an Inventory Manager
+        # receiving "against PO-2026-0003" mentions POs but is allowed to receive (C6.3).
+        return "write", [], off_topic
     denied = sorted(permissions.denied_areas(role, guard.data_areas))
     if denied and len(denied) == len(set(guard.data_areas)):
         return "refuse_rbac", denied, off_topic  # everything asked for is outside the role
-    return ("write" if guard.intent == "write" else "read"), denied, off_topic
+    return "read", denied, off_topic
 
 
 def guard_node(state: AgentState, config: RunnableConfig) -> AgentState:
@@ -89,6 +94,14 @@ def guard_node(state: AgentState, config: RunnableConfig) -> AgentState:
     guard = structured_call("guard", "fast", GuardOutput, guard_messages(role, state))
     language = script_language(guard.language, state["message"])
     route, denied, off_topic = decide(role, guard)
+    message = state["message"]
+    if not guard.injection_suspected:
+        named = areas_named(message)
+        if route == "refuse_scope" and named:  # "show me the users table": a data question
+            denied = sorted(permissions.denied_areas(role, named))
+            route = "refuse_rbac" if len(denied) == len(set(named)) else "read"
+        if route == "help" and VAGUE_MEASURE.search(message):
+            route = "read"  # "how are we doing?" -> ask which measure, not the help menu
     if route not in ("refuse_scope", "help") and OFF_TOPIC.search(state["message"]):
         off_topic = True  # the model may miss an off-topic part next to a data question
     if guard.injection_suspected:

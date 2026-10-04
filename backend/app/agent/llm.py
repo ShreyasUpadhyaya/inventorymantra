@@ -27,6 +27,7 @@ MAX_TOKENS: dict[str, int] = {
     "sql": 700,
     "compose": 450,
     "judge": 120,
+    "write": 600,
 }
 DEFAULT_MAX_TOKENS = 800
 

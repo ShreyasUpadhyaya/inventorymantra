@@ -209,7 +209,13 @@ export function ChatView() {
             }}
             maxLength={waitingForAnswer ? 200 : MAX_MESSAGE}
             rows={1}
-            placeholder={waitingForAnswer ? "Pick an option above or type your answer…" : "Ask a question…"}
+            placeholder={
+              !waitingForAnswer
+                ? "Ask a question or make a change…"
+                : last?.kind === "assistant" && last.turn.suggestions.length
+                  ? "Pick an option above or type your answer…"
+                  : "Type your answer…"
+            }
             aria-label="Message"
             className="max-h-40 min-h-10 resize-none"
             disabled={busy}

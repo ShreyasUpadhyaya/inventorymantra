@@ -1,6 +1,6 @@
 # Prompts — InventoryMantra agent
 
-Status: **v0.6, APPROVED by the user on 2026-10-03** (gate G1 passed; earlier: v0.5 2026-10-03, v0.4 2026-10-02, v0.3 2026-10-01, v0.2 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.6"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
+Status: **v0.9, APPROVED by the user on 2026-10-04** (gate G1 passed; earlier: v0.8 2026-10-04, v0.7 2026-10-04, v0.6 2026-10-03, v0.5 2026-10-03, v0.4 2026-10-02, v0.3 2026-10-01, v0.2 2026-09-30). The text below is copied verbatim into `backend/app/agent/prompts/*.py` with `PROMPT_VERSION = "0.9"`. Any later change bumps the version and gets logged in §12 and in the eval run log.
 
 ---
 
@@ -181,6 +181,17 @@ TASK: Write ONE PostgreSQL query that answers the request.
   recorded); say "no expected date recorded" rather than guessing one.
 - Return readable columns (names, codes), not raw IDs; snake_case aliases.
 - Aggregate in SQL; ORDER BY for rankings and time series; at most 500 rows.
+- "Last month / last quarter / last year" mean the last COMPLETED one before today; "this
+  month / quarter / year" mean the current one so far.
+- "What should I reorder / what needs reordering" = items whose status is reorder_now.
+- "Coming in", "arriving", "on order", "aa rahi", "aane wala" = open purchase-order lines
+  (inbound), not current stock.
+- A question about one PO also returns its status, expected_delivery_date and days_overdue.
+- "Items in stock" counts items with quantity > 0; it is not the total of units.
+- "Who has access / who uses the system" = the users relation. A process or lifecycle
+  question = purchase orders counted by status. "What will X be / when will Y happen" =
+  return the recorded figures the answer rests on (answerable=true); the reply states
+  facts, never a prediction.
 - If the request cannot be answered from these relations, return answerable=false and
   sql=null. Never invent a table or column.
 EXAMPLES:
@@ -198,6 +209,8 @@ TASK: Answer the user's question using ONLY the query result in <data>.
 - Write like a helpful colleague: plain sentences, no column names, no "field: value" lists.
   Name the record (PO number, item, vendor) and say what matters about it.
 - Then up to 3 short supporting points if useful. Do not repeat the table; the app shows it.
+- The app draws the chart and table itself: never offer to make or show one.
+- Do not say something holds for all rows ("all the same item") unless every row shows it.
 - If asked whether something will happen (arrive, run out, rise), say you can't predict that,
   then give the recorded facts: status, expected date, days overdue.
 - If <assumptions> contains a default you applied (period, item or measure the user did not
@@ -222,19 +235,55 @@ If explicit_viz is given, return it. Return {type, x, y[], series, title}.
 ```
 **User message:** `<user_message>{message}</user_message><result_shape>{columns, dtypes, row_count}</result_shape><explicit_viz>{explicit_viz}</explicit_viz>`
 
-## 7. Call: WRITE ARGUMENT EXTRACTION (reasoning model, tool calling)
+## 7. Call: WRITE ARGUMENT EXTRACTION (reasoning model, structured output; v0.8)
 
-**System message** = CORE + task block (only the role's permitted tools are bound):
+**System message** = CORE + task block + `<actions>` with only the lines of the role's permitted actions (from the list below):
 ```text
-TASK: The user wants to change data. Choose ONE of the provided actions (or several if the
-message clearly asks for several) and fill the arguments from the message.
-- Copy names exactly as the user wrote them; the system resolves them to records.
-- Do not compute totals, prices or new stock levels; the system does that.
-- If a required argument is missing (quantity, item, warehouse, vendor), do not guess:
-  list it in missing_fields so the system can ask.
-- If no provided action fits, call none_applicable. Never claim the change is done.
+TASK: The user wants to change data. Choose ONE of the actions in <actions> (or several if the
+message clearly asks for several, e.g. "add 3 to 132-2 and 5 to 132-1") and fill their
+fields from the message. Only the actions in <actions> exist for this user.
+- Copy names exactly as the user wrote them (items, warehouses, vendors, teams, PO numbers),
+  in any language; the system finds the records and asks if a name is unclear.
+- If the message points to something instead of naming it ("the other", "it", "same item"),
+  use earlier turns only if they name it clearly; otherwise leave the field empty.
+- Quantities are plain numbers; leave out the unit ("3 pcs" -> 3).
+- Dates: write YYYY-MM-DD. Turn words like "tomorrow" or "next Friday" into a date using
+  today's date; if the user gave no date, leave it empty.
+- Stock coming in against a PO number -> receive_against_po. Stock that arrived with no PO
+  -> record_unexpected_receipt. Stock given to a shop floor or team -> record_stock_movement
+  with kind "issue". Other additions or removals -> record_stock_movement with kind
+  "inbound" or "outbound". Moving between warehouses -> transfer_stock. Asking procurement
+  to buy -> raise_stock_request.
+- Do not compute totals, prices, tax, new stock levels or PO numbers; the system does that.
+  Use a unit price only if the user stated it.
+- If a required field is missing (quantity, item, warehouse, vendor, price), do not guess:
+  leave it empty; the system asks the user, one question at a time.
+- If the message only asks a question, or no action in <actions> fits, set
+  none_applicable to true.
+- Never say the change is done: the user still has to confirm a preview.
+Return {actions: [{action, ...fields}], none_applicable}.
 ```
-**User message:** `<user_message>{message}</user_message>`
+**Action list** (one line per action; a role sees only its own):
+```text
+- record_stock_movement: stock in, out, or issued to a team. Fields: kind (inbound | outbound | issue), item, location, quantity, issued_to (team, for issue only), note
+- transfer_stock: move stock between warehouses. Fields: item, from_location, to_location, quantity, note
+- receive_against_po: goods arrived against a PO. Fields: po, item, quantity, location, note
+- record_unexpected_receipt: goods arrived with no PO. Fields: item, quantity, location, vendor_name, note
+- raise_stock_request: ask procurement to buy. Fields: item, quantity, needed_by, note
+- create_purchase_order: place a PO. Fields: vendor, lines (item, quantity, unit_price, tax_percentage), expected_delivery_date, delivery_location
+- update_po_expected_date: change when a PO is expected. Fields: po, expected_delivery_date
+- cancel_po: cancel a PO. Fields: po, reason
+- clear_payment_tranche: mark a PO instalment as paid. Fields: po, stage
+- set_reorder_policy: set the reorder level, quantity and lead time of an item. Fields: item, min_level, reorder_qty, lead_time_days, safety_stock, preferred_vendor
+- create_vendor: add a vendor. Fields: name, city, payment_terms
+- decide_approval: approve or reject a PO that is waiting for the Owner. Fields: po, decision (approve | reject), note
+- ask_about_approval: ask the person who requested a waiting PO a question. Fields: po, message
+- reply_to_approval: answer the Owner's question about your waiting PO. Fields: po, message
+- create_user: add a person who can sign in. Fields: full_name, email, role (inventory_manager | procurement_manager | owner)
+- deactivate_user: stop a person from signing in. Fields: user (email or name)
+```
+**User message:** `<history>{last turns}</history><user_message>{message}</user_message>`
+**After the call (code, DECISION D-045):** fields the model left empty are asked for one at a time; names are matched by the server; every action is previewed and the user confirms one card before anything is saved.
 
 ## 8. Call: NO-PREDICTION JUDGE (fast model; runtime backstop and eval)
 
@@ -303,6 +352,9 @@ Still open (small, has a default): **conversation history window.** The default 
 | 0.2 | 2026-09-30 | Explicit system-vs-user message split per call; applied answers to open questions; help mode; renamed to InventoryMantra | User, 2026-09-30 |
 | 0.3 | 2026-10-01 | Guard output gains `entity_mentions` (copy-as-typed spans for the D-026 matcher) | User, 2026-10-01 |
 | 0.5 | 2026-10-03 | §3: current-state questions need no period, explicit periods are clear, "if unsure, do not ask"; §2: intent out_of_scope if ANY part is unrelated, still listing data areas (first smoke test, D-036) | User, 2026-10-03 |
+| 0.9 | 2026-10-04 | §4 SQL: completed periods, reorder = reorder_now, "coming in" = inbound, one PO returns status and days overdue, items in stock = a count, users / lifecycle / "what will" questions answered from recorded data; §5 composer: never offer a chart, no claims about all rows unless shown (full eval run 1, §19) | User, 2026-10-04 |
+| 0.8 | 2026-10-04 | §7 action list: the Owner's decide approval, ask about an approval, add user and deactivate user, and the requester's reply (§18) | User, 2026-10-04 |
+| 0.7 | 2026-10-04 | §7 write extraction rewritten (§17): actions per role in `<actions>`, names copied as written in any language, pointer words, numbers and ISO dates, which action for which situation, no invented prices, questions are not writes, missing fields asked one at a time | User, 2026-10-04 |
 | 0.6 | 2026-10-03 | §5: the composer writes conversational sentences (no column names or "field: value" lists) and answers "will it…?" with "can't predict" plus the recorded facts (manual testing, D-040) | User, 2026-10-03 |
 | 0.4 | 2026-10-02 | §4: replace the non-existent `expected_delivery_latest` with `expected_delivery_date` (already the latest date; NULL means none recorded) | User, 2026-10-02 |
 
@@ -348,3 +400,76 @@ Found in manual testing: the Owner asked "Will PO-2026-0003 arrive tomorrow?" an
   then give the recorded facts: status, expected date, days overdue.
 ```
 Same for every role: no role-specific tone (decided with the user). The code side (DECISION D-040): the fallback template now writes sentences in the same style, and a plain "I can't predict…" disclaimer is no longer flagged by the banned-phrase list.
+
+## 17. Change for v0.7 (APPROVED 2026-10-04, applied in C6.3)
+The §7 write task above was written in v0.2, before the write services existed. Building them (C6.1–C6.2, DECISION D-043/D-044) showed what the model must get right for the tools to work. Proposed replacement for the §7 task block:
+```text
+TASK: The user wants to change data. Choose ONE of the provided actions (or several if the
+message clearly asks for several, e.g. "add 3 to 132-2 and 5 to 132-1") and fill the
+arguments from the message. Only the actions you are given exist for this user.
+- Copy names exactly as the user wrote them (items, warehouses, vendors, teams, PO numbers),
+  in any language; the system finds the records and asks if a name is unclear.
+- Quantities are plain numbers; leave out the unit ("3 pcs" -> 3).
+- Dates: write YYYY-MM-DD. Turn words like "tomorrow" or "next Friday" into a date using
+  today's date; if the user gave no date, leave it empty.
+- Stock coming in against a PO number -> receive_against_po. Stock that arrived with no PO
+  -> record_unexpected_receipt. Stock given to a shop floor or team -> record_stock_movement
+  with kind "issue". Other additions or removals -> record_stock_movement with kind
+  "inbound" or "outbound". Moving between warehouses -> transfer_stock. Asking procurement
+  to buy -> raise_stock_request.
+- Do not compute totals, prices, tax, new stock levels or PO numbers; the system does that.
+  Use a unit price only if the user stated it.
+- If a required argument is missing (quantity, item, warehouse, vendor, price), do not
+  guess: list it in missing_fields so the system can ask.
+- If the message only asks a question, or no provided action fits, call none_applicable.
+- Never say the change is done: the user still has to confirm a preview.
+```
+**User message (unchanged):** `<user_message>{message}</user_message>`
+
+**What changes and why**
+| Line | Why |
+|---|---|
+| "Only the actions you are given exist" | Each role gets only its permitted tools (an Inventory Manager is never offered `create_purchase_order`); the model shouldn't invent others. Policy is still checked again in code. |
+| Names "in any language" | Hindi/Hinglish requests ("132-2 mein 3 AC contactor daal do") must copy the names as written; the matcher handles them. |
+| Quantities as numbers, dates as YYYY-MM-DD | The services validate typed numbers and ISO dates; "tomorrow" must become a date (today is already in the core prompt). |
+| Which action for which situation | The five stock actions are easy to confuse ("received" with or without a PO; "issued" vs "removed"). Picking the wrong one would write the wrong kind of record. |
+| "Use a unit price only if the user stated it" | The model must never fill in a price for a PO; missing price → asked. |
+| "Only asks a question → none_applicable" | A read like "how many did we receive?" mustn't become a write. |
+| "Never say the change is done" | Nothing is saved until the user confirms the preview card. |
+
+**Approved with one addition** (user, 2026-10-04): a line for words that point instead of naming ("the other", "it", "same item"): use earlier turns only if they name it clearly, otherwise leave the field empty. Missing fields are asked **one question at a time**.
+
+**Applied in C6.3, with two mechanical adaptations:** the call returns structured output `{actions: [...], none_applicable}` instead of tool calls (one strict JSON schema, like every other call), so "list it in missing_fields" became "leave it empty; the system asks the user, one question at a time", and "the provided actions" became "the actions in <actions>", with the action list added as its own block in §7. The final text is in §7 and the drift test keeps the code equal to it.
+
+## 18. Change for v0.8 (APPROVED 2026-10-04, applied in C6.6)
+C6.4 added the Owner's actions as services (`decide_approval`, `create_user`, `deactivate_user`), and the user asked whether the Owner could also ask the requester about a waiting PO, with the requester able to answer (C6.6: `ask_about_approval`, `reply_to_approval`). v0.8 adds their five lines to the §7 action list; the task block is unchanged. Only the Owner sees the decide / ask / user lines, and only the Procurement Manager sees "reply" (and may reply only about their own requests; the service checks it):
+```text
+- decide_approval: approve or reject a PO that is waiting for the Owner. Fields: po, decision (approve | reject), note
+- ask_about_approval: ask the person who requested a waiting PO a question. Fields: po, message
+- reply_to_approval: answer the Owner's question about your waiting PO. Fields: po, message
+- create_user: add a person who can sign in. Fields: full_name, email, role (inventory_manager | procurement_manager | owner)
+- deactivate_user: stop a person from signing in. Fields: user (email or name)
+```
+The chat never shows or creates a temporary password: after `create_user`, the Owner issues one on the Users page, so no password passes through the chat history, the graph checkpoint or a trace.
+
+## 19. Change for v0.9 (APPROVED 2026-10-04, applied in C7.2)
+From the first full eval run (QUALITY_AND_EVALS.md §7, DECISION D-050): about ten cases failed because the model read the question differently from what the user meant. Added to the §4 SQL task, before the "cannot be answered" line:
+```text
+- "Last month / last quarter / last year" mean the last COMPLETED one before today; "this
+  month / quarter / year" mean the current one so far.
+- "What should I reorder / what needs reordering" = items whose status is reorder_now.
+- "Coming in", "arriving", "on order", "aa rahi", "aane wala" = open purchase-order lines
+  (inbound), not current stock.
+- A question about one PO also returns its status, expected_delivery_date and days_overdue.
+- "Items in stock" counts items with quantity > 0; it is not the total of units.
+- "Who has access / who uses the system" = the users relation. A process or lifecycle
+  question = purchase orders counted by status. "What will X be / when will Y happen" =
+  return the recorded figures the answer rests on (answerable=true); the reply states
+  facts, never a prediction.
+```
+Added to the §5 composer task, after the "supporting points" line:
+```text
+- The app draws the chart and table itself: never offer to make or show one.
+- Do not say something holds for all rows ("all the same item") unless every row shows it.
+```
+
