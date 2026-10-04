@@ -39,6 +39,7 @@ make api         # uvicorn backend on :8000
 make web         # next dev on :3000
 make test        # test-db, then ruff + mypy + pytest (unit + rbac); no LLM calls
 make eval        # LangSmith eval run over evals/corpus (costs tokens; run deliberately)
+make converse    # 36 multi-turn conversations with automatic checks (offline unless CONFIRM=yes)
 ```
 
 ## 4. One-commit approval protocol (non-negotiable)

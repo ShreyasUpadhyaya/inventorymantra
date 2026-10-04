@@ -22,8 +22,11 @@ VAGUE_TIME = re.compile(
 
 # Vague measures: only then may the bot ask "what would you like to see?"
 VAGUE_MEASURE = re.compile(
-    r"how are we doing|how(?:'s| is) (?:business|it going|everything)|how are things|"
-    r"overall (?:status|picture)|performance overview|kya haal|"
+    r"how are we doing|how are things|"
+    # "how is the business going?", "how's our company doing" (voice test 2026-10-05)
+    r"how(?:'s| is| are)? (?:the |our )?(?:business|company)\b|"
+    r"how(?:'s| is| are) (?:it|everything|things) (?:going|doing)|"
+    r"overall (?:status|picture|performance)|performance overview|kya haal|"
     r"kais[aei] (?:chal rah[aei]|kar rah[ei])|"  # Hinglish: kaisa chal raha, kaise kar rahe
     r"कैस[ाेी] (?:चल रह[ाेी]|कर रह[ेी])|क्या हाल",  # user test 2026-10-04: हम कैसा कर रहे हैं?
     re.I,
@@ -49,6 +52,34 @@ AREA_WORDS: list[tuple[str, re.Pattern[str]]] = [
     ("sales", re.compile(r"\b(sales|revenue|customers?)\b", re.I)),
     ("audit_all", re.compile(r"\baudit\b", re.I)),
 ]
+
+
+# A whole message that is only a greeting or thanks (probe 2026-10-04: "Thanks!" was sent to
+# the SQL step and came back "not recorded").
+GREETING = re.compile(
+    r"^\s*(hi|hello|hey|namaste|namaskar|नमस्ते|good (?:morning|afternoon|evening))[\s!.]*$",
+    re.I,
+)
+THANKS = re.compile(
+    r"^\s*(thanks?|thank you|thx|ok(?:ay)?,? thanks?|dhanyavaad|dhanyawad|shukriya|धन्यवाद|"
+    r"शुक्रिया)[\s!.]*$",
+    re.I,
+)
+# A change request: a write verb first and a number ("Add 3 to 132 and 5 to the other" was
+# read as a question when no item was named; probe 2026-10-04).
+WRITE_START = re.compile(
+    r"^\s*(add|issue|transfer|move|remove|receive|record|request|raise|place|create)\b.*\d",
+    re.I,
+)
+_CLAUSE_SPLIT = re.compile(r"\s*(?:\band then\b|\bthen\b|\band\b|\baur\b|और|फिर|[,;/])\s*", re.I)
+
+
+def without_off_topic(message: str) -> str:
+    """The message minus its clearly off-topic clauses ("stock of bush and write a poem" ->
+    "stock of bush"), so the composer never sees the poem request (probe 2026-10-04)."""
+    clauses = [c for c in _CLAUSE_SPLIT.split(message) if c and c.strip()]
+    kept = [c for c in clauses if not OFF_TOPIC.search(c)]
+    return ", ".join(kept) if kept and len(kept) < len(clauses) else message
 
 
 def areas_named(message: str) -> list[str]:

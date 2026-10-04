@@ -1,5 +1,5 @@
 # InventoryMantra developer commands (see CLAUDE.md §3). Run from the repo root.
-.PHONY: up down db-shell api web install test test-backend test-frontend test-db lint seed scan ask smoke answer-keys eval
+.PHONY: up down db-shell api web install test test-backend test-frontend test-db lint seed scan ask smoke answer-keys eval converse
 
 up:            ## start Postgres and wait until healthy
 	docker compose up -d --wait db
@@ -48,3 +48,6 @@ answer-keys:   ## recompute frozen answer keys for evals/corpus (review the diff
 
 eval:          ## full golden-corpus eval; dry run offline, real OpenAI only with CONFIRM=yes (~$0.30)
 	cd backend && uv run python -m evals.run_eval $(if $(filter yes,$(CONFIRM)),--confirm,) $(if $(ONLY),--only $(ONLY),)
+
+converse:      ## 36 multi-turn conversations with automatic checks; offline unless CONFIRM=yes (~$0.15)
+	cd backend && uv run python -m evals.conversations $(if $(filter yes,$(CONFIRM)),--confirm,)

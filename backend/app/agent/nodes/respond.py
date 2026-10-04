@@ -3,7 +3,8 @@
 from langchain_core.runnables import RunnableConfig
 
 from app.agent.prompts import DENIAL, OUT_OF_SCOPE
-from app.agent.prompts.help import EXAMPLES, GREETING, HELP_INTRO
+from app.agent.prompts.help import GREETING, HELP_INTRO, WELCOME, examples
+from app.agent.signals import THANKS
 from app.agent.state import AgentState
 
 
@@ -14,11 +15,13 @@ def respond_fixed(state: AgentState, config: RunnableConfig) -> AgentState:
         return {"answer": OUT_OF_SCOPE[lang], "suggestions": []}
     if route == "refuse_rbac":
         return {"answer": DENIAL[lang], "suggestions": []}
-    examples = EXAMPLES[config["configurable"]["role"]]
+    chips = examples(config["configurable"]["role"], lang)
     intro = HELP_INTRO[lang]
-    if state["guard"].intent == "greeting":
+    if THANKS.search(state["message"]):
+        intro = f"{WELCOME[lang]} {intro}"
+    elif state["guard"].intent == "greeting":
         intro = f"{GREETING[lang]} {intro}"
-    return {"answer": intro, "suggestions": list(examples)}
+    return {"answer": intro, "suggestions": list(chips)}
 
 
 def finalize(state: AgentState) -> AgentState:

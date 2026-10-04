@@ -233,3 +233,21 @@ def test_an_unknown_account_gets_the_denial_not_a_crash(world: World) -> None:
     turn = run_turn(stranger, "Add 3 Zeta Test Widget Beta to 132-2")
     assert turn.answer == DENIAL["en"] and turn.interrupt is None
     assert world.stock(world.beta, "132-2") is None
+
+
+def test_a_name_that_keeps_matching_nothing_is_dropped_after_two_retries(world: World) -> None:
+    """Probe 2026-10-04: answering "1" to "Which vendor?" looped forever."""
+    plan = {"actions": [call("create_purchase_order", vendor=None,
+                             lines=[{"item": "Zeta Test Widget Alpha", "quantity": 20,
+                                     "unit_price": 450, "tax_percentage": None}])],
+            "none_applicable": False}  # fmt: skip
+    with fake.scripted("write", plan):
+        turn = ask(world, PM, "Place a PO for 20 Zeta Test Widget Alpha at 450 each")
+    seen = []
+    for _ in range(6):
+        if turn.interrupt is None or turn.interrupt["kind"] == "confirm":
+            break
+        seen.append(turn.interrupt["question"])
+        turn = answer(world, PM, turn, "1" if "vendor" in turn.interrupt["question"] else "450")
+    assert turn.interrupt is None and "vendor" in turn.answer.lower()
+    assert len(seen) <= 4

@@ -352,6 +352,13 @@ def check_write(state: AgentState, config: RunnableConfig) -> AgentState:
         except (Ambiguous, NotFound) as exc:
             if exc.field is None:
                 return _stop(write, exc.message)
+            misses = dict(write.get("misses") or {})
+            misses[exc.field] = misses.get(exc.field, 0) + 1
+            write = {**write, "misses": misses}
+            if isinstance(exc, NotFound) and misses[exc.field] > MAX_ASKS:
+                # probe 2026-10-04: a vendor answer of "1" matched nothing, was asked again
+                # and accepted again, forever; now the change is dropped after two retries
+                return _stop(write, GAVE_UP[lang].format(field=field_name(exc.field, lang)))
             if isinstance(exc, NotFound):
                 _set(args, exc.field, None)  # the name matched nothing: ask for it again
             question = {"field": exc.field, "text": exc.message if exc.options else

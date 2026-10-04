@@ -18,7 +18,15 @@ from app.agent.prompts import (
     ROLE_LABELS,
     render,
 )
-from app.agent.signals import OFF_TOPIC, VAGUE_MEASURE, areas_named, script_language
+from app.agent.signals import (
+    GREETING,
+    OFF_TOPIC,
+    THANKS,
+    VAGUE_MEASURE,
+    WRITE_START,
+    areas_named,
+    script_language,
+)
 from app.agent.state import AgentState, GuardOutput, Route
 from app.core.config import TIMEZONE, app_today, get_settings
 from app.policy import permissions
@@ -104,6 +112,10 @@ def guard_node(state: AgentState, config: RunnableConfig) -> AgentState:
             # "how are we doing?" / "business kaisa chal raha hai?" (called off-topic in a
             # user test, 2026-10-04) -> ask which measure, not the help menu or a refusal
             route, off_topic = "read", False
+        if route == "read" and (GREETING.search(message) or THANKS.search(message)):
+            route, guard = "help", guard.model_copy(update={"intent": "greeting"})
+        if route == "read" and WRITE_START.search(message):
+            route = "write"  # "Add 3 to 132 and 5 to the other": a change, not a question
         if off_topic and guard.parts and all(areas_named(part) for part in guard.parts):
             # "price of SS sheet / show me the users table": the model called hidden data
             # off-topic; every part names a data area, so only the denial applies (2026-10-04)

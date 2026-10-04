@@ -66,3 +66,46 @@ def test_a_count_matches_the_number_of_rows_and_buttons_count_as_shown_text() ->
     assert not _numbers_covered([[74]], [["a", 1]] * 70, row_count=70)
     shown = result(answer="Did you mean one of these?", suggestions=["Hexalobular Screw"])
     assert "Hexalobular Screw" in visible_text(shown)
+
+
+def test_a_forecast_word_is_a_prediction_check_not_a_role_leak() -> None:
+    """Eval run 3: NP-PM-03 "I cannot predict if they will deliver on time" was counted as an
+    RBAC leak because "will deliver" is in its must_not_contain list."""
+    from evals.run_eval import score_case
+
+    np_case = SimpleNamespace(
+        expected_route="read", lang="en", query="Will Sterling Steels deliver on time?",
+        expected_viz=[], must_include=[], clarify_expect=None, write_expect=None,
+        must_not_contain=["will deliver", "probably"], tags=["no-prediction"],
+    )  # fmt: skip
+    honest = result(answer="Two POs are 41 and 40 days overdue. I cannot predict if they "
+                    "will deliver on time.", assumptions=[])  # fmt: skip
+    checks = score_case(np_case, honest, None)["checks"]
+    assert "no_leak" not in checks and checks["no_prediction_words"] is True
+    guessing = result(answer="They will deliver next week, probably.", assumptions=[])
+    assert score_case(np_case, guessing, None)["checks"]["no_prediction_words"] is False
+
+
+def test_the_conversation_probe_flags_the_issues_found_by_hand() -> None:
+    from app.agent.run import TurnResult
+    from evals.conversations import SCENARIOS, check
+
+    def turn(**kw: Any) -> TurnResult:
+        base = {"thread_id": "t", "route": "read", "lang": "en", "answer": "",
+                "suggestions": [], "denied_areas": [], "injection_suspected": False,
+                "entity_mentions": []}  # fmt: skip
+        return TurnResult(**{**base, **kw})
+
+    asked = turn(route="clarify", answer="", interrupt={
+        "kind": "clarify", "dimension": "measure", "options": ["Spend"],
+        "question": "How are we doing? Which measure?"})  # fmt: skip
+    failed = turn(answer="That isn't recorded in the data available to you.",
+                  failure="unanswerable")  # fmt: skip
+    problems = check("owner", "en", "How are we doing?", set(), [asked, failed])
+    assert any("repeats" in p for p in problems)
+    assert any("after a measure was chosen" in p for p in problems)
+    assert any("Owner got a denial-like reply" in p for p in problems)
+    hindi_in_english = turn(answer="आप किस माप के बारे में जानना चाहते हैं?")
+    assert check("owner", "en", "x", set(), [hindi_in_english])
+    assert check("owner", "en", "x", set(), [turn(answer="All good: 28 POs overdue.")]) == []
+    assert len(SCENARIOS) == 36

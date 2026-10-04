@@ -16,6 +16,7 @@ from pydantic import BaseModel, ConfigDict
 
 from app.agent.entity_match import normalise, resolve
 from app.agent.llm import LLMBudgetExceededError, LLMConfigError, structured_call
+from app.agent.measures import MEASURE_QUESTION, measure_options
 from app.agent.nodes.guard import neutralise, system_prompt
 from app.agent.prompts import render
 from app.agent.prompts.clarify import CLARIFY_TASK
@@ -138,6 +139,13 @@ def clarify_check(state: AgentState, config: RunnableConfig) -> AgentState:
     """One model call: is the period or measure too vague, with no conventional default?"""
     if state.get("clarifications"):  # already asked once this turn
         return {"clarify": None}
+    if VAGUE_MEASURE.search(state["message"]):
+        # "how are we doing?" always needs a measure; asked from the role's fixed list, no
+        # model call (probe 2026-10-04: model-written options the role couldn't answer)
+        role, lang = config["configurable"]["role"], state["lang"]
+        return {"clarify": {"kind": "clarify", "dimension": "measure",
+                            "question": MEASURE_QUESTION[lang],
+                            "options": measure_options(role, lang)}}  # fmt: skip
     try:
         out = structured_call(
             "clarify",
@@ -162,9 +170,12 @@ def clarify_check(state: AgentState, config: RunnableConfig) -> AgentState:
     if ask and out.dimension == "measure" and not VAGUE_MEASURE.search(state["message"]):
         # Smoke run 2: asked "gross, operating or net margin?" when only gross margin exists.
         ask = False
-    question = without_echo(out.question or "", state["message"])
+    question, options = without_echo(out.question or "", state["message"]), out.options
+    if out.dimension == "measure":  # fixed per role: only measures its views answer (probe)
+        role, lang = config["configurable"]["role"], state["lang"]
+        question, options = MEASURE_QUESTION[lang], measure_options(role, lang)
     payload = {"kind": "clarify", "dimension": out.dimension, "question": question,
-               "options": out.options} if ask else None  # fmt: skip
+               "options": options} if ask else None  # fmt: skip
     return {"clarify": payload, "assumptions": assumptions}
 
 

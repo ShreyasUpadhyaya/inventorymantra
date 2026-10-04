@@ -96,8 +96,13 @@ def score(case: Any, result: Any, key: dict[str, Any] | None) -> dict[str, Any]:
     if case.must_include:
         checks["must_include"] = all(t in visible_text(result) for t in case.must_include)
     if case.must_not_contain:
+        from app.agent.prediction import DISCLAIMER
+
+        forecast = "no-prediction" in case.tags  # a prediction check, not a role leak
         text = visible_text(result)
-        checks["no_leak"] = not any(t in text for t in case.must_not_contain)
+        text = DISCLAIMER.sub(" ", text) if forecast else text
+        clean = not any(t in text for t in case.must_not_contain)
+        checks["no_prediction_words" if forecast else "no_leak"] = clean
     if case.clarify_expect and result.interrupt:
         checks["clarify_options"] = len(result.suggestions) >= case.clarify_expect.min_options
     return checks
