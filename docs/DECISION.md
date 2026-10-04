@@ -451,3 +451,16 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Budget:** the run sets its own token cap (default 900k) for that process only, because the 200k daily app budget is smaller than a full run (~5k tokens per case in the smoke runs).
 - **Offline dry run (2026-10-04):** all 107 cases run, 0 errors, 0 leaks; the 6 failures are offline-only limits (templated answers missing words the real model would write, and the keyword stand-ins for the guard).
 - **Status:** Accepted
+
+### D-050 · Fixes from the first full eval run; prompt v0.9 (C7.2)
+- **Run 1 → run 2 (both full corpus, gpt-4.1-mini, ~$0.37 each):** execution accuracy 0.71 → **0.855**, faithfulness 0.911 → **1.00**, route accuracy 0.981 → **1.00**, clarification recall 0.917 → **1.00**, chart accuracy 0.871 → 0.903; leaks 0, predictions 0 and scope refusals 100% in both. **Every QUALITY_AND_EVALS §4 gate now passes.**
+- **Code fixes:**
+  - Grounding: the business year may be named ("In August 2026"), and a number written as part of a date must match exactly. The rounding allowance for amounts had let 2031 pass for 2026.
+  - A "location" mention that is really a team ("issued to C84 FM assembly") resolves to the team instead of "couldn't find a warehouse".
+  - "How are we doing?" goes to the measure question even if the model calls it help.
+  - A request that names a data area outright ("show me the users table") but that the model calls off-topic is decided by role: the fixed denial where the role can't see it, an answer where it can.
+- **Checker fixes:** expected text may be in the buttons; a one-number count key is met by that many result rows.
+- **Answer keys narrowed to what was asked:** RD-PM-09 (value only), RD-OW-06 (revenue and cost), RD-OW-09 (one count).
+- **Prompt v0.9 (PROMPTS.md §19):** SQL meanings (completed periods, reorder = reorder_now, "coming in" = inbound, one PO returns status and days overdue, items in stock = a count, users / lifecycle / "what will" from recorded data); composer never offers a chart and makes no claims about all rows unless shown.
+- **Still open (10 cases, logged in §7):** 6 give the right answer in a different SQL shape (the checker compares numbers, not meaning). 4 real misses, to revisit only if the demo needs them: "what should I reorder this week" still filters by the order-by date; the Owner's "explain our PO lifecycle" and "what will our margin be next quarter" still come back "not recorded"; "received this month" counted only `receipt`, not `inbound`.
+- **Status:** Accepted

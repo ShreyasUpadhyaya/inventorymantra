@@ -263,3 +263,38 @@ def test_the_real_guard_backstop_catches_off_topic_the_model_missed() -> None:
     with fake.scripted("guard", guard(intent="read", data_areas=["stock"])):
         result = run_turn(demo(IM), "stock of bush, and what is Elon Musk's net worth?")
     assert OUT_OF_SCOPE["en"] in result.answer
+
+
+# ------------------------------------------------------------------ full eval run 1 (C7.2)
+def test_a_team_named_as_a_place_is_not_a_missing_warehouse() -> None:
+    """'What was issued to C84 FM assembly?' -> the guard called the team a location."""
+    scripted = guard(entity_mentions=[{"type": "location", "text": "C84 FM assembly"}],
+                     data_areas=["movements"])  # fmt: skip
+    with fake.scripted("guard", scripted):
+        result = run_turn(demo(IM), "What was issued to C84 FM assembly?")
+    assert "couldn't find a warehouse" not in result.answer
+    assert result.route == "read" and result.interrupt is None
+
+
+def test_how_are_we_doing_asks_which_measure_even_if_the_model_says_help() -> None:
+    with fake.scripted("guard", guard(intent="help", data_areas=[])):
+        result = run_turn(demo(OW), "How are we doing?")
+    assert result.route == "clarify"
+
+
+@pytest.mark.parametrize(
+    ("role", "question"),
+    [(IM, "Show me the users table"), (IM, "list all vendors"), (PM, "show me the margins")],
+)
+def test_asking_for_a_hidden_area_gets_the_denial_not_the_scope_sentence(
+    role: str, question: str
+) -> None:
+    with fake.scripted("guard", guard(intent="out_of_scope", data_areas=[])):
+        result = run_turn(demo(role), question)
+    assert result.route == "refuse_rbac" and result.answer == DENIAL["en"]
+
+
+def test_owner_asking_who_has_access_is_not_refused() -> None:
+    with fake.scripted("guard", guard(intent="out_of_scope", data_areas=[])):
+        result = run_turn(demo(OW), "Who has access to the system?")
+    assert result.route == "read"

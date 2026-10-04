@@ -130,3 +130,12 @@ def test_a_number_then_a_conjunction_then_a_noun_is_not_a_count_claim() -> None:
     columns = ["lead_time_days", "order_by_date"]
     assert check_grounding(answer, columns, [[44, "2026-08-17"]], ["q"]).ok
     assert not check_grounding("44 या order", columns, [[7, "2026-08-17"]], ["q"]).ok
+
+
+def test_the_business_year_may_be_named() -> None:
+    """Full eval run 1: 'In August 2026, …' failed faithfulness because 2026 wasn't in the rows."""
+    from app.agent.nodes.compose import grounding_context
+
+    context = grounding_context("How many issues per team in August?")
+    assert check_grounding("In August 2026 there were 45 issues.", ["n"], [[45]], context).ok
+    assert not check_grounding("In August 2031 there were 45 issues.", ["n"], [[45]], context).ok

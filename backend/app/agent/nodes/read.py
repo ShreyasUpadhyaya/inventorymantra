@@ -71,6 +71,10 @@ def resolve_entities(state: AgentState, config: RunnableConfig) -> AgentState:
                                  "code": top.code, "name": top.name})  # fmt: skip
             elif result.outcome == "denied":
                 denied.append(AREA_FOR_KIND[mention.type])
+            elif mention.type == "location" and (team := _team(conn, mention.text)):
+                # "issued to C84 FM assembly": a team, not a warehouse (full eval run 1)
+                resolved.append({"type": "team", "text": mention.text, "code": team,
+                                 "name": team})  # fmt: skip
             else:  # clarify -> ask (interrupt); not_found -> reply with suggestions
                 return {
                     "entity_issue": {
@@ -88,6 +92,16 @@ def resolve_entities(state: AgentState, config: RunnableConfig) -> AgentState:
         return {"route": "refuse_rbac", "denied_areas": sorted(set(denied)), "resolved": []}
     return {"resolved": resolved, "denied_areas": sorted(set(denied)), "entity_issue": None,
             "mention_index": index}  # fmt: skip
+
+
+def _team(conn: Any, text: str) -> str | None:
+    """The shop floor or team a "location" mention really names, if exactly one."""
+    rows = conn.execute(
+        "SELECT name FROM inv_issued_to_targets WHERE is_active AND "
+        "(lower(name) = lower(%s) OR lower(name) LIKE '%%' || lower(%s) || '%%')",
+        (text.strip(), text.strip()),
+    ).fetchall()
+    return str(rows[0][0]) if len(rows) == 1 else None
 
 
 def after_entities(
