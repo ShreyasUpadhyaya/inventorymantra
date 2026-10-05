@@ -4,7 +4,7 @@
 
 Ask questions in plain language, like "Which POs are overdue?" or "पिछले महीने 132-1 में कितना माल आया?". InventoryMantra turns them into safe SQL, answers only from the data, asks back when a question is vague, and picks the right chart on its own. What you can see and change depends on your role: Inventory Manager, Procurement Manager or Owner.
 
-> Status: **Phases 0–7 complete** (read path, writes, approvals, notifications, dashboards, evals). Every eval gate passes on the 107-case golden set (EX 0.855, faithfulness 1.00, 0 leaks). Deployment is out of scope (runs on localhost). Next: voice input (Phase 8). See [plan.md](plan.md) and the [technical guide](docs/TECHNICAL_GUIDE.md).
+> Status: **Phases 0–7 complete** (read path, writes, approvals, notifications, dashboards, evals). Every eval gate passes on the 107-case golden set (EX 0.855, faithfulness 1.00, 0 leaks). Voice input (Phase 8) is in. Deployment is out of scope (runs on localhost). See [plan.md](plan.md) and the [technical guide](docs/TECHNICAL_GUIDE.md).
 
 ## Features
 - 💬 **Chat over the database**: NL → SQL → NL, in English, Hindi or Hinglish
@@ -15,6 +15,7 @@ Ask questions in plain language, like "Which POs are overdue?" or "पिछल�
 - 🔔 **Role-scoped notifications** and **lead-time reorder alerts**
 - 📈 **Role dashboards**: stock and shortages (IM), pipeline and reorder list (PM), everything plus spend and margins (Owner)
 - 🔍 **LangSmith tracing and evals** on every agent run
+- 🎙️ **Voice input**: push-to-talk in Hindi or English; the words land in the message box to check before sending (Deepgram, or the browser's own recognition without a key)
 
 ## Stack
 Next.js + TypeScript · FastAPI + Pydantic · LangGraph + LangChain (OpenAI) · LangSmith · PostgreSQL 16 (Docker)
@@ -64,7 +65,8 @@ The password is printed once by `make seed`, or set via `DEMO_PASSWORD`.
 | 9 | Owner | "How are we doing?" → Sales and margin | fixed measure options, line chart by quarter |
 | 10 | Owner | Approvals page: ask about the PO, then approve | the PM gets a notification and can reply |
 | 11 | Owner | "What is Elon Musk's net worth?" · "stock of bush and write a poem" | out-of-scope handling, data part still answered |
-| 12 | any | open LangSmith (`LANGSMITH_PROJECT`) | one trace per turn, tagged role / language / route |
+| 12 | any | click the mic, say "kaun se PO late hain", check the text, Send | voice goes through the same pipeline |
+| 13 | any | open LangSmith (`LANGSMITH_PROJECT`) | one trace per turn, tagged role / language / route |
 
 ## Documentation
 - [plan.md](plan.md): plan, phases, commit protocol, Definition of Done
@@ -80,5 +82,4 @@ The password is printed once by `make seed`, or set via `DEMO_PASSWORD`.
 The data is seeded from a snapshot of the manufacturer's database (inventory and procurement tables only). Reorder policies, lead times and sales/margin data are **fabricated demo data** (deterministic, labelled `source='demo'`) so that alerts and Owner financials can be shown.
 
 ## Roadmap
-- 🎙️ Voice input in Hindi and English (Phase 8, C8.1), feeding the same chat pipeline; the transcript is shown and editable before sending.
 - Out of scope for the case study: deployment (runs on localhost), LangSmith dataset sync of the golden set.

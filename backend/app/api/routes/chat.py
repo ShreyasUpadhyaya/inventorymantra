@@ -71,13 +71,16 @@ class ResumeIn(BaseModel):
     answer: str = Field(min_length=1, max_length=200)
 
 
-class _PerUserLimit:
-    def __init__(self) -> None:
+class PerUserLimit:
+    """Requests per user per minute, from the named setting (per process; D-054)."""
+
+    def __init__(self, setting: str = "chat_messages_per_minute") -> None:
         self._hits: dict[UUID, deque[float]] = defaultdict(deque)
         self._lock = threading.Lock()
+        self._setting = setting
 
     def allow(self, user_id: UUID) -> bool:
-        now, limit = time.monotonic(), get_settings().chat_messages_per_minute
+        now, limit = time.monotonic(), int(getattr(get_settings(), self._setting))
         with self._lock:
             hits = self._hits[user_id]
             while hits and now - hits[0] > 60:
@@ -92,7 +95,7 @@ class _PerUserLimit:
             self._hits.clear()
 
 
-chat_limit = _PerUserLimit()
+chat_limit = PerUserLimit()
 
 
 def _event(kind: str, data: dict[str, Any]) -> str:

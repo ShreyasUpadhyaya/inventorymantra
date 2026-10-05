@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { MessageBubble, type ChatItem } from "@/components/chat/message-bubble";
+import { MicButton } from "@/components/chat/mic-button";
 import { useSession } from "@/components/session-provider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +13,7 @@ import { ApiError } from "@/lib/api";
 import { chat, SAFE_ERROR, toTurn, type ChatEvent, type ThreadSummary } from "@/lib/chat";
 import type { Role } from "@/lib/roles";
 import { cn } from "@/lib/utils";
+import { appendTranscript } from "@/lib/voice";
 
 const MAX_MESSAGE = 2000; // backend/app/api/routes/chat.py
 
@@ -34,8 +36,17 @@ const STARTERS: Record<Role, string[]> = {
   ],
 };
 
-let counter = 0;
-const nextId = () => `local-${++counter}`;
+function lastUserText(items: ChatItem[]): string {
+  const item = items.findLast((i) => i.kind === "user");
+  return item?.kind === "user" ? item.text : "";
+}
+
+// Unique across hot reloads and remounts: a module counter restarted at 0 on Fast Refresh while
+// the messages stayed, giving two bubbles the key "local-8" (user report, 2026-10-05).
+const nextId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? `local-${crypto.randomUUID()}`
+    : `local-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 
 export function ChatView() {
   const { user } = useSession();
@@ -48,6 +59,7 @@ export function ChatView() {
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
   const abort = useRef<AbortController | null>(null);
   const threadRef = useRef<string | null>(urlThread); // the thread this view is showing
@@ -191,6 +203,11 @@ export function ChatView() {
           <div ref={bottom} />
         </div>
 
+        {voiceError && (
+          <p className="border-t px-3 pt-2 text-sm text-destructive" role="alert">
+            {voiceError}
+          </p>
+        )}
         <form
           className="flex items-end gap-2 border-t p-3"
           onSubmit={(e) => {
@@ -200,7 +217,10 @@ export function ChatView() {
         >
           <Textarea
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              setVoiceError(null);
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
                 e.preventDefault();
@@ -219,6 +239,15 @@ export function ChatView() {
             aria-label="Message"
             className="max-h-40 min-h-10 resize-none"
             disabled={busy}
+          />
+          <MicButton
+            disabled={busy}
+            recentText={`${draft} ${lastUserText(items)}`}
+            onText={(text) => {
+              setVoiceError(null);
+              setDraft((current) => appendTranscript(current, text)); // check it, then send
+            }}
+            onError={setVoiceError}
           />
           <Button type="submit" size="icon-lg" disabled={busy || !draft.trim()} aria-label="Send">
             <SendHorizontal aria-hidden />

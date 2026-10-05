@@ -411,11 +411,26 @@ Examples of the scripted conversations:
 - Out of scope by decision (the brief allows localhost). Rate limiting is in-process and keyed on the direct client address. A deployment would need a shared store and the forwarded client IP.
 
 **Voice:**
-- Not yet built (Phase 8, C8.1).
+- Deepgram transcription is tested with a stand-in provider and a mocked HTTP response, not against the live API.
+- The browser fallback works only in Chrome and Edge, with one language per recording.
 
 ---
 
-## 12. Running it
+## 12. Voice input (C8.1)
+
+**Files:** `backend/app/services/speech.py` (the `SpeechToText` interface and Deepgram), `backend/app/api/routes/voice.py`, `frontend/src/lib/voice.ts`, `frontend/src/components/chat/mic-button.tsx`, `backend/tests/api/test_voice.py`, `frontend/src/lib/voice.test.ts`.
+
+How a recording flows:
+1. Click the mic and talk; click again to stop (auto-stop after 60 s).
+2. With `DEEPGRAM_API_KEY` set, the browser records opus audio and posts it to `POST /api/voice/transcribe`.
+   - The API checks the session, the audio type, the size (≤ 5 MB) and the per-user rate (10 per minute).
+   - It then calls Deepgram (`nova-3`, language `multi`) in a worker thread.
+   - Audio and transcripts are never stored or logged.
+   - A language button next to the mic (Auto / EN / हिं) picks Deepgram `multi`, `en-IN` or `hi`. Spoken codes are written as codes ("one thirty two dash one" → "132-1").
+3. Without a key, `GET /api/voice/status` says so, and the browser uses its own speech recognition (Chrome / Edge; Hindi after Devanagari input, else Indian English).
+4. The words are **added to the message box**. The user checks or edits them and presses Send. From there it is an ordinary typed message: same guard, RBAC, clarification, charts and write confirmation (D-055).
+
+## 13. Running it
 
 ```bash
 cp .env.example .env     # fill in keys; LLM_MODE=fake costs nothing
