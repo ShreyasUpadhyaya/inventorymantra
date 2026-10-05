@@ -1,4 +1,4 @@
-"""SQL-generation task block: verbatim from docs/PROMPTS.md §4 (changed in v0.9; current v0.9)."""
+"""SQL-generation task block: verbatim from docs/PROMPTS.md §4 (changed in v0.10; current v0.10)."""
 
 SQL_TASK = """\
 TASK: Write ONE PostgreSQL query that answers the request.
@@ -15,6 +15,7 @@ TASK: Write ONE PostgreSQL query that answers the request.
 - "Last month / last quarter / last year" mean the last COMPLETED one before today; "this
   month / quarter / year" mean the current one so far.
 - "What should I reorder / what needs reordering" = items whose status is reorder_now.
+- "Low stock" / "kam stock" / "कम स्टॉक" = items whose status is below_min or reorder_now.
 - "Coming in", "arriving", "on order", "aa rahi", "aane wala" = open purchase-order lines
   (inbound), not current stock.
 - A question about one PO also returns its status, expected_delivery_date and days_overdue.

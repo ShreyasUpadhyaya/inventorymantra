@@ -33,11 +33,13 @@ docs/                                                  DECISION, Architecture, Q
 ```
 make up          # docker compose up -d (postgres)
 make seed        # migrate + load data/seed + fabricate demo data (seed=42)
+make test-db     # recreate + seed the separate test database (tests and evals use it, D-051)
 make scan        # lead-time reorder scan: "reorder now" notifications (once per item per day)
 make api         # uvicorn backend on :8000
 make web         # next dev on :3000
-make test        # ruff + mypy + pytest (unit + rbac); no LLM calls
+make test        # test-db, then ruff + mypy + pytest (unit + rbac); no LLM calls
 make eval        # LangSmith eval run over evals/corpus (costs tokens; run deliberately)
+make converse    # 36 multi-turn conversations with automatic checks (offline unless CONFIRM=yes)
 ```
 
 ## 4. One-commit approval protocol (non-negotiable)

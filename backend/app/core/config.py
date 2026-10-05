@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     )
 
     database_url: SecretStr | None = None
+    test_database_url: SecretStr | None = None  # default: DATABASE_URL's name + "_test"
     jwt_secret_key: SecretStr | None = None
     openai_api_key: SecretStr | None = None
     langsmith_api_key: SecretStr | None = None

@@ -153,8 +153,8 @@ def test_options_are_in_the_users_language() -> None:
 def test_measure_options_fit_the_role() -> None:
     owner = run_turn(demo(OW), "How are we doing?")
     im = run_turn(demo(IM), "How are we doing?")
-    assert "Revenue and margins" in owner.suggestions
-    assert all("Revenue" not in s and "spend" not in s.lower() for s in im.suggestions)
+    assert owner.suggestions == ["Sales and margin", "Spend", "Overdue orders", "Low stock"]
+    assert im.suggestions == ["Low stock", "Stock by warehouse", "Issues this month"]
 
 
 def test_clear_questions_are_not_interrupted() -> None:

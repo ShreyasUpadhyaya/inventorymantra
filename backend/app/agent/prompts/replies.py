@@ -22,6 +22,13 @@ FAILURE: dict[str, dict[Lang, str]] = {
         "hi": "यह जानकारी आपके लिए उपलब्ध डेटा में दर्ज नहीं है।",
         "hinglish": "Ye jaankari aapke liye uplabdh data mein darj nahi hai.",
     },
+    # The Owner sees every table, so "available to you" wrongly sounded like a denial
+    # (user test 2026-10-04); other roles keep it, which reveals nothing about hidden data.
+    "unanswerable_all": {
+        "en": "That isn't recorded in our data.",
+        "hi": "यह जानकारी हमारे डेटा में दर्ज नहीं है।",
+        "hinglish": "Ye jaankari hamare data mein darj nahi hai.",
+    },
     "no_choice": {
         "en": "I couldn't tell which period you meant, so I haven't looked anything up. "
         "Please ask again with a period, for example “last 30 days” or “August 2026”.",

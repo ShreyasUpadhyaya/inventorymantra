@@ -65,6 +65,14 @@ describe("toDrawable", () => {
     });
   });
 
+  it("a line chart runs oldest to newest even when rows come newest first", () => {
+    const newestFirst = [...rows].reverse();
+    const d = toDrawable({ type: "line", title: "m", x: "quarter", y: ["margin_pct"] }, columns, newestFirst);
+    expect(d.type === "line" && d.data.map((p) => p.quarter)).toEqual(["2026-Q1", "2026-Q2", "2026-Q3"]);
+    const bar = toDrawable({ type: "bar", title: "m", x: "quarter", y: ["margin_pct"] }, columns, newestFirst);
+    expect(bar.type === "bar" && bar.data[0].quarter).toBe("2026-Q3"); // rankings keep their order
+  });
+
   it("falls back to a table when the spec doesn't fit the data", () => {
     expect(toDrawable({ type: "line", title: "t", x: "month", y: ["spend"] }, columns, rows)).toEqual({ type: "table" });
     expect(toDrawable({ type: "flow", title: "t" }, columns, rows)).toEqual({ type: "table" });

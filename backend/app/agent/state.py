@@ -63,7 +63,7 @@ class AgentState(TypedDict, total=False):
     entity_asks: int
     # clarification (C4.3)
     clarify: dict[str, Any] | None  # pending question {kind, dimension, question, options}
-    clarifications: list[dict[str, str]]  # answered {question, answer} this turn
+    clarifications: list[dict[str, str]]  # answered {question, answer, dimension} this turn
     sql: str | None
     sql_error: str | None  # sanitised error fed to the repair attempt
     sql_attempts: int

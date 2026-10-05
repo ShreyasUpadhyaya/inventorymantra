@@ -14,6 +14,7 @@ from typing import Any
 from uuid import UUID
 
 from app.db.readonly import readonly_session
+from app.db.session import use_test_database
 from evals.schema import ANSWER_KEYS_PATH, EvalCase, load_corpus
 from scripts.fabricate import DEMO_USERS, demo_id
 
@@ -58,6 +59,7 @@ def build_all() -> dict[str, dict[str, Any]]:
 
 
 def main() -> None:
+    use_test_database()  # keys come from the freshly seeded test database (D-051)
     keys = build_all()
     ANSWER_KEYS_PATH.write_text(
         json.dumps(keys, ensure_ascii=False, indent=1, sort_keys=True) + "\n",

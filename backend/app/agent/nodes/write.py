@@ -145,11 +145,13 @@ LOCATION_FIELDS = {"location", "from_location", "to_location", "delivery_locatio
 
 
 # ------------------------------------------------------------------ helpers
-def _user(config: RunnableConfig) -> AuthUser:
+def _user(config: RunnableConfig, lang: Lang) -> AuthUser:
+    """The signed-in user, read again from the database: a deactivated or unknown account
+    gets the fixed denial, never a write."""
     with get_pool().connection() as conn:
         user = load_user(conn, UUID(config["configurable"]["user_id"]))
     if user is None or not user.is_active:
-        raise WriteError(DENIAL["en"])
+        raise WriteError(DENIAL[lang])
     return user
 
 
@@ -326,7 +328,10 @@ def check_write(state: AgentState, config: RunnableConfig) -> AgentState:
     pending = [dict(p) for p in write["pending"]]
     previews = list(write["previews"])
     index = write["index"]
-    user = _user(config)
+    try:
+        user = _user(config, lang)
+    except WriteError as exc:  # was uncaught: the turn crashed instead of answering
+        return _stop(write, exc.message)
     while index < len(pending):
         action, args = pending[index]["action"], pending[index]["args"]
         field = missing_field(action, args)
@@ -347,6 +352,13 @@ def check_write(state: AgentState, config: RunnableConfig) -> AgentState:
         except (Ambiguous, NotFound) as exc:
             if exc.field is None:
                 return _stop(write, exc.message)
+            misses = dict(write.get("misses") or {})
+            misses[exc.field] = misses.get(exc.field, 0) + 1
+            write = {**write, "misses": misses}
+            if isinstance(exc, NotFound) and misses[exc.field] > MAX_ASKS:
+                # probe 2026-10-04: a vendor answer of "1" matched nothing, was asked again
+                # and accepted again, forever; now the change is dropped after two retries
+                return _stop(write, GAVE_UP[lang].format(field=field_name(exc.field, lang)))
             if isinstance(exc, NotFound):
                 _set(args, exc.field, None)  # the name matched nothing: ask for it again
             question = {"field": exc.field, "text": exc.message if exc.options else
@@ -445,7 +457,7 @@ def apply_write(state: AgentState, config: RunnableConfig) -> AgentState:
     operation_id = f"chat:{config['configurable']['thread_id']}:{write['id']}"
     thread_id = config["configurable"]["thread_id"]
     try:
-        user = _user(config)
+        user = _user(config, lang)
         if write["status"] != "confirmed":
             cancel(user, previews, operation_id, thread_id)
             return {"write": {**write, "status": "done"}, "answer": CANCELLED[lang],

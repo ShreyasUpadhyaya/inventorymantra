@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict
 from app.agent.entity_match import AREA_FOR_KIND, resolve
 from app.agent.fake import OFFLINE_UNSUPPORTED
 from app.agent.llm import LLMBudgetExceededError, LLMConfigError, structured_call
+from app.agent.measures import measure_question
 from app.agent.nodes.guard import neutralise, system_prompt
 from app.agent.prompts import DENIAL, render
 from app.agent.prompts.replies import (
@@ -30,6 +31,7 @@ from app.agent.prompts.replies import (
 from app.agent.prompts.sql import SQL_TASK
 from app.agent.prompts.sql_examples import few_shots
 from app.agent.schema_context import allowed_views, schema_block
+from app.agent.signals import without_off_topic
 from app.agent.sql_guard import validate_sql
 from app.agent.state import AgentState
 from app.core.config import app_today
@@ -132,10 +134,17 @@ def respond_entity(state: AgentState) -> AgentState:
 # ------------------------------------------------------------------ SQL
 def effective_message(state: AgentState) -> str:
     """The user's question plus their clarification answers, all as user text."""
+    message = state["message"]
+    if state.get("off_topic_part"):
+        message = without_off_topic(message)  # the poem request never reaches the model
     answers = state.get("clarifications", [])
     if not answers:
-        return state["message"]
-    return f"{state['message']} [{'; '.join(a['answer'] for a in answers)}]"
+        return message
+    if any(a.get("dimension") == "measure" for a in answers):
+        # The chosen measure *is* the question (user test 2026-10-04): its fixed question,
+        # or the user's own words if they typed something else.
+        return "; ".join(measure_question(a["answer"]) for a in answers)
+    return f"{message} [{'; '.join(a['answer'] for a in answers)}]"
 
 
 def sql_messages(role: str, state: AgentState) -> list[Any]:
@@ -208,9 +217,10 @@ def after_execute(state: AgentState) -> Literal["compose", "generate_sql", "resp
     return "compose"
 
 
-def respond_failure(state: AgentState) -> AgentState:
+def respond_failure(state: AgentState, config: RunnableConfig) -> AgentState:
     kind = state.get("failure") or "sql_failed"
-    answer = FAILURE[kind][state["lang"]]
+    owner = kind == "unanswerable" and config["configurable"]["role"] == "owner"
+    answer = FAILURE["unanswerable_all" if owner else kind][state["lang"]]
     if state.get("denied_areas"):
         answer = f"{answer} {DENIAL[state['lang']]}"
     return {"answer": answer, "suggestions": [], "failure": kind}

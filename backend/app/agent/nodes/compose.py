@@ -9,6 +9,7 @@ built straight from the rows, which is grounded by construction.
 
 import json
 import logging
+import re
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -22,6 +23,7 @@ from app.agent.nodes.read import effective_message
 from app.agent.prediction import check_prediction
 from app.agent.prompts import DENIAL, Lang, render
 from app.agent.prompts.compose import COMPOSE_TASK
+from app.agent.prompts.languages import LANGUAGE_NAMES
 from app.agent.state import AgentState
 from app.agent.templates import template_answer as build_template
 from app.agent.viz import choose_viz
@@ -29,11 +31,6 @@ from app.core.config import app_today, get_settings
 
 logger = logging.getLogger("inventorymantra.agent")
 
-LANGUAGE_NAMES = {
-    "en": "English",
-    "hi": "Hindi (Devanagari script)",
-    "hinglish": "Hinglish (Hindi written in Roman script)",
-}
 ROWS_FOR_MODEL = 50  # bigger results: the first 50 rows plus whole-result totals
 FOR_RECORD: dict[Lang, str] = {
     "en": "For {name}: ",
@@ -124,6 +121,24 @@ def _check(answer: str, state: AgentState) -> list[str]:
     return problems
 
 
+_RUPEES = re.compile(r"₹(\d[\d,]*\d|\d)(\.\d+)?")
+
+
+def indian_grouping(answer: str) -> str:
+    """₹5,689,423.54 -> ₹56,89,423.54: the model sometimes groups rupees the Western way
+    (probe 2026-10-04); CORE STYLE asks for Indian grouping."""
+
+    def regroup(m: re.Match[str]) -> str:
+        digits = m.group(1).replace(",", "")
+        if len(digits) <= 3:
+            return m.group(0)
+        head, tail = digits[:-3], digits[-3:]
+        groups = [head[max(i - 2, 0) : i] for i in range(len(head), 0, -2)][::-1]
+        return "₹" + ",".join([*groups, tail]) + (m.group(2) or "")
+
+    return _RUPEES.sub(regroup, answer)
+
+
 def compose(state: AgentState, config: RunnableConfig) -> AgentState:
     role = config["configurable"]["role"]
     viz = choose_viz(
@@ -149,7 +164,7 @@ def compose(state: AgentState, config: RunnableConfig) -> AgentState:
             logger.warning("composer answer rejected: %s", "; ".join(problems))
         if not answer:
             answer, fallback = template_answer(state), True
-    answer = name_matched_records(answer, state)
+    answer = name_matched_records(indian_grouping(answer), state)
     if state.get("denied_areas") and DENIAL[state["lang"]] not in answer:
         answer = f"{answer} {DENIAL[state['lang']]}"
     return {"answer": answer, "suggestions": [], "viz": viz.model_dump(),

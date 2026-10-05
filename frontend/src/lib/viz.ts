@@ -14,6 +14,8 @@ export type Drawable =
   | { type: "flow"; mermaid: string };
 
 const CHARTS: VizType[] = ["bar", "line", "pie", "stacked_bar"];
+// Period keys that sort correctly as text: 2026, 2026-Q3, 2026-08, 2026-08-01, ISO timestamps.
+const TIME_KEY = /^\d{4}(-Q[1-4]|-\d{2}(-\d{2})?)?(T.*)?$/;
 
 export function toDrawable(viz: VizSpec | null, columns: string[], rows: Cell[][]): Drawable {
   if (!rows.length) return { type: "none" };
@@ -34,7 +36,11 @@ export function toDrawable(viz: VizSpec | null, columns: string[], rows: Cell[][
     const y = (viz.y ?? []).filter((c) => columns.includes(c) && c !== x);
     if (!columns.includes(x) || !y.length) return { type: "table" };
     const xi = columns.indexOf(x);
-    const data = rows.map((row) => {
+    // A trend reads left to right: "latest 3 quarters" often arrives newest first.
+    const ordered = viz.type === "line" && rows.every((row) => TIME_KEY.test(String(row[xi])))
+      ? [...rows].sort((a, b) => String(a[xi]).localeCompare(String(b[xi])))
+      : rows;
+    const data = ordered.map((row) => {
       const point: Point = { [x]: formatCell(row[xi], x) };
       for (const column of y) point[column] = toNumber(row[columns.indexOf(column)]);
       return point;

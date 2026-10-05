@@ -16,8 +16,11 @@ from pydantic import BaseModel, ConfigDict
 
 from app.agent.entity_match import normalise, resolve
 from app.agent.llm import LLMBudgetExceededError, LLMConfigError, structured_call
+from app.agent.measures import MEASURE_QUESTION, measure_options
 from app.agent.nodes.guard import neutralise, system_prompt
+from app.agent.prompts import render
 from app.agent.prompts.clarify import CLARIFY_TASK
+from app.agent.prompts.languages import LANGUAGE_NAMES
 from app.agent.prompts.replies import DIDNT_RECOGNISE, WHICH_ONE
 from app.agent.signals import VAGUE_MEASURE, VAGUE_TIME
 from app.agent.state import AgentState
@@ -114,13 +117,35 @@ def clarify_messages(role: str, state: AgentState) -> list[Any]:
 
     data = json.dumps(state.get("resolved", []), ensure_ascii=False)
     user = f"<user_message>{neutralise(state['message'])}</user_message><data>{data}</data>"
-    return [SystemMessage(system_prompt(role, CLARIFY_TASK)), HumanMessage(user)]
+    task = render(CLARIFY_TASK, language=LANGUAGE_NAMES[state["lang"]])  # not guessed (v0.10)
+    return [SystemMessage(system_prompt(role, task)), HumanMessage(user)]
+
+
+_PUNCT = "?.!,।'\"“”‘’"
+_GAP = rf"[\s{re.escape(_PUNCT)}]"
+
+
+def without_echo(question: str, message: str) -> str:
+    """Drop the user's own words when the model repeats them before its question
+    ("Business kaisa chal raha hai? Aap kis measure…", user test 2026-10-04)."""
+    words = [w.strip(_PUNCT) for w in message.split() if w.strip(_PUNCT)]
+    pattern = rf"{_GAP}*" + rf"{_GAP}+".join(map(re.escape, words)) + rf"{_GAP}*"
+    start = re.match(pattern, question, re.I) if words else None
+    rest = question[start.end() :].strip() if start else ""
+    return rest[:1].upper() + rest[1:] if rest else question
 
 
 def clarify_check(state: AgentState, config: RunnableConfig) -> AgentState:
     """One model call: is the period or measure too vague, with no conventional default?"""
     if state.get("clarifications"):  # already asked once this turn
         return {"clarify": None}
+    if VAGUE_MEASURE.search(state["message"]):
+        # "how are we doing?" always needs a measure; asked from the role's fixed list, no
+        # model call (probe 2026-10-04: model-written options the role couldn't answer)
+        role, lang = config["configurable"]["role"], state["lang"]
+        return {"clarify": {"kind": "clarify", "dimension": "measure",
+                            "question": MEASURE_QUESTION[lang],
+                            "options": measure_options(role, lang)}}  # fmt: skip
     try:
         out = structured_call(
             "clarify",
@@ -145,8 +170,12 @@ def clarify_check(state: AgentState, config: RunnableConfig) -> AgentState:
     if ask and out.dimension == "measure" and not VAGUE_MEASURE.search(state["message"]):
         # Smoke run 2: asked "gross, operating or net margin?" when only gross margin exists.
         ask = False
-    payload = {"kind": "clarify", "dimension": out.dimension, "question": out.question,
-               "options": out.options} if ask else None  # fmt: skip
+    question, options = without_echo(out.question or "", state["message"]), out.options
+    if out.dimension == "measure":  # fixed per role: only measures its views answer (probe)
+        role, lang = config["configurable"]["role"], state["lang"]
+        question, options = MEASURE_QUESTION[lang], measure_options(role, lang)
+    payload = {"kind": "clarify", "dimension": out.dimension, "question": question,
+               "options": options} if ask else None  # fmt: skip
     return {"clarify": payload, "assumptions": assumptions}
 
 
@@ -194,7 +223,8 @@ def ask_clarify(state: AgentState) -> AgentState:
             return {"clarify": None, "failure": "no_choice"}
         return {"clarify": {**payload, "unrecognised": raw[:60]}}
     clarifications = [*state.get("clarifications", []),
-                      {"question": payload.get("question", ""), "answer": answer}]  # fmt: skip
+                      {"question": payload.get("question", ""), "answer": answer,
+                       "dimension": payload.get("dimension") or ""}]  # fmt: skip
     return {"clarifications": clarifications, "clarify": None}
 
 

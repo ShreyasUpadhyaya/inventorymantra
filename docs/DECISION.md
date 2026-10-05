@@ -226,7 +226,7 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Offline SQL:** `fake` mode answers **only golden-corpus questions**, with their reviewed SQL, and says "can't answer offline" otherwise. All 61 corpus read questions return the frozen answers value for value through the full offline pipeline. That validates routing, matching, the guard, role execution and serialisation, **not** model quality.
 - **Off-topic plus data in one message** (a case the user found while testing): "price of PO 3 and then write a poem" used to get only the out-of-scope sentence. Now `decide()` routes the data part normally, and a final `finalize` node **adds** the out-of-scope sentence. So that example gets the fixed DENIAL and then OUT_OF_SCOPE, and an allowed data part gets its rows plus OUT_OF_SCOPE. A purely off-topic message is unchanged. Added to the corpus as `RB-IM-17`.
 - **Prompt v0.4** (approved 2026-10-02): §4 now points at the real column `expected_delivery_date` instead of the non-existent `expected_delivery_latest`.
-- **Failure replies** (`prompts/replies.py`, en/hi/Hinglish, formal "aap"): sql_failed, timeout, unanswerable (with "in the data available to you", which reveals nothing about other roles) and unavailable (budget or config).
+- **Failure replies** (`prompts/replies.py`, en/hi/Hinglish, formal "aap"): sql_failed, timeout, unanswerable (with "in the data available to you", which reveals nothing about other roles; the Owner, who sees everything, gets "That isn't recorded in our data." so it never reads like a denial, 2026-10-04) and unavailable (budget or config).
 - **Status:** Accepted
 
 ### D-032 · Clarification as a LangGraph interrupt (C4.3)
@@ -463,4 +463,45 @@ Format: **Context → Decision → Consequences**. Status is one of Accepted, Pr
 - **Answer keys narrowed to what was asked:** RD-PM-09 (value only), RD-OW-06 (revenue and cost), RD-OW-09 (one count).
 - **Prompt v0.9 (PROMPTS.md §19):** SQL meanings (completed periods, reorder = reorder_now, "coming in" = inbound, one PO returns status and days overdue, items in stock = a count, users / lifecycle / "what will" from recorded data); composer never offers a chart and makes no claims about all rows unless shown.
 - **Still open (10 cases, logged in §7):** 6 give the right answer in a different SQL shape (the checker compares numbers, not meaning). 4 real misses, to revisit only if the demo needs them: "what should I reorder this week" still filters by the order-by date; the Owner's "explain our PO lifecycle" and "what will our margin be next quarter" still come back "not recorded"; "received this month" counted only `receipt`, not `inbound`.
+- **Status:** Accepted
+
+### D-051 · Tests and evals run on their own database (C7.0)
+- **Context:** trying a write in the app (2026-10-04) changed the frozen demo data and broke 16 tests that compare against seeded numbers. Tests and the demo shared one database.
+- **Decision:** pytest, the smoke run, the full eval and the answer-key builder switch to a separate database before their first query: `TEST_DATABASE_URL`, or by default `DATABASE_URL` with `_test` added to the name (`inventorymantra_test`). The switch refuses any name that doesn't end in `_test`. `make test-db` drops, recreates and seeds it (about 5 seconds), and `make test` runs it first, so every test run starts from the frozen seed. The app (`make api`, `make ask`) keeps using the demo database. If Postgres is up but the test database is missing, the database tests fail with "run `make test-db`" instead of quietly skipping. CI seeds its test database the same way.
+- **Consequence:** writes made while trying the app no longer affect tests or evals; the read-only roles are cluster-wide, so they work in both databases.
+- **Status:** Accepted
+
+### D-052 · Fixes from the user's real-model tests (2026-10-04)
+Each found by the user in the app with `LLM_MODE=openai`, root-caused from the LangSmith trace, and covered by a test:
+- **Write path, unknown account:** `check_write` let the "not a known user" error escape and the turn crashed (seen with `make ask`, which ran as a made-up user). It now answers with the denial; `make ask` runs as the seeded demo user of the role.
+- **Denial plus out-of-scope sentence:** "price of SS sheet / show me the users table" (Inventory Manager) got both. When every part of the request names a data area, only the denial is given; a real off-topic part ("… and write a poem") still gets the scope sentence.
+- **Owner "not recorded" read like a denial:** the Owner now gets "That isn't recorded in our data."; other roles keep "…available to you", which hides whether the data exists elsewhere.
+- **"How are we doing?" in Hindi / Hinglish:** "हम कैसा कर रहे हैं?" missed the vague-measure phrases, so the measure question was dropped; "business kaisa chal raha hai?" was called off-topic by the model. The phrases now cover कैसा/कैसे/कैसी + चल रहा/कर रहे (and Roman forms), and a match always leads to the measure question.
+- **Echoed question:** the model began its clarifying question with the user's own words; a leading echo is removed.
+- **Chosen measure:** "business kaisa chal raha hai? [Stock levels]" came back unanswerable. After a measure question, the chosen measure alone goes to the SQL step.
+- **Line charts** over periods are drawn oldest to newest (the margin chart ran Q3 → Q1).
+- **Prompt v0.10** (PROMPTS.md §20): the clarifying question is written in the detected language (it came back in Hindi for an English question), offers only measures the data holds (no stock value), and "low stock" means `below_min` or `reorder_now`.
+- **Status:** Accepted
+
+### D-053 · Eval run 3, the conversation probe, and what it found (2026-10-05)
+- **Eval run 3** (full corpus, prompt v0.10, ~$0.37): EX 0.855, faithfulness 1.00, route 1.00, clarify P/R 1.00/1.00, chart 0.919, language 1.00, no predictions, p95 5.44 s. It reported **1 leak**, which was a checker error: NP-PM-03 answered "I cannot predict if they will deliver on time", and the case's forecast-word list (`must_not_contain: "will deliver"`) was scored as a role leak. Forecast-word lists on `no-prediction` cases now count as a prediction check (`no_prediction_words`, with the same "I can't predict…" allowance as the live check), never as a leak. Re-scored: 0 leaks, 0 predictions, every gate passes.
+- **Conversation probe** (`evals/conversations.py`, `make converse`): the corpus checks one turn at a time, but the user found bugs that only show across turns. 36 scripted conversations (3 roles × en/hi/Hinglish, answered with option numbers and typed values, every confirm card cancelled) with automatic checks for wrong reply language, a question that repeats the user, an option that then fails, a denial-like reply to the Owner, a denial with extra text and template fallbacks. Runs on the test database; offline by default, ~$0.15 with `CONFIRM=yes`.
+- **First real probe run: 11 of 36 flagged.** Fixed, each with a replay test:
+  - **A poem was written:** "stock of bush and write a poem" → after the item question, the composer wrote the poem. Off-topic clauses are now cut from the text the SQL step and the composer see (`signals.without_off_topic`); the scope sentence is still added.
+  - **"Which measure?" options the role couldn't use:** the model offered "Stock value" to the Inventory Manager and "Sales"/"Profit" options that then came back "not recorded". The question and options are now fixed per role (`agent/measures.py`: Owner sales and margin / spend / overdue / low stock; Procurement spend / overdue / low stock; Inventory low stock / stock by warehouse / issues this month), in the user's language, with no model call; each option is sent to the SQL step as one concrete question.
+  - **"Thanks!"** went to the SQL step and came back "not recorded": greetings and thanks now get the fixed reply ("You're welcome!" plus the example chips).
+  - **Hindi help** showed English example chips: the examples now exist in Hindi and Hinglish.
+  - **"Add 3 to 132 and 5 to the other"** (no item named) was read as a question: a message that starts with a change verb and has a number goes to the write path.
+  - **A vendor that matched nothing** ("1") was asked for forever: a name that keeps matching nothing stops after two retries.
+  - **"OD40 item"** was read as a count claim ("40 items") and the answer fell back to the template: a number glued to letters is a name.
+  - **Rupees in Western grouping** (₹5,689,423.54): amounts are regrouped the Indian way (₹56,89,423.54).
+  - **"How is the business going?"** (user, by voice, 2026-10-05) missed the "how are we doing" phrases and came back "not recorded". The phrases now cover "how is (the / our) business / company", "how's it going", "how are things going", without catching "how is it priced" or "how is PO 3 going".
+- **Second probe run: 4 flagged, all expected:** "what is our stock value?" is honestly not recorded; two forecast phrasings were caught by the prediction check and replaced by the safe template; one false flag (the deliberately Hindi help chip in English mode) is no longer flagged.
+- **Still open:** "what should I reorder this week" filters by order-by date (1 item instead of 15); answers sometimes name internal status values ("reorder_now"). Both are prompt-level and listed as limitations.
+- **Status:** Accepted
+
+### D-054 · Deployment out of scope; one technical guide (C7.4)
+- **Context:** the brief allows running on localhost; the user chose to skip C7.3 (2026-10-04) and asked for one document with the technical explanations, limitations, tests and eval set.
+- **Decision:** no deployment config is added. `docs/TECHNICAL_GUIDE.md` is the single technical reference (LangGraph / LangChain / LangSmith with file names, prompt layers including the core system prompt, the golden set and its decisions, tests, eval results, limitations); the README links to it and carries a 10-minute demo script.
+- **Consequence:** what a deployment would need is listed under limitations (shared rate-limit store, forwarded client IP, platform secrets).
 - **Status:** Accepted

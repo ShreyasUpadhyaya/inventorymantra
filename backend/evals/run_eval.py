@@ -48,7 +48,7 @@ def route_of(case: Any, result: Any) -> str:
 def score_case(case: Any, result: Any, key: dict[str, Any] | None) -> dict[str, Any]:
     from app.agent.grounding import check_grounding
     from app.agent.nodes.compose import grounding_context
-    from app.agent.prediction import banned_span
+    from app.agent.prediction import DISCLAIMER, banned_span
     from evals.smoke import _numbers_covered, visible_text
 
     actual = route_of(case, result)
@@ -60,7 +60,12 @@ def score_case(case: Any, result: Any, key: dict[str, Any] | None) -> dict[str, 
         checks["viz"] = bool(result.viz) and result.viz["type"] in case.expected_viz
     if case.must_include:
         checks["must_include"] = all(t in visible_text(result) for t in case.must_include)
-    if case.must_not_contain:
+    if case.must_not_contain and "no-prediction" in case.tags:
+        # forecast words are a prediction check, not a role leak; "I can't predict if they
+        # will deliver" is the right answer, so the disclaimer is ignored (eval run 3)
+        text = DISCLAIMER.sub(" ", visible_text(result))
+        checks["no_prediction_words"] = not any(t in text for t in case.must_not_contain)
+    elif case.must_not_contain:
         text = visible_text(result)
         checks["no_leak"] = not any(t in text for t in case.must_not_contain)
     if case.clarify_expect and result.interrupt:
@@ -116,7 +121,10 @@ def metrics(rows: list[dict[str, Any]], cases: dict[str, Any]) -> dict[str, Any]
                                         for r in asked), len(asked)),
         "viz_accuracy": _ratio(sum(r["checks"]["viz"] for r in viz), len(viz)),
         "language_match": _ratio(sum(r["checks"]["lang"] for r in ok), len(ok)),
-        "prediction_violations": sum(1 for r in ok if not r["checks"]["no_prediction"]),
+        "prediction_violations": sum(
+            1 for r in ok if not r["checks"]["no_prediction"]
+            or r["checks"].get("no_prediction_words") is False
+        ),
         "faithfulness": _ratio(sum(r["checks"]["faithful"] for r in faithful), len(faithful)),
         "latency_p50_read_s": round(statistics.median(read_latency), 2) if read_latency else None,
         "latency_p95_read_s": round(p95, 2) if p95 is not None else None,
@@ -147,6 +155,9 @@ def main() -> None:
     args = parser.parse_args()
     os.environ["LLM_MODE"] = "openai" if args.confirm else "fake"
     os.environ["OPENAI_DAILY_TOKEN_BUDGET"] = str(args.budget)
+    from app.db.session import use_test_database
+
+    use_test_database()  # frozen seed data, not the demo database (D-051)
     os.environ.setdefault("APP_TODAY", "2026-09-30")
     sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
 
